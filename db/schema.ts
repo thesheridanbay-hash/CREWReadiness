@@ -1,100 +1,120 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   integer,
+  jsonb,
+  numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   serial,
   text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 /**
- * NOTE (T1/D14): this schema is extended heavily in T1 — tenancy (companyId +
- * FORCE RLS on every tenant table), modules, question variants, content
- * versions, attempts, assignments, crews, tags, parked concepts, media, jobs.
- * The shapes below are the carried-over base from the clone, minus hearts and
- * subscriptions (D10).
+ * Multi-tenant schema (T1, PLAN.md §3 / D14 / D20).
+ *
+ * Conventions:
+ * - Every tenant table carries `companyId` (text) and is covered by a
+ *   fail-closed RLS policy — see db/rls.sql. `provider_settings` is the one
+ *   platform-scoped exception (D5/D25).
+ * - `companyId`/`userId` are text: they will reference Better Auth's
+ *   organization/user tables once T2 lands (FKs added then — Better Auth owns
+ *   those tables).
+ * - Content ids are serial ints (internal, player-facing). Session/job/media
+ *   ids are UUIDs (externally referenced, unguessable).
+ * - `ai_jobs` is the tenant anchor for background work: jobs resolve their
+ *   companyId from a DB-verified row via app_get_job_company(), never from
+ *   event payloads (D20, outside-voice F2).
  */
+
+/* ───────────────────────── Content hierarchy ───────────────────────── */
 
 export const courses = pgTable("courses", {
   id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
   title: text("title").notNull(),
-  imageSrc: text("image_src").notNull(),
+  imageSrc: text("image_src").notNull().default("/mascot.svg"),
+  activeContentVersionId: integer("active_content_version_id").references(
+    (): AnyPgColumn => contentVersions.id,
+    { onDelete: "set null" }
+  ),
 });
 
-export const coursesRelations = relations(courses, ({ many }) => ({
-  userProgress: many(userProgress),
-  units: many(units),
-}));
+export const contentVersions = pgTable(
+  "content_versions",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    courseId: integer("course_id")
+      .references(() => courses.id, { onDelete: "cascade" })
+      .notNull(),
+    version: integer("version").notNull(),
+    publishedAt: timestamp("published_at").notNull().defaultNow(),
+    publishedBy: text("published_by").notNull(),
+  },
+  (t) => [
+    uniqueIndex("content_versions_course_version_uq").on(t.courseId, t.version),
+  ]
+);
+
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  courseId: integer("course_id")
+    .references(() => courses.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  order: integer("order").notNull(),
+});
 
 export const units = pgTable("units", {
   id: serial("id").primaryKey(),
-  title: text("title").notNull(), // Unit 1
-  description: text("description").notNull(), // Learn the basics of spanish
-  courseId: integer("course_id")
-    .references(() => courses.id, {
-      onDelete: "cascade",
-    })
+  companyId: text("company_id").notNull(),
+  moduleId: integer("module_id")
+    .references(() => modules.id, { onDelete: "cascade" })
     .notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
   order: integer("order").notNull(),
 });
-
-export const unitsRelations = relations(units, ({ many, one }) => ({
-  course: one(courses, {
-    fields: [units.courseId],
-    references: [courses.id],
-  }),
-  lessons: many(lessons),
-}));
 
 export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(),
-  title: text("title").notNull(),
+  companyId: text("company_id").notNull(),
   unitId: integer("unit_id")
-    .references(() => units.id, {
-      onDelete: "cascade",
-    })
+    .references(() => units.id, { onDelete: "cascade" })
     .notNull(),
+  title: text("title").notNull(),
   order: integer("order").notNull(),
 });
 
-export const lessonsRelations = relations(lessons, ({ one, many }) => ({
-  unit: one(units, {
-    fields: [lessons.unitId],
-    references: [units.id],
-  }),
-  challenges: many(challenges),
-}));
+export const questionTypeEnum = pgEnum("question_type", ["SELECT", "ASSIST"]);
 
-export const challengesEnum = pgEnum("type", ["SELECT", "ASSIST"]);
-
-export const challenges = pgTable("challenges", {
+export const questions = pgTable("questions", {
   id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
   lessonId: integer("lesson_id")
-    .references(() => lessons.id, {
-      onDelete: "cascade",
-    })
+    .references(() => lessons.id, { onDelete: "cascade" })
     .notNull(),
-  type: challengesEnum("type").notNull(),
+  type: questionTypeEnum("type").notNull(),
   question: text("question").notNull(),
+  /** Static "why" shown on the first wrong answer (EXPLAIN step, D7). */
+  explanation: text("explanation"),
   order: integer("order").notNull(),
 });
 
-export const challengesRelations = relations(challenges, ({ one, many }) => ({
-  lesson: one(lessons, {
-    fields: [challenges.lessonId],
-    references: [lessons.id],
-  }),
-  challengeOptions: many(challengeOptions),
-  challengeProgress: many(challengeProgress),
-}));
-
-export const challengeOptions = pgTable("challenge_options", {
+export const questionOptions = pgTable("question_options", {
   id: serial("id").primaryKey(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
+  companyId: text("company_id").notNull(),
+  questionId: integer("question_id")
+    .references(() => questions.id, { onDelete: "cascade" })
     .notNull(),
   text: text("text").notNull(),
   correct: boolean("correct").notNull(),
@@ -102,46 +122,505 @@ export const challengeOptions = pgTable("challenge_options", {
   audioSrc: text("audio_src"),
 });
 
-export const challengeOptionsRelations = relations(
-  challengeOptions,
-  ({ one }) => ({
-    challenge: one(challenges, {
-      fields: [challengeOptions.challengeId],
-      references: [challenges.id],
-    }),
-  })
-);
-
-export const challengeProgress = pgTable("challenge_progress", {
+/** Pre-generated retest bank (D7): same concept, new surface. Regenerated on publish. */
+export const questionVariants = pgTable("question_variants", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
+  companyId: text("company_id").notNull(),
+  questionId: integer("question_id")
+    .references(() => questions.id, { onDelete: "cascade" })
     .notNull(),
-  completed: boolean("completed").notNull().default(false),
+  contentVersionId: integer("content_version_id").references(
+    () => contentVersions.id,
+    { onDelete: "cascade" }
+  ),
+  prompt: text("prompt").notNull(),
+  options: jsonb("options")
+    .$type<Array<{ text: string; correct: boolean }>>()
+    .notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const challengeProgressRelations = relations(
-  challengeProgress,
-  ({ one }) => ({
-    challenge: one(challenges, {
-      fields: [challengeProgress.challengeId],
-      references: [challenges.id],
-    }),
-  })
+/* ───────────────────────── Learning loop ───────────────────────── */
+
+export const learningSessionStatusEnum = pgEnum("learning_session_status", [
+  "ACTIVE",
+  "COMPLETED",
+  "ABANDONED",
+]);
+
+export const learningStepEnum = pgEnum("learning_step", [
+  "QUESTION",
+  "EXPLAIN",
+  "AI_RETEACH",
+  "CONCEPT_PARKED",
+]);
+
+export const learningSessions = pgTable(
+  "learning_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: text("company_id").notNull(),
+    userId: text("user_id").notNull(),
+    lessonId: integer("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
+      .notNull(),
+    /** Sessions pin to a content version at start (D17/D22). */
+    contentVersionId: integer("content_version_id").notNull(),
+    status: learningSessionStatusEnum("status").notNull().default("ACTIVE"),
+    activeQuestionId: integer("active_question_id").references(
+      () => questions.id,
+      { onDelete: "set null" }
+    ),
+    step: learningStepEnum("step").notNull().default("QUESTION"),
+    reteachCycle: integer("reteach_cycle").notNull().default(0),
+    startedAt: timestamp("started_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    /** One active session per user+lesson (PLAN §10). */
+    uniqueIndex("learning_sessions_one_active_uq")
+      .on(t.userId, t.lessonId)
+      .where(sql`${t.status} = 'ACTIVE'`),
+  ]
 );
+
+export const attemptSurfaceEnum = pgEnum("attempt_surface", [
+  "ORIGINAL",
+  "VARIANT",
+]);
+
+/** Append-only answer log; feeds weak-concept reports (D21). */
+export const attempts = pgTable(
+  "attempts",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    userId: text("user_id").notNull(),
+    /** Nullable until T3 reshapes the player onto persisted sessions. */
+    sessionId: uuid("session_id").references(() => learningSessions.id, {
+      onDelete: "set null",
+    }),
+    questionId: integer("question_id")
+      .references(() => questions.id, { onDelete: "cascade" })
+      .notNull(),
+    variantId: integer("variant_id").references(() => questionVariants.id, {
+      onDelete: "set null",
+    }),
+    surface: attemptSurfaceEnum("surface").notNull().default("ORIGINAL"),
+    correct: boolean("correct").notNull(),
+    cycle: integer("cycle").notNull().default(0),
+    /** Double-submit guard (PLAN §10): unique when present. */
+    idempotencyKey: text("idempotency_key"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("attempts_idempotency_uq")
+      .on(t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} IS NOT NULL`),
+  ]
+);
+
+export const parkedStatusEnum = pgEnum("parked_status", [
+  "PARKED",
+  "COACHED",
+  "RESOLVED",
+]);
+
+/** D23 park-and-continue: manager resolution queue. */
+export const parkedConcepts = pgTable("parked_concepts", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  userId: text("user_id").notNull(),
+  questionId: integer("question_id")
+    .references(() => questions.id, { onDelete: "cascade" })
+    .notNull(),
+  lessonId: integer("lesson_id")
+    .references(() => lessons.id, { onDelete: "cascade" })
+    .notNull(),
+  sessionId: uuid("session_id").references(() => learningSessions.id, {
+    onDelete: "set null",
+  }),
+  status: parkedStatusEnum("status").notNull().default("PARKED"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  resolvedBy: text("resolved_by"),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+/* ───────────────────────── Org & assignment ───────────────────────── */
+
+export const crews = pgTable("crews", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  name: text("name").notNull(),
+});
+
+export const crewMembers = pgTable(
+  "crew_members",
+  {
+    crewId: integer("crew_id")
+      .references(() => crews.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id").notNull(),
+    companyId: text("company_id").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.crewId, t.userId] })]
+);
+
+/** Employee/crew × course (exactly one target per row). */
+export const assignments = pgTable(
+  "assignments",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    courseId: integer("course_id")
+      .references(() => courses.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id"),
+    crewId: integer("crew_id").references(() => crews.id, {
+      onDelete: "cascade",
+    }),
+    assignedBy: text("assigned_by").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      "assignments_exactly_one_target",
+      sql`(${t.userId} IS NULL) <> (${t.crewId} IS NULL)`
+    ),
+    uniqueIndex("assignments_user_course_uq")
+      .on(t.courseId, t.userId)
+      .where(sql`${t.userId} IS NOT NULL`),
+    uniqueIndex("assignments_crew_course_uq")
+      .on(t.courseId, t.crewId)
+      .where(sql`${t.crewId} IS NOT NULL`),
+  ]
+);
+
+/** Reusable manual: tag library (D16). */
+export const tags = pgTable(
+  "tags",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    name: text("name").notNull(),
+  },
+  (t) => [uniqueIndex("tags_company_name_uq").on(t.companyId, t.name)]
+);
+
+export const lessonTags = pgTable(
+  "lesson_tags",
+  {
+    lessonId: integer("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
+      .notNull(),
+    tagId: integer("tag_id")
+      .references(() => tags.id, { onDelete: "cascade" })
+      .notNull(),
+    companyId: text("company_id").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.lessonId, t.tagId] })]
+);
+
+/* ───────────────────────── Media & AI pipeline ───────────────────────── */
+
+export const mediaKindEnum = pgEnum("media_kind", ["PHOTO", "VOICE", "VIDEO"]);
+
+/** Vercel Blob objects (D9/D12): EXIF-stripped, access via authed proxy (T11). */
+export const mediaAssets = pgTable("media_assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: text("company_id").notNull(),
+  uploadedBy: text("uploaded_by").notNull(),
+  pathname: text("pathname").notNull(),
+  contentType: text("content_type").notNull(),
+  kind: mediaKindEnum("kind").notNull(),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const aiJobKindEnum = pgEnum("ai_job_kind", [
+  "TEXT_TO_TRAINING",
+  "VOICE_TO_TRAINING",
+  "PHOTO_TO_TRAINING",
+  "VARIANT_PREGEN",
+  "DECAY_SCAN",
+]);
+
+export const aiJobStatusEnum = pgEnum("ai_job_status", [
+  "PENDING",
+  "RUNNING",
+  "SUCCEEDED",
+  "FAILED",
+  "DEAD_LETTER",
+]);
+
+/** Tenant anchor for background work (D20): scopedForJob() resolves companyId here. */
+export const aiJobs = pgTable("ai_jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: text("company_id").notNull(),
+  kind: aiJobKindEnum("kind").notNull(),
+  status: aiJobStatusEnum("status").notNull().default("PENDING"),
+  mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, {
+    onDelete: "set null",
+  }),
+  payload: jsonb("payload").$type<Record<string, unknown>>(),
+  error: text("error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Per-company metering (D5/D25); alerts read from here. */
+export const aiUsageEvents = pgTable("ai_usage_events", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  jobId: uuid("job_id").references(() => aiJobs.id, { onDelete: "set null" }),
+  operation: text("operation").notNull(),
+  provider: text("provider").notNull(),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  costUsd: numeric("cost_usd", { precision: 10, scale: 4 })
+    .notNull()
+    .default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const reviewStatusEnum = pgEnum("review_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+
+/** AI drafts are never auto-published (D6): owner review queue. */
+export const reviewQueue = pgTable("review_queue", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  jobId: uuid("job_id").references(() => aiJobs.id, { onDelete: "set null" }),
+  courseId: integer("course_id").references(() => courses.id, {
+    onDelete: "set null",
+  }),
+  draft: jsonb("draft").$type<Record<string, unknown>>().notNull(),
+  status: reviewStatusEnum("status").notNull().default("PENDING"),
+  reviewedBy: text("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** In-app notifications (D24). */
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  companyId: text("company_id").notNull(),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown>>(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/* ───────────────────────── User progress ───────────────────────── */
 
 export const userProgress = pgTable("user_progress", {
   userId: text("user_id").primaryKey(),
+  companyId: text("company_id").notNull(),
   userName: text("user_name").notNull().default("User"),
   userImageSrc: text("user_image_src").notNull().default("/mascot.svg"),
   activeCourseId: integer("active_course_id").references(() => courses.id, {
-    onDelete: "cascade",
+    onDelete: "set null",
   }),
   points: integer("points").notNull().default(0),
 });
+
+/* ───────────────── Platform-scoped settings (D5/D25) ───────────────── */
+
+/**
+ * NOT tenant-scoped: platform owner only. RLS policy requires the
+ * `app.is_platform` transaction setting (set by the scoped layer for
+ * platform-role sessions only). Key encryption mechanics land in P3.
+ */
+export const providerSettings = pgTable("provider_settings", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull().unique(),
+  encryptedKey: text("encrypted_key"),
+  settings: jsonb("settings").$type<Record<string, unknown>>(),
+  alertThresholdUsd: numeric("alert_threshold_usd", {
+    precision: 10,
+    scale: 2,
+  }),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/* ───────────────────────── Relations ───────────────────────── */
+
+export const coursesRelations = relations(courses, ({ many, one }) => ({
+  modules: many(modules),
+  contentVersions: many(contentVersions),
+  activeContentVersion: one(contentVersions, {
+    fields: [courses.activeContentVersionId],
+    references: [contentVersions.id],
+  }),
+  userProgress: many(userProgress),
+  assignments: many(assignments),
+}));
+
+export const contentVersionsRelations = relations(
+  contentVersions,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [contentVersions.courseId],
+      references: [courses.id],
+    }),
+  })
+);
+
+export const modulesRelations = relations(modules, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [modules.courseId],
+    references: [courses.id],
+  }),
+  units: many(units),
+}));
+
+export const unitsRelations = relations(units, ({ one, many }) => ({
+  module: one(modules, {
+    fields: [units.moduleId],
+    references: [modules.id],
+  }),
+  lessons: many(lessons),
+}));
+
+export const lessonsRelations = relations(lessons, ({ one, many }) => ({
+  unit: one(units, {
+    fields: [lessons.unitId],
+    references: [units.id],
+  }),
+  questions: many(questions),
+  lessonTags: many(lessonTags),
+}));
+
+export const questionsRelations = relations(questions, ({ one, many }) => ({
+  lesson: one(lessons, {
+    fields: [questions.lessonId],
+    references: [lessons.id],
+  }),
+  questionOptions: many(questionOptions),
+  variants: many(questionVariants),
+  attempts: many(attempts),
+}));
+
+export const questionOptionsRelations = relations(
+  questionOptions,
+  ({ one }) => ({
+    question: one(questions, {
+      fields: [questionOptions.questionId],
+      references: [questions.id],
+    }),
+  })
+);
+
+export const questionVariantsRelations = relations(
+  questionVariants,
+  ({ one }) => ({
+    question: one(questions, {
+      fields: [questionVariants.questionId],
+      references: [questions.id],
+    }),
+  })
+);
+
+export const learningSessionsRelations = relations(
+  learningSessions,
+  ({ one, many }) => ({
+    lesson: one(lessons, {
+      fields: [learningSessions.lessonId],
+      references: [lessons.id],
+    }),
+    attempts: many(attempts),
+  })
+);
+
+export const attemptsRelations = relations(attempts, ({ one }) => ({
+  question: one(questions, {
+    fields: [attempts.questionId],
+    references: [questions.id],
+  }),
+  session: one(learningSessions, {
+    fields: [attempts.sessionId],
+    references: [learningSessions.id],
+  }),
+}));
+
+export const parkedConceptsRelations = relations(parkedConcepts, ({ one }) => ({
+  question: one(questions, {
+    fields: [parkedConcepts.questionId],
+    references: [questions.id],
+  }),
+  lesson: one(lessons, {
+    fields: [parkedConcepts.lessonId],
+    references: [lessons.id],
+  }),
+}));
+
+export const crewsRelations = relations(crews, ({ many }) => ({
+  members: many(crewMembers),
+  assignments: many(assignments),
+}));
+
+export const crewMembersRelations = relations(crewMembers, ({ one }) => ({
+  crew: one(crews, {
+    fields: [crewMembers.crewId],
+    references: [crews.id],
+  }),
+}));
+
+export const assignmentsRelations = relations(assignments, ({ one }) => ({
+  course: one(courses, {
+    fields: [assignments.courseId],
+    references: [courses.id],
+  }),
+  crew: one(crews, {
+    fields: [assignments.crewId],
+    references: [crews.id],
+  }),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  lessonTags: many(lessonTags),
+}));
+
+export const lessonTagsRelations = relations(lessonTags, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [lessonTags.lessonId],
+    references: [lessons.id],
+  }),
+  tag: one(tags, {
+    fields: [lessonTags.tagId],
+    references: [tags.id],
+  }),
+}));
+
+export const aiJobsRelations = relations(aiJobs, ({ one, many }) => ({
+  mediaAsset: one(mediaAssets, {
+    fields: [aiJobs.mediaAssetId],
+    references: [mediaAssets.id],
+  }),
+  usageEvents: many(aiUsageEvents),
+}));
+
+export const aiUsageEventsRelations = relations(aiUsageEvents, ({ one }) => ({
+  job: one(aiJobs, {
+    fields: [aiUsageEvents.jobId],
+    references: [aiJobs.id],
+  }),
+}));
+
+export const reviewQueueRelations = relations(reviewQueue, ({ one }) => ({
+  job: one(aiJobs, {
+    fields: [reviewQueue.jobId],
+    references: [aiJobs.id],
+  }),
+  course: one(courses, {
+    fields: [reviewQueue.courseId],
+    references: [courses.id],
+  }),
+}));
 
 export const userProgressRelations = relations(userProgress, ({ one }) => ({
   activeCourse: one(courses, {

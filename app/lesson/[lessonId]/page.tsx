@@ -24,14 +24,14 @@ const LessonIdPage = async ({ params }: LessonIdPageProps) => {
   if (!lesson || !userProgress) return redirect("/learn");
 
   const initialPercentage =
-    (lesson.challenges.filter((challenge) => challenge.completed).length /
-      lesson.challenges.length) *
+    (lesson.questions.filter((question) => question.completed).length /
+      lesson.questions.length) *
     100;
 
   return (
     <Quiz
       initialLessonId={lesson.id}
-      initialLessonChallenges={lesson.challenges}
+      initialQuestions={lesson.questions}
       initialPercentage={initialPercentage}
     />
   );

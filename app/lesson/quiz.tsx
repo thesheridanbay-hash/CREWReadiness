@@ -8,8 +8,8 @@ import Confetti from "react-confetti";
 import { useAudio, useWindowSize, useMount } from "react-use";
 import { toast } from "sonner";
 
-import { upsertChallengeProgress } from "@/actions/challenge-progress";
-import { challengeOptions, challenges } from "@/db/schema";
+import { recordCorrectAnswer } from "@/actions/challenge-progress";
+import { questionOptions, questions } from "@/db/schema";
 import { usePracticeModal } from "@/store/use-practice-modal";
 
 import { Challenge } from "./challenge";
@@ -29,16 +29,16 @@ import { ResultCard } from "./result-card";
 type QuizProps = {
   initialPercentage: number;
   initialLessonId: number;
-  initialLessonChallenges: (typeof challenges.$inferSelect & {
+  initialQuestions: (typeof questions.$inferSelect & {
     completed: boolean;
-    challengeOptions: (typeof challengeOptions.$inferSelect)[];
+    questionOptions: (typeof questionOptions.$inferSelect)[];
   })[];
 };
 
 export const Quiz = ({
   initialPercentage,
   initialLessonId,
-  initialLessonChallenges,
+  initialQuestions,
 }: QuizProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
@@ -64,10 +64,10 @@ export const Quiz = ({
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
   });
-  const [challenges] = useState(initialLessonChallenges);
+  const [lessonQuestions] = useState(initialQuestions);
   const [activeIndex, setActiveIndex] = useState(() => {
-    const uncompletedIndex = challenges.findIndex(
-      (challenge) => !challenge.completed
+    const uncompletedIndex = lessonQuestions.findIndex(
+      (question) => !question.completed
     );
 
     return uncompletedIndex === -1 ? 0 : uncompletedIndex;
@@ -76,8 +76,8 @@ export const Quiz = ({
   const [selectedOption, setSelectedOption] = useState<number>();
   const [status, setStatus] = useState<"none" | "wrong" | "correct">("none");
 
-  const challenge = challenges[activeIndex];
-  const options = challenge?.challengeOptions ?? [];
+  const question = lessonQuestions[activeIndex];
+  const options = question?.questionOptions ?? [];
 
   const onNext = () => {
     setActiveIndex((current) => current + 1);
@@ -111,11 +111,11 @@ export const Quiz = ({
 
     if (correctOption.id === selectedOption) {
       startTransition(() => {
-        upsertChallengeProgress(challenge.id)
+        recordCorrectAnswer(question.id)
           .then(() => {
             void correctControls.play();
             setStatus("correct");
-            setPercentage((prev) => prev + 100 / challenges.length);
+            setPercentage((prev) => prev + 100 / lessonQuestions.length);
           })
           .catch(() => toast.error("Something went wrong. Please try again."));
       });
@@ -126,7 +126,7 @@ export const Quiz = ({
     }
   };
 
-  if (!challenge) {
+  if (!question) {
     return (
       <>
         {finishAudio}
@@ -159,7 +159,7 @@ export const Quiz = ({
           </h1>
 
           <div className="flex w-full items-center justify-center gap-x-4">
-            <ResultCard variant="points" value={challenges.length * 10} />
+            <ResultCard variant="points" value={lessonQuestions.length * 10} />
           </div>
         </div>
 
@@ -173,9 +173,9 @@ export const Quiz = ({
   }
 
   const title =
-    challenge.type === "ASSIST"
+    question.type === "ASSIST"
       ? "Select the correct meaning"
-      : challenge.question;
+      : question.question;
 
   return (
     <>
@@ -191,8 +191,8 @@ export const Quiz = ({
             </h1>
 
             <div>
-              {challenge.type === "ASSIST" && (
-                <QuestionBubble question={challenge.question} />
+              {question.type === "ASSIST" && (
+                <QuestionBubble question={question.question} />
               )}
 
               <Challenge
@@ -201,7 +201,7 @@ export const Quiz = ({
                 status={status}
                 selectedOption={selectedOption}
                 disabled={pending}
-                type={challenge.type}
+                type={question.type}
               />
             </div>
           </div>
