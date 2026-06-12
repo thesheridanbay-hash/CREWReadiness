@@ -136,6 +136,26 @@ export type TransitionError = {
 
 export type TransitionResult = TransitionOk | TransitionError;
 
+/* ─────────────────────── Transition context ─────────────────────── */
+
+/**
+ * Read-model inputs the machine needs but must not fetch itself (the machine
+ * is pure — D17). The caller assembles these from the database before calling
+ * transition(). ADDITIVE to the frozen contract.
+ */
+export type TransitionContext = {
+  /** Next question in lesson order after the active one; null = none left. */
+  nextQuestionId: number | null;
+  /** Prior persisted WRONG attempts for the active question by this user. */
+  priorWrongAttempts: number;
+  /**
+   * False when the per-question daily live-reteach budget is exhausted
+   * (LOOP_CONFIG.RETEACH_CALLS_PER_QUESTION_PER_DAY) — the machine then
+   * falls back to serving a pre-generated variant directly (D7).
+   */
+  reteachAvailableToday: boolean;
+};
+
 /* ─────────────────────────── Config ─────────────────────────── */
 
 export const LOOP_CONFIG = {
