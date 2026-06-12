@@ -6,6 +6,7 @@ import { AppActionError } from "@/lib/errors";
 import { DirectAdapter } from "./adapters/direct";
 import { OpenClawAdapter } from "./adapters/openclaw";
 import type { ProviderAdapter } from "./adapters/types";
+import { decryptSecret } from "./crypto";
 import { createLeakGuard } from "./guard";
 import { recordUsage } from "./meter";
 import {
@@ -60,10 +61,20 @@ const resolveProvider = async (ctx: AiContext): Promise<ResolvedProvider> => {
   }
 
   const settings = row.settings ?? {};
-  // TODO(P3 wiring): encrypted_key is stored encrypted; decryption keyed by
-  // PROVIDER_KEY_SECRET lands with the platform settings UI. Until then the
-  // value is used as-is in non-production environments.
-  const apiKey = row.encrypted_key ?? "";
+  // Keys are stored AES-256-GCM encrypted (lib/ai/crypto). Decrypt with
+  // PROVIDER_KEY_SECRET; a malformed/again-unconfigured value yields an empty
+  // key, surfaced to the caller as a provider error rather than a crash.
+  let apiKey = "";
+  if (row.encrypted_key) {
+    try {
+      apiKey = decryptSecret(row.encrypted_key);
+    } catch {
+      throw new AppActionError(
+        "conflict",
+        "The stored AI provider key could not be decrypted. Re-save it in platform settings."
+      );
+    }
+  }
   const alertThresholdUsd = row.alert_threshold_usd
     ? Number(row.alert_threshold_usd)
     : null;
