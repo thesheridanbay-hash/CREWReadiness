@@ -268,6 +268,10 @@ export type ReteachResult =
 /** Reteach is capped at ~60 words (prompt) — 256 tokens is generous headroom. */
 const RETEACH_MAX_TOKENS = 256;
 
+/** Rough token estimate (~4 chars/token) for metering when the provider
+ * returns no usage counts (e.g. the OpenClaw MCP bridge). */
+const estimateTokens = (text: string): number => Math.ceil(text.length / 4);
+
 /**
  * Live reteach (D7): streamed, leak-guarded. Any failure mode — timeout,
  * guard trip, provider error — resolves to a FALLBACK signal; the caller
@@ -319,10 +323,12 @@ export const reteach = async (
   // On timeout we abort the upstream fetch and fall back to a variant (D7).
   let iterator: AsyncIterator<string>;
   let firstResult: IteratorResult<string>;
+  let reteachPrompt = "";
 
   try {
+    reteachPrompt = buildReteachPrompt({ question: args.question });
     const source = await adapter.streamText({
-      prompt: buildReteachPrompt({ question: args.question }),
+      prompt: reteachPrompt,
       maxOutputTokens: RETEACH_MAX_TOKENS,
       signal: controller.signal,
     });
@@ -337,12 +343,18 @@ export const reteach = async (
     return { kind: "fallback", reason: "timeout" };
   }
 
-  // Meter now, while the caller's transaction is open (finding #5).
+  // Meter now, while the caller's transaction is open (finding #5). Input
+  // tokens are measured from the actual prompt; output is a cap estimate
+  // since the reply streams to the client after this transaction closes.
   await recordUsage(
     ctx,
     "reteach",
     providerName,
-    { ...ZERO_USAGE, outputTokens: RETEACH_MAX_TOKENS },
+    {
+      inputTokens: estimateTokens(reteachPrompt),
+      outputTokens: RETEACH_MAX_TOKENS,
+      costUsd: 0,
+    },
     alertThresholdUsd
   );
 
