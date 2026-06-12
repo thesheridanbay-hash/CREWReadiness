@@ -5,7 +5,7 @@ import Image from "next/image";
 import { getSession } from "@/lib/auth/session";
 import { getStudioCourses } from "@/lib/content/queries";
 
-import { CreateCourseForm } from "./create-course-form";
+import { CourseCreator } from "./course-creator";
 
 const StudioPage = async () => {
   const session = await getSession();
@@ -31,7 +31,7 @@ const StudioPage = async () => {
         </Link>
       </div>
 
-      <CreateCourseForm />
+      <CourseCreator />
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {courses.length === 0 && (
