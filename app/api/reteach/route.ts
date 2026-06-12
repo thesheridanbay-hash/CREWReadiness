@@ -18,6 +18,11 @@ import { scoped } from "@/lib/db/scoped";
  * and the returned stream performs no DB work (review finding #5).
  */
 
+// Cap the function (Pro honors this; Hobby caps lower). The gateway's 8s
+// first-chunk timeout keeps us well under any platform limit and degrades to
+// a variant when the provider is slow.
+export const maxDuration = 30;
+
 const bodySchema = z.object({ sessionId: z.string().uuid() });
 
 export async function POST(request: NextRequest) {
