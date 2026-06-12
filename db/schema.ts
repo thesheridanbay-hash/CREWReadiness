@@ -92,6 +92,12 @@ export const lessons = pgTable("lessons", {
     .references(() => units.id, { onDelete: "cascade" })
     .notNull(),
   title: text("title").notNull(),
+  /**
+   * Plain-language teaching text shown before the questions (AI Course
+   * Builder). Nullable: hand-authored lessons and pre-builder content have
+   * none, and the player renders questions-only when it's absent.
+   */
+  teachingText: text("teaching_text"),
   order: integer("order").notNull(),
 });
 
@@ -343,6 +349,10 @@ export const aiJobKindEnum = pgEnum("ai_job_kind", [
   "PHOTO_TO_TRAINING",
   "VARIANT_PREGEN",
   "DECAY_SCAN",
+  /** AI Course Builder: full-course text generation → review queue. */
+  "GENERATE_COURSE",
+  /** Sequential image fill for an approved course (icon + lesson art). */
+  "GENERATE_COURSE_ASSETS",
 ]);
 
 export const aiJobStatusEnum = pgEnum("ai_job_status", [
@@ -414,6 +424,75 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+/* ───────────────── AI Course Builder (course-builder feature) ───────────────── */
+
+/**
+ * Per-company owner "master prompt" guidance for the AI Course Builder.
+ * Tenant-scoped (one row per company). Composed with the platform site
+ * prompt (provider_settings, course_builder row) at generation time. This is
+ * owner-authored TRUSTED guidance — it joins the instruction block, while the
+ * owner's free-text course idea is sandwiched as DATA (lib/ai/prompts.ts).
+ */
+export const companySettings = pgTable("company_settings", {
+  companyId: text("company_id").primaryKey(),
+  masterPrompt: text("master_prompt"),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Course icon vs. lesson artwork. ICON rows carry a null lessonId. */
+export const courseAssetKindEnum = pgEnum("course_asset_kind", [
+  "ICON",
+  "ILLUSTRATION",
+  "REALISTIC",
+]);
+
+/**
+ * Sequential image-generation queue for a course (D-image). One row per image
+ * the builder wants (course icon + per-lesson art). The PR21 pipeline drains
+ * PENDING rows ONE AT A TIME, in `order`, so results are reliable rather than
+ * a parallel fan-out: PENDING → GENERATING → GENERATED|FAILED. On GENERATED,
+ * the row points at a media_assets blob; the icon row also updates
+ * courses.imageSrc. Resumable + idempotent by status.
+ */
+export const courseAssetStatusEnum = pgEnum("course_asset_status", [
+  "PENDING",
+  "GENERATING",
+  "GENERATED",
+  "FAILED",
+]);
+
+export const courseAssets = pgTable(
+  "course_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: text("company_id").notNull(),
+    courseId: integer("course_id")
+      .references(() => courses.id, { onDelete: "cascade" })
+      .notNull(),
+    /** Null for the course ICON; set for lesson artwork. */
+    lessonId: integer("lesson_id").references(() => lessons.id, {
+      onDelete: "cascade",
+    }),
+    /** Stable human ref assigned on ingest (A1, A2, …) for editor commands. */
+    ref: text("ref").notNull(),
+    kind: courseAssetKindEnum("kind").notNull(),
+    prompt: text("prompt").notNull(),
+    /** Drain order within the course (icon first, then lessons in tree order). */
+    order: integer("order").notNull(),
+    status: courseAssetStatusEnum("status").notNull().default("PENDING"),
+    mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, {
+      onDelete: "set null",
+    }),
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("course_assets_course_ref_uq").on(t.courseId, t.ref),
+  ]
+);
 
 /* ───────────────────────── User progress ───────────────────────── */
 
@@ -522,6 +601,7 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   }),
   userProgress: many(userProgress),
   assignments: many(assignments),
+  assets: many(courseAssets),
 }));
 
 export const contentVersionsRelations = relations(
@@ -557,6 +637,7 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   }),
   questions: many(questions),
   lessonTags: many(lessonTags),
+  assets: many(courseAssets),
 }));
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -690,6 +771,21 @@ export const userProgressRelations = relations(userProgress, ({ one }) => ({
   activeCourse: one(courses, {
     fields: [userProgress.activeCourseId],
     references: [courses.id],
+  }),
+}));
+
+export const courseAssetsRelations = relations(courseAssets, ({ one }) => ({
+  course: one(courses, {
+    fields: [courseAssets.courseId],
+    references: [courses.id],
+  }),
+  lesson: one(lessons, {
+    fields: [courseAssets.lessonId],
+    references: [lessons.id],
+  }),
+  mediaAsset: one(mediaAssets, {
+    fields: [courseAssets.mediaAssetId],
+    references: [mediaAssets.id],
   }),
 }));
 

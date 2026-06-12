@@ -81,7 +81,9 @@ DECLARE
     'ai_usage_events',
     'review_queue',
     'notifications',
-    'user_progress'
+    'user_progress',
+    'company_settings',
+    'course_assets'
   ];
 BEGIN
   FOREACH t IN ARRAY tenant_tables LOOP
@@ -153,6 +155,56 @@ $$;
 
 REVOKE ALL ON FUNCTION app_get_active_provider() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app_get_active_provider() TO app_runtime;
+
+-- ─── 4b-i. Image provider config resolution (AI Course Builder) ────────────
+-- Image generation is a SEPARATE provider from the text model (the text
+-- OpenClaw bridge can't do images). Its config lives in its own
+-- provider_settings row (provider = 'image'); the asset pipeline runs inside
+-- TENANT job transactions and reaches exactly that one row through this
+-- definer — same posture as app_get_active_provider for the text model.
+-- VOLATILE: the platform owner can re-key the image model at any time.
+CREATE OR REPLACE FUNCTION app_get_image_provider()
+RETURNS TABLE (
+  provider text,
+  encrypted_key text,
+  settings jsonb,
+  alert_threshold_usd numeric
+)
+LANGUAGE sql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.provider, p.encrypted_key, p.settings, p.alert_threshold_usd
+  FROM provider_settings p
+  WHERE p.provider = 'image'
+  LIMIT 1
+$$;
+
+REVOKE ALL ON FUNCTION app_get_image_provider() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_get_image_provider() TO app_runtime;
+
+-- ─── 4b-ii. Site-level course-builder guidance (AI Course Builder) ─────────
+-- The platform "master prompt" is a global guidance string (NO secret) that
+-- composes with each company's owner prompt. Stored in its own
+-- provider_settings row (provider = 'course_builder'); read by tenant
+-- generate-course jobs through this definer. Returns settings only — never a
+-- key — so it widens nothing beyond the non-secret guidance text.
+CREATE OR REPLACE FUNCTION app_get_course_builder_config()
+RETURNS TABLE (settings jsonb)
+LANGUAGE sql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.settings
+  FROM provider_settings p
+  WHERE p.provider = 'course_builder'
+  LIMIT 1
+$$;
+
+REVOKE ALL ON FUNCTION app_get_course_builder_config() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_get_course_builder_config() TO app_runtime;
 
 -- One ai_usage_threshold alert per company per month (review finding #7):
 -- concurrent metering transactions collide here instead of double-alerting.

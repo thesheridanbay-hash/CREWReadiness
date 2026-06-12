@@ -3,7 +3,9 @@ import {
   aiUsageEvents,
   assignments,
   attempts,
+  companySettings,
   contentVersions,
+  courseAssets,
   courses,
   crewMembers,
   crews,
@@ -56,6 +58,8 @@ export const TENANT_TABLES = {
   review_queue: reviewQueue,
   notifications,
   user_progress: userProgress,
+  company_settings: companySettings,
+  course_assets: courseAssets,
 } as const;
 
 export const TENANT_TABLE_NAMES = Object.keys(

@@ -1,4 +1,4 @@
-import type { Usage } from "../types";
+import type { ImageResult, Usage } from "../types";
 
 export type GenerateJsonArgs = {
   prompt: string;
@@ -25,4 +25,20 @@ export interface ProviderAdapter {
   /** Token stream; usage for streams is estimated by the gateway. */
   streamText(args: StreamTextArgs): Promise<AsyncIterable<string>>;
   transcribe(audioUrl: string): Promise<{ text: string; usage: Usage }>;
+}
+
+export type GenerateImageArgs = {
+  prompt: string;
+  /** Square size in px (provider clamps to supported sizes). */
+  size?: number;
+};
+
+/**
+ * Image generation is a SEPARATE provider from text (the brief's image model;
+ * the OpenClaw text bridge can't do images). Adapters return bytes (b64) or a
+ * URL; the caller persists to Blob.
+ */
+export interface ImageProviderAdapter {
+  readonly name: string;
+  generateImage(args: GenerateImageArgs): Promise<ImageResult>;
 }
