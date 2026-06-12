@@ -19,3 +19,10 @@ Deferred work with full context. Added by /plan-eng-review 2026-06-12.
 - **Cons:** Cap tuning per plan tier; a too-low cap silently dulls the AI teaching loop and needs monitoring to detect.
 - **Context:** The gateway already meters every call per company (`ai_usage_events`, D5) and alerts platform owner at thresholds (D25). Enforcement is a budget check in the gateway before any live provider call. Start: `lib/ai/gateway.ts` budget guard + `provider_settings` cap columns.
 - **Depends on / blocked by:** P3 gateway + P4 metering shipped; real usage data to set sane defaults.
+
+## 6. P5 memory loop — AI-dependent remainder
+
+- **What:** Two of the four P5 items still need the AI provider + image generation: (a) trainee-generated scenarios (employees propose situations that become draft questions), and (b) bilingual EN/ES image-pair generation for photo lessons.
+- **Why:** Both call the AI gateway / an image model. Shipping them before a provider is configured would be untestable theater. The decay/retraining-trigger half of the loop (D13 Decay/Correct) is built and live: `lib/learning-loop/decay.ts` + the weekly `inngest/functions/decay-scan.ts`, which flags decayed concepts (miss-rate past threshold) to owners.
+- **Context:** decayScan already iterates companies and writes `concept_decayed` notifications. Trainee scenarios reuse the review queue (draft → owner approve). Bilingual pairs reuse `generateLesson`/`analyzePhoto` with a target-language prompt + image gen.
+- **Depends on / blocked by:** AI provider configured in `/platform/settings`; Inngest connected (for decayScan cron + scenario jobs); an image-generation provider for the bilingual pairs.
