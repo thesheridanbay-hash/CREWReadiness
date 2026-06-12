@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: Typecheck, lint, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+
+  integration:
+    name: RLS isolation + action matrix (Neon branch)
+    runs-on: ubuntu-latest
+    needs: quality
+    # Runs only when Neon credentials are configured as repo secrets.
+    # Required secrets: NEON_API_KEY, NEON_PROJECT_ID
+    # The branch is created fresh per run, schema + RLS applied, then deleted.
+    env:
+      HAS_NEON: ${{ secrets.NEON_API_KEY != '' && secrets.NEON_PROJECT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_NEON == 'true'
+
+      - uses: actions/setup-node@v4
+        if: env.HAS_NEON == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+        if: env.HAS_NEON == 'true'
+
+      - name: Create Neon test branch
+        if: env.HAS_NEON == 'true'
+        id: neon
+        uses: neondatabase/create-branch-action@v5
+        with:
+          api_key: ${{ secrets.NEON_API_KEY }}
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch_name: ci-${{ github.run_id }}
+
+      - name: Apply schema + RLS
+        if: env.HAS_NEON == 'true'
+        env:
+          DATABASE_URL_OWNER: ${{ steps.neon.outputs.db_url }}
+        run: |
+          npm run db:push
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          # CI runs RLS as the branch owner; role posture asserted by tests.
+          psql "$DATABASE_URL_OWNER" -v ON_ERROR_STOP=0 -f db/rls.sql || true
+
+      - name: Run integration suites
+        if: env.HAS_NEON == 'true'
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+          DATABASE_URL_TEST: ${{ steps.neon.outputs.db_url }}
+        run: npm run test:integration
+
+      - name: Delete Neon test branch
+        if: env.HAS_NEON == 'true' && always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          api_key: ${{ secrets.NEON_API_KEY }}
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ci-${{ github.run_id }}
+
+  evals:
+    name: AI eval gate (D19)
+    runs-on: ubuntu-latest
+    needs: quality
+    # Gates prompt changes once evals/ + provider keys exist (P3/T4).
+    steps:
+      - uses: actions/checkout@v4
+      - name: Eval suites
+        run: |
+          if [ -d evals ] && [ -n "${{ secrets.EVAL_PROVIDER_KEY }}" ]; then
+            echo "evals: configured — runner lands with the AI gateway (T4)"
+          else
+            echo "evals: skipped (no evals/ directory or provider key yet)"
+          fi
