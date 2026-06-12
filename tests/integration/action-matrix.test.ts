@@ -44,7 +44,11 @@ import {
   acceptEmployeeInviteAction,
   createEmployeeInviteAction,
 } from "@/actions/auth";
-import { recordCorrectAnswer } from "@/actions/challenge-progress";
+import {
+  acknowledgeExplain,
+  startOrResumeSession,
+  submitAnswer,
+} from "@/actions/learning-loop";
 import { upsertUserProgress } from "@/actions/user-progress";
 
 const ownerSession: Session = {
@@ -67,14 +71,67 @@ type MatrixRow = {
 /** DB-free rows: validation, auth, and role failures. */
 const matrix: MatrixRow[] = [
   {
-    name: "recordCorrectAnswer rejects invalid input",
-    run: () => recordCorrectAnswer(-5),
+    name: "startOrResumeSession rejects invalid lesson ids",
+    run: () => startOrResumeSession(-1),
     session: ownerSession,
     expectCode: "validation",
   },
   {
-    name: "recordCorrectAnswer requires a session",
-    run: () => recordCorrectAnswer(1),
+    name: "startOrResumeSession requires a session",
+    run: () => startOrResumeSession(1),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "submitAnswer rejects malformed payloads",
+    run: () =>
+      submitAnswer({
+        sessionId: "not-a-uuid",
+        questionId: 1,
+        surface: "ORIGINAL",
+        variantId: null,
+        optionRef: 0,
+        idempotencyKey: "k".repeat(12),
+      }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "submitAnswer rejects short idempotency keys",
+    run: () =>
+      submitAnswer({
+        sessionId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910",
+        questionId: 1,
+        surface: "ORIGINAL",
+        variantId: null,
+        optionRef: 0,
+        idempotencyKey: "abc",
+      }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "submitAnswer requires a session",
+    run: () =>
+      submitAnswer({
+        sessionId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910",
+        questionId: 1,
+        surface: "ORIGINAL",
+        variantId: null,
+        optionRef: 0,
+        idempotencyKey: "k".repeat(12),
+      }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "acknowledgeExplain requires a session",
+    run: () =>
+      acknowledgeExplain({
+        sessionId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910",
+        questionId: 1,
+        idempotencyKey: "k".repeat(12),
+      }),
     session: null,
     expectCode: "unauthorized",
   },
@@ -150,19 +207,13 @@ describe("server-action matrix — validation & auth rows (DB-free)", () => {
 describe.skipIf(!process.env.DATABASE_URL_TEST)(
   "server-action matrix — success rows (DB)",
   () => {
-    it("recordCorrectAnswer succeeds against seeded content", async () => {
+    it("full loop: start session, answer correctly, view advances", async () => {
       const { makeDb, seedCompany } = await import("./fixtures");
       const { sql } = await import("drizzle-orm");
       const ctx = makeDb();
 
       try {
         const seeded = await seedCompany(ctx.db, `co-act-${Date.now()}`);
-
-        const questionRow = await ctx.db.execute<{ id: number }>(
-          sql`SELECT id FROM questions WHERE company_id = ${seeded.companyId} LIMIT 1`
-        );
-        const questionId = questionRow.rows[0]?.id;
-        expect(questionId).toBeDefined();
 
         sessionState.current = {
           userId: seeded.userId,
@@ -172,8 +223,39 @@ describe.skipIf(!process.env.DATABASE_URL_TEST)(
           imageSrc: "/mascot.svg",
         };
 
-        const result = await recordCorrectAnswer(questionId!);
-        expect(result.ok).toBe(true);
+        const started = await startOrResumeSession(
+          await ctx.db
+            .execute<{ id: number }>(
+              sql`SELECT l.id FROM lessons l WHERE l.company_id = ${seeded.companyId} LIMIT 1`
+            )
+            .then((r) => r.rows[0]!.id)
+        );
+        expect(started.ok).toBe(true);
+        if (!started.ok) return;
+        expect(started.data.view.type).toBe("QUESTION");
+        if (started.data.view.type !== "QUESTION") return;
+
+        const surface = started.data.view.surface;
+        const correctRef = await ctx.db
+          .execute<{ id: number }>(
+            sql`SELECT id FROM question_options
+                WHERE question_id = ${surface.questionId} AND correct LIMIT 1`
+          )
+          .then((r) => r.rows[0]!.id);
+
+        const answered = await submitAnswer({
+          sessionId: started.data.sessionId,
+          questionId: surface.questionId,
+          surface: "ORIGINAL",
+          variantId: null,
+          optionRef: correctRef,
+          idempotencyKey: `it-${Date.now()}-ok`,
+        });
+
+        expect(answered.ok).toBe(true);
+        if (!answered.ok) return;
+        expect(answered.data.pointsEarned).toBeGreaterThan(0);
+        expect(["QUESTION", "COMPLETE"]).toContain(answered.data.view.type);
       } finally {
         await ctx.pool.end();
       }
