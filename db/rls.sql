@@ -160,6 +160,36 @@ CREATE UNIQUE INDEX IF NOT EXISTS notifications_ai_threshold_month_uq
   ON notifications (company_id, type, date_trunc('month', created_at))
   WHERE type = 'ai_usage_threshold';
 
+-- ─── 4c. Cross-company AI usage (T13/D25) ─────────────────────────────────
+-- Platform-owner-only aggregate. SECURITY DEFINER bypasses per-row RLS so it
+-- can total every company, but it self-guards on app.is_platform — a setting
+-- only the scoped layer sets, and only for platform-role sessions. An
+-- employee/owner session (same app_runtime role) cannot satisfy the guard.
+
+CREATE OR REPLACE FUNCTION app_platform_usage()
+RETURNS TABLE (company_id text, spend numeric, calls bigint)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF current_setting('app.is_platform', true) IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'platform access required';
+  END IF;
+  RETURN QUERY
+    SELECT e.company_id,
+           COALESCE(SUM(e.cost_usd), 0) AS spend,
+           count(*)::bigint AS calls
+    FROM ai_usage_events e
+    WHERE e.created_at >= date_trunc('month', now())
+    GROUP BY e.company_id
+    ORDER BY SUM(e.cost_usd) DESC;
+END $$;
+
+REVOKE ALL ON FUNCTION app_platform_usage() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_platform_usage() TO app_runtime;
+
 -- ─── 5. Verification (run these; both must hold) ───────────────────────────
 -- a) Runtime role must NOT bypass RLS (CI asserts this in T5):
 --      SELECT rolname, rolbypassrls, rolsuper FROM pg_roles
