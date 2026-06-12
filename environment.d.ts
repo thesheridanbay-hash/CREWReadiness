@@ -12,6 +12,13 @@ declare global {
 
       // public app url
       NEXT_PUBLIC_APP_URL: string;
+
+      // better auth secret + base url (T2)
+      BETTER_AUTH_SECRET: string;
+      BETTER_AUTH_URL?: string;
+
+      // dev-only auth bypass — never set in production
+      DEV_AUTH_BYPASS?: string;
     }
   }
 }

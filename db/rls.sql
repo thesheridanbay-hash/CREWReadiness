@@ -43,6 +43,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 ALTER ROLE app_runtime NOBYPASSRLS NOSUPERUSER NOCREATEDB NOCREATEROLE;
 
 -- ─── 2. FORCE RLS + tenant-isolation policy on every tenant table ──────────
+--
+-- NOT in this list (auth infrastructure — reads happen before tenant context
+-- exists, only via lib/auth/* code paths):
+--   Better Auth: "user", session, account, verification, organization,
+--                member, invitation
+--   Employee:    employee_credentials, employee_sessions, employee_invites,
+--                employee_login_attempts
 
 DO $$
 DECLARE

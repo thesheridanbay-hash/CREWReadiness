@@ -447,6 +447,70 @@ export const providerSettings = pgTable("provider_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+/* ──────────────── Employee auth (T2 — D4, auth infrastructure) ──────────────── */
+
+/**
+ * Employee credential tables are AUTH INFRASTRUCTURE, not tenant data:
+ * sign-in runs before any tenant context exists, so these tables are NOT in
+ * the db/rls.sql tenant list (same as Better Auth's own tables). They are
+ * only touched by lib/auth/employee.ts code paths.
+ *
+ * Spike outcome (D4/T2): usernames are unique PER COMPANY (two companies can
+ * both have "miguel") — global-unique username plugins can't express that,
+ * so employees use this dedicated credential path, per the plan's fallback.
+ */
+export const employeeCredentials = pgTable(
+  "employee_credentials",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    /** App-level user id (e.g. "emp_<uuid>") used across tenant tables. */
+    userId: text("user_id").notNull().unique(),
+    username: text("username").notNull(),
+    displayName: text("display_name").notNull(),
+    pinHash: text("pin_hash").notNull(),
+    failedAttempts: integer("failed_attempts").notNull().default(0),
+    lockedUntil: timestamp("locked_until"),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("employee_credentials_company_username_uq").on(
+      t.companyId,
+      t.username
+    ),
+  ]
+);
+
+/** DB-backed employee sessions: short idle expiry, revocable, listable (D4). */
+export const employeeSessions = pgTable("employee_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: text("company_id").notNull(),
+  userId: text("user_id").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Invite links: owner/manager pre-creates username + display name (D4). */
+export const employeeInvites = pgTable("employee_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: text("company_id").notNull(),
+  username: text("username").notNull(),
+  displayName: text("display_name").notNull(),
+  createdBy: text("created_by").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Per-IP sign-in attempt log for rate limiting (D4). Pruned opportunistically. */
+export const employeeLoginAttempts = pgTable("employee_login_attempts", {
+  id: serial("id").primaryKey(),
+  ip: text("ip").notNull(),
+  attemptedAt: timestamp("attempted_at").notNull().defaultNow(),
+});
+
 /* ───────────────────────── Relations ───────────────────────── */
 
 export const coursesRelations = relations(courses, ({ many, one }) => ({
@@ -628,3 +692,7 @@ export const userProgressRelations = relations(userProgress, ({ one }) => ({
     references: [courses.id],
   }),
 }));
+
+/* ───────────── Better Auth tables (T2) — re-exported for the db instance ───────────── */
+
+export * from "./auth-schema";
