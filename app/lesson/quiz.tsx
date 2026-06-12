@@ -112,7 +112,12 @@ export const Quiz = ({
     if (correctOption.id === selectedOption) {
       startTransition(() => {
         recordCorrectAnswer(question.id)
-          .then(() => {
+          .then((result) => {
+            if (!result.ok) {
+              toast.error(result.error.message);
+              return;
+            }
+
             void correctControls.play();
             setStatus("correct");
             setPercentage((prev) => prev + 100 / lessonQuestions.length);
