@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { AppActionError } from "@/lib/errors";
 
 import { DirectAdapter } from "./adapters/direct";
-import { OpenClawAdapter } from "./adapters/openclaw";
+import { McpAdapter } from "./adapters/mcp";
 import type { ProviderAdapter } from "./adapters/types";
 import { decryptSecret } from "./crypto";
 import { createLeakGuard } from "./guard";
@@ -83,10 +83,16 @@ const resolveProvider = async (ctx: AiContext): Promise<ResolvedProvider> => {
     return {
       providerName: "openclaw",
       alertThresholdUsd,
-      adapter: new OpenClawAdapter({
+      adapter: new McpAdapter({
         endpoint: String(settings.endpoint ?? ""),
-        model: String(settings.model ?? ""),
         apiKey,
+        toolName: String(settings.toolName ?? "ask_ai_hassan"),
+        model: settings.model ? String(settings.model) : undefined,
+        thinking: settings.thinking ? String(settings.thinking) : undefined,
+        timeoutSeconds:
+          typeof settings.timeoutSeconds === "number"
+            ? settings.timeoutSeconds
+            : 120,
       }),
     };
   }

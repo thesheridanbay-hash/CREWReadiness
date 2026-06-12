@@ -32,6 +32,7 @@ export type ProviderSettingsView = {
   provider: "openclaw" | "direct" | null;
   endpoint: string;
   model: string;
+  toolName: string;
   alertThresholdUsd: number | null;
   hasKey: boolean;
 };
@@ -47,6 +48,7 @@ export const getProviderSettingsView = async (): Promise<Result<ProviderSettings
           provider: null,
           endpoint: "",
           model: "",
+          toolName: "ask_ai_hassan",
           alertThresholdUsd: null,
           hasKey: false,
         });
@@ -56,6 +58,7 @@ export const getProviderSettingsView = async (): Promise<Result<ProviderSettings
         provider: (row.provider as "openclaw" | "direct") ?? null,
         endpoint: String(settings.endpoint ?? settings.baseUrl ?? ""),
         model: String(settings.model ?? ""),
+        toolName: String(settings.toolName ?? "ask_ai_hassan"),
         alertThresholdUsd: row.alertThresholdUsd ? Number(row.alertThresholdUsd) : null,
         hasKey: Boolean(row.encryptedKey),
       });
@@ -65,7 +68,10 @@ export const getProviderSettingsView = async (): Promise<Result<ProviderSettings
 const upsertSchema = z.object({
   provider: z.enum(["openclaw", "direct"]),
   endpoint: z.string().trim().url().max(500),
-  model: z.string().trim().min(1).max(120),
+  // Model is required for a direct API; optional passthrough for OpenClaw.
+  model: z.string().trim().max(120).optional(),
+  // OpenClaw MCP generation tool name (discovered: ask_ai_hassan).
+  toolName: z.string().trim().min(1).max(120).optional(),
   // Optional: leave blank to keep the existing key.
   apiKey: z.string().trim().max(500).optional(),
   alertThresholdUsd: z.number().nonnegative().max(100000).optional(),
@@ -77,7 +83,12 @@ export const upsertProviderSettings = async (input: unknown): Promise<Result<nul
     if (!parsed.success) return fromZod(parsed.error);
 
     const auth = await requirePlatform();
-    const { provider, endpoint, model, apiKey, alertThresholdUsd } = parsed.data;
+    const { provider, endpoint, model, toolName, apiKey, alertThresholdUsd } =
+      parsed.data;
+
+    if (provider === "direct" && !model) {
+      return err("validation", "A model name is required for a direct API provider.");
+    }
 
     let encryptedKey: string | undefined;
     if (apiKey) {
@@ -98,7 +109,11 @@ export const upsertProviderSettings = async (input: unknown): Promise<Result<nul
       const existing = await tx.query.providerSettings.findFirst();
 
       // This provider becomes the single active one.
-      const settings = { active: true, endpoint, model };
+      const settings: Record<string, unknown> = { active: true, endpoint };
+      if (model) settings.model = model;
+      if (provider === "openclaw") {
+        settings.toolName = toolName || "ask_ai_hassan";
+      }
 
       if (existing) {
         await tx

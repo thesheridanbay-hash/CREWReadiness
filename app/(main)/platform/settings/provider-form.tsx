@@ -20,6 +20,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
   );
   const [endpoint, setEndpoint] = useState(current.endpoint);
   const [model, setModel] = useState(current.model);
+  const [toolName, setToolName] = useState(current.toolName || "ask_ai_hassan");
   const [apiKey, setApiKey] = useState("");
   const [threshold, setThreshold] = useState(
     current.alertThresholdUsd ? String(current.alertThresholdUsd) : ""
@@ -30,7 +31,8 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       const result = await upsertProviderSettings({
         provider,
         endpoint,
-        model,
+        model: model || undefined,
+        toolName: provider === "openclaw" ? toolName || undefined : undefined,
         apiKey: apiKey || undefined,
         alertThresholdUsd: threshold ? Number(threshold) : undefined,
       });
@@ -77,14 +79,37 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">Model</label>
+        <label className="mb-1 block text-sm font-bold text-neutral-700">
+          Model{" "}
+          {provider === "openclaw" && (
+            <span className="font-normal text-muted-foreground">(optional)</span>
+          )}
+        </label>
         <input
           className={inputClass}
-          placeholder="e.g. gpt-4o-mini"
+          placeholder={provider === "openclaw" ? "leave blank for the bridge default" : "e.g. gpt-4o-mini"}
           value={model}
           onChange={(event) => setModel(event.target.value)}
         />
       </div>
+
+      {provider === "openclaw" && (
+        <div>
+          <label className="mb-1 block text-sm font-bold text-neutral-700">
+            MCP generation tool
+          </label>
+          <input
+            className={inputClass}
+            placeholder="ask_ai_hassan"
+            value={toolName}
+            onChange={(event) => setToolName(event.target.value)}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            The tool your MCP server exposes for text generation (discovered:
+            ask_ai_hassan).
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="mb-1 block text-sm font-bold text-neutral-700">
