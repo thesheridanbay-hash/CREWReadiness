@@ -35,6 +35,7 @@
     "@radix-ui/react-separator": "^1.1.9",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.57.0",
+    "@vercel/blob": "^2.4.0",
     "better-auth": "^1.6.17",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
