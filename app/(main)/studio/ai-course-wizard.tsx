@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { requestCourseGeneration } from "@/actions/course-builder";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -22,8 +21,8 @@ const inputClass =
 
 export const AiCourseWizard = () => {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [submitted, setSubmitted] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [done, setDone] = useState<{ title: string } | null>(null);
 
   const [idea, setIdea] = useState("");
   const [title, setTitle] = useState("");
@@ -35,57 +34,86 @@ export const AiCourseWizard = () => {
 
   const canSubmit = Boolean(idea.trim() || title.trim() || topics.trim() || goals.trim());
 
-  const onSubmit = () => {
-    if (!canSubmit) return;
-    startTransition(async () => {
-      const result = await requestCourseGeneration({
-        userBrief: idea.trim() || undefined,
-        title: title.trim() || undefined,
-        unitCount: unitCount ? Number(unitCount) : undefined,
-        goals: goals.trim() || undefined,
-        topics: topics.trim() || undefined,
-        employeeLevel: employeeLevel.trim() || undefined,
-        style: style.trim() || undefined,
-      });
-      if (!result.ok) {
-        toast.error(result.error.message);
-        return;
-      }
-      setSubmitted(true);
-      toast.success("Course generation started.");
-      router.refresh();
-    });
+  const reset = () => {
+    setDone(null);
+    setIdea("");
+    setTitle("");
+    setUnitCount("");
+    setGoals("");
+    setTopics("");
+    setEmployeeLevel("");
+    setStyle("");
   };
 
-  if (submitted) {
+  const onSubmit = async () => {
+    if (!canSubmit || pending) return;
+    setPending(true);
+    try {
+      // Generation is synchronous (the model takes ~1-2 min); the server route
+      // runs under Fluid Compute's 300s budget. Keep the request open for it.
+      const res = await fetch("/api/course/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userBrief: idea.trim() || undefined,
+          title: title.trim() || undefined,
+          unitCount: unitCount ? Number(unitCount) : undefined,
+          goals: goals.trim() || undefined,
+          topics: topics.trim() || undefined,
+          employeeLevel: employeeLevel.trim() || undefined,
+          style: style.trim() || undefined,
+        }),
+        signal: AbortSignal.timeout(290_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        title?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.message ?? "Generation failed. Please try again.");
+        return;
+      }
+      setDone({ title: data.title ?? "Your course" });
+      toast.success("Course ready in the review queue.");
+      router.refresh();
+    } catch {
+      toast.error(
+        "Generation took too long or failed. Your AI provider may be slow — please try again."
+      );
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (pending) {
+    return (
+      <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-6">
+        <h3 className="text-lg font-bold text-neutral-700">Generating your course…</h3>
+        <p className="text-sm text-muted-foreground">
+          AI is drafting the modules, lessons, and questions. This usually takes
+          1–2 minutes — keep this tab open. It&apos;ll drop into the review queue
+          when it&apos;s done.
+        </p>
+      </div>
+    );
+  }
+
+  if (done) {
     return (
       <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-green-200 bg-green-50 p-6">
         <h3 className="text-lg font-bold text-neutral-700">
-          Building your course…
+          “{done.title}” is ready ✓
         </h3>
         <p className="text-sm text-muted-foreground">
-          AI is drafting the modules, lessons, and questions. This takes a
-          minute. It&apos;ll appear in the{" "}
+          Your draft is in the{" "}
           <Link href="/studio/review" className="font-bold text-sky-600 underline">
             review queue
-          </Link>{" "}
-          when it&apos;s ready — review and approve it, then generate images.
+          </Link>
+          . Review and approve it to turn it into a real course, then generate
+          images.
         </p>
         <div>
-          <Button
-            type="button"
-            variant="secondaryOutline"
-            onClick={() => {
-              setSubmitted(false);
-              setIdea("");
-              setTitle("");
-              setUnitCount("");
-              setGoals("");
-              setTopics("");
-              setEmployeeLevel("");
-              setStyle("");
-            }}
-          >
+          <Button type="button" variant="secondaryOutline" onClick={reset}>
             Build another
           </Button>
         </div>
