@@ -13,6 +13,8 @@ export const EVENTS = {
   voiceRequested: "training/voice.requested",
   photoRequested: "training/photo.requested",
   variantsRequested: "training/variants.requested",
+  /** AI Course Builder: drain a course's image queue sequentially. */
+  courseAssetsRequested: "course/assets.requested",
 } as const;
 
 /** The only payload events are allowed to carry (D20/F2). */
