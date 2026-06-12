@@ -58,6 +58,59 @@ export const variantBatchSchema = z.array(variantDraftSchema).min(1).max(10);
 
 export type VariantDraft = z.infer<typeof variantDraftSchema>;
 
+/* ─────────── Rich course draft (AI Course Builder) ─────────── */
+
+/** Lesson illustration/photo to generate. Refs are permissive: the model may
+ * emit M1/U1/A1 etc.; we renumber to stable refs on ingest, so validation
+ * never fails on ref-format drift. */
+const refString = z.string().min(1).max(16);
+
+export const assetDraftSchema = z.object({
+  ref: refString,
+  kind: z.enum(["illustration", "realistic"]),
+  prompt: z.string().min(1).max(500),
+});
+
+export type AssetDraft = z.infer<typeof assetDraftSchema>;
+
+export const courseDraftSchema = z.object({
+  courseTitle: z.string().min(1).max(200),
+  /** Prompt for the dynamic course-card icon (req 1). */
+  courseIconPrompt: z.string().min(1).max(400),
+  modules: z
+    .array(
+      z.object({
+        ref: refString,
+        title: z.string().min(1).max(200),
+        units: z
+          .array(
+            z.object({
+              ref: refString,
+              title: z.string().min(1).max(200),
+              lessons: z
+                .array(
+                  z.object({
+                    ref: refString,
+                    title: z.string().min(1).max(200),
+                    teachingText: z.string().min(1).max(4000),
+                    assets: z.array(assetDraftSchema).max(4).default([]),
+                    questions: z.array(questionDraftSchema).min(1).max(12),
+                  })
+                )
+                .min(1)
+                .max(20),
+            })
+          )
+          .min(1)
+          .max(20),
+      })
+    )
+    .min(1)
+    .max(12),
+});
+
+export type CourseDraft = z.infer<typeof courseDraftSchema>;
+
 export const photoAnalysisSchema = z.object({
   /** What the model saw (wrong-way/right-way pairs, hazards, context). */
   observations: z.string().min(1).max(2000),
@@ -72,10 +125,20 @@ export const transcriptionSchema = z.object({
 
 export type AiOperation =
   | "generateLesson"
+  | "generateCourse"
   | "reteach"
   | "generateVariants"
   | "analyzePhoto"
-  | "transcribeVoice";
+  | "transcribeVoice"
+  | "generateImage";
+
+/** Result of an image generation: bytes (b64) or a URL, plus content type. */
+export type ImageResult = {
+  b64?: string;
+  url?: string;
+  contentType: string;
+  usage: Usage;
+};
 
 /**
  * Tenant context for every gateway call: metering writes ride the caller's
@@ -108,8 +171,10 @@ export const ZERO_USAGE: Usage = { inputTokens: 0, outputTokens: 0, costUsd: 0 }
 /** Per-operation timeouts (ms). Reteach is tight: timeout → pre-gen variant (D7). */
 export const AI_TIMEOUTS: Record<AiOperation, number> = {
   generateLesson: 120_000,
+  generateCourse: 180_000,
   reteach: 8_000,
   generateVariants: 60_000,
   analyzePhoto: 120_000,
   transcribeVoice: 300_000,
+  generateImage: 120_000,
 };

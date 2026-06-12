@@ -4,24 +4,32 @@ import type { z } from "zod";
 import { AppActionError } from "@/lib/errors";
 
 import { DirectAdapter } from "./adapters/direct";
+import { OpenAiImageAdapter } from "./adapters/image";
 import { McpAdapter } from "./adapters/mcp";
-import type { ProviderAdapter } from "./adapters/types";
+import type { ImageProviderAdapter, ProviderAdapter } from "./adapters/types";
 import { decryptSecret } from "./crypto";
 import { createLeakGuard } from "./guard";
 import { recordUsage } from "./meter";
+import { composeCourseGuidance } from "./prompt-composer";
 import {
+  buildCoursePrompt,
+  buildImagePrompt,
   buildLessonPrompt,
   buildPhotoPrompt,
   buildReteachPrompt,
   buildVariantPrompt,
+  type CourseBrief,
 } from "./prompts";
 import {
   AI_TIMEOUTS,
+  courseDraftSchema,
   lessonDraftSchema,
   photoAnalysisSchema,
   variantBatchSchema,
   ZERO_USAGE,
   type AiContext,
+  type CourseDraft,
+  type ImageResult,
   type LessonDraft,
   type PhotoAnalysis,
   type VariantDraft,
@@ -106,6 +114,88 @@ const resolveProvider = async (ctx: AiContext): Promise<ResolvedProvider> => {
       apiKey,
     }),
   };
+};
+
+type ResolvedImageProvider = {
+  adapter: ImageProviderAdapter;
+  providerName: string;
+  alertThresholdUsd: number | null;
+};
+
+/**
+ * Resolve the IMAGE provider (AI Course Builder). Separate from the text model
+ * (the OpenClaw bridge can't do images): its config lives in its own
+ * provider_settings row, read here through app_get_image_provider() so tenant
+ * asset-generation jobs reach exactly that one row without opening the
+ * platform-scoped table.
+ */
+const resolveImageProvider = async (
+  ctx: AiContext
+): Promise<ResolvedImageProvider> => {
+  const result = await ctx.tx.execute<{
+    provider: string | null;
+    encrypted_key: string | null;
+    settings: Record<string, unknown> | null;
+    alert_threshold_usd: string | null;
+  }>(sql`SELECT * FROM app_get_image_provider()`);
+
+  const row = result.rows[0];
+
+  if (!row?.provider) {
+    throw new AppActionError(
+      "conflict",
+      "No image provider is configured. The platform owner sets one in provider settings."
+    );
+  }
+
+  const settings = row.settings ?? {};
+  let apiKey = "";
+  if (row.encrypted_key) {
+    try {
+      apiKey = decryptSecret(row.encrypted_key);
+    } catch {
+      throw new AppActionError(
+        "conflict",
+        "The stored image provider key could not be decrypted. Re-save it in platform settings."
+      );
+    }
+  }
+
+  return {
+    providerName: "image",
+    alertThresholdUsd: row.alert_threshold_usd
+      ? Number(row.alert_threshold_usd)
+      : null,
+    adapter: new OpenAiImageAdapter({
+      baseUrl: String(settings.baseUrl ?? settings.endpoint ?? ""),
+      model: String(settings.model ?? "gpt-image-1"),
+      apiKey,
+    }),
+  };
+};
+
+/**
+ * Compose the trusted course-builder guidance for THIS tenant: the platform
+ * site prompt (definer-read, so a background job sees it without platform
+ * context) layered with the company owner's own master prompt (tenant-scoped,
+ * visible under the open transaction). Pure layering lives in prompt-composer.
+ */
+const composeGuidanceFor = async (ctx: AiContext): Promise<string> => {
+  const siteResult = await ctx.tx.execute<{
+    settings: Record<string, unknown> | null;
+  }>(sql`SELECT settings FROM app_get_course_builder_config()`);
+  const siteSettings = siteResult.rows[0]?.settings ?? null;
+  const sitePrompt =
+    siteSettings && typeof siteSettings.sitePrompt === "string"
+      ? siteSettings.sitePrompt
+      : null;
+
+  const companyRow = await ctx.tx.query.companySettings.findFirst();
+
+  return composeCourseGuidance({
+    sitePrompt,
+    companyPrompt: companyRow?.masterPrompt ?? null,
+  });
 };
 
 const withTimeout = async <T>(
@@ -212,6 +302,69 @@ export const generateVariants = async (
   );
 
   return data;
+};
+
+/**
+ * Full-course generation (AI Course Builder). Uses the TEXT provider to emit
+ * the rich courseDraftSchema (modules → units → lessons + teachingText +
+ * per-lesson image asset prompts + questions). The owner's brief idea is
+ * sandwiched as DATA; the composed site+company guidance is trusted
+ * instruction. The draft lands in the review queue — never auto-published
+ * (D6) — and image assets are generated SEQUENTIALLY afterward (PR21).
+ */
+export const generateCourse = async (
+  ctx: AiContext,
+  args: { brief: CourseBrief; userBrief: string }
+): Promise<CourseDraft> => {
+  const { adapter, providerName, alertThresholdUsd } =
+    await resolveProvider(ctx);
+
+  const guidance = await composeGuidanceFor(ctx);
+
+  const { data, usage } = await validated(
+    courseDraftSchema,
+    () =>
+      adapter.generateJson({
+        prompt: buildCoursePrompt({
+          guidance,
+          brief: args.brief,
+          userBrief: args.userBrief,
+        }),
+      }),
+    AI_TIMEOUTS.generateCourse,
+    "generateCourse"
+  );
+
+  await recordUsage(ctx, "generateCourse", providerName, usage, alertThresholdUsd);
+
+  return data;
+};
+
+/**
+ * Generate ONE image (AI Course Builder). The caller (PR21 pipeline) invokes
+ * this strictly one asset at a time and persists the bytes to Blob behind the
+ * authed media proxy. Style-primed per kind (icon / illustration / realistic).
+ * Metered against the image provider's own row.
+ */
+export const generateImage = async (
+  ctx: AiContext,
+  args: { prompt: string; kind: "illustration" | "realistic" | "icon"; size?: number }
+): Promise<ImageResult> => {
+  const { adapter, providerName, alertThresholdUsd } =
+    await resolveImageProvider(ctx);
+
+  const result = await withTimeout(
+    adapter.generateImage({
+      prompt: buildImagePrompt(args.prompt, args.kind),
+      size: args.size,
+    }),
+    AI_TIMEOUTS.generateImage,
+    "generateImage"
+  );
+
+  await recordUsage(ctx, "generateImage", providerName, result.usage, alertThresholdUsd);
+
+  return result;
 };
 
 export const analyzePhoto = async (

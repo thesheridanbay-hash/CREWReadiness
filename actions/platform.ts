@@ -1,6 +1,6 @@
 "use server";
 
-import { sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -28,6 +28,15 @@ const requirePlatform = async () => {
   return auth;
 };
 
+/**
+ * provider_settings holds several distinct rows keyed by `provider`: the
+ * active TEXT model ("openclaw"|"direct"), the image model ("image"), and the
+ * course-builder site prompt ("course_builder"). The text-provider getter and
+ * upsert below scope to the text rows so the image/prompt rows never collide
+ * with their findFirst().
+ */
+const TEXT_PROVIDERS = ["openclaw", "direct"] as const;
+
 export type ProviderSettingsView = {
   provider: "openclaw" | "direct" | null;
   endpoint: string;
@@ -42,7 +51,9 @@ export const getProviderSettingsView = async (): Promise<Result<ProviderSettings
     const auth = await requirePlatform();
 
     return scoped<Result<ProviderSettingsView>>(auth, async (tx) => {
-      const row = await tx.query.providerSettings.findFirst();
+      const row = await tx.query.providerSettings.findFirst({
+        where: inArray(providerSettings.provider, [...TEXT_PROVIDERS]),
+      });
       if (!row) {
         return ok({
           provider: null,
@@ -106,7 +117,9 @@ export const upsertProviderSettings = async (input: unknown): Promise<Result<nul
     }
 
     return scoped<Result<null>>(auth, async (tx) => {
-      const existing = await tx.query.providerSettings.findFirst();
+      const existing = await tx.query.providerSettings.findFirst({
+        where: inArray(providerSettings.provider, [...TEXT_PROVIDERS]),
+      });
 
       // This provider becomes the single active one.
       const settings: Record<string, unknown> = { active: true, endpoint };
@@ -139,6 +152,142 @@ export const upsertProviderSettings = async (input: unknown): Promise<Result<nul
           alertThresholdUsd:
             alertThresholdUsd !== undefined ? String(alertThresholdUsd) : null,
         });
+      }
+
+      revalidatePath("/platform/settings");
+      return ok(null);
+    });
+  });
+
+/* ───────────── Image provider (AI Course Builder) ───────────── */
+
+export type ImageProviderView = {
+  baseUrl: string;
+  model: string;
+  hasKey: boolean;
+};
+
+export const getImageProviderView = async (): Promise<Result<ImageProviderView>> =>
+  guard<ImageProviderView>(async () => {
+    const auth = await requirePlatform();
+
+    return scoped<Result<ImageProviderView>>(auth, async (tx) => {
+      const row = await tx.query.providerSettings.findFirst({
+        where: eq(providerSettings.provider, "image"),
+      });
+      const settings = (row?.settings ?? {}) as Record<string, unknown>;
+      return ok({
+        baseUrl: String(settings.baseUrl ?? settings.endpoint ?? ""),
+        model: String(settings.model ?? ""),
+        hasKey: Boolean(row?.encryptedKey),
+      });
+    });
+  });
+
+const imageUpsertSchema = z.object({
+  // OpenAI-compatible images endpoint base (we POST {baseUrl}/images/generations).
+  baseUrl: z.string().trim().url().max(500),
+  model: z.string().trim().min(1).max(120),
+  // Optional: leave blank to keep the existing key.
+  apiKey: z.string().trim().max(500).optional(),
+});
+
+export const upsertImageProviderSettings = async (
+  input: unknown
+): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = imageUpsertSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requirePlatform();
+    const { baseUrl, model, apiKey } = parsed.data;
+
+    let encryptedKey: string | undefined;
+    if (apiKey) {
+      try {
+        encryptedKey = encryptSecret(apiKey);
+      } catch (error) {
+        if (isProviderKeyConfigError(error)) {
+          return err(
+            "conflict",
+            "Set the PROVIDER_KEY_SECRET environment variable before saving a provider key."
+          );
+        }
+        throw error;
+      }
+    }
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const existing = await tx.query.providerSettings.findFirst({
+        where: eq(providerSettings.provider, "image"),
+      });
+      const settings: Record<string, unknown> = { baseUrl, model };
+
+      if (existing) {
+        await tx
+          .update(providerSettings)
+          .set({
+            settings,
+            ...(encryptedKey ? { encryptedKey } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(providerSettings.id, existing.id));
+      } else {
+        if (!encryptedKey) {
+          return err("validation", "An API key is required to configure the image model.");
+        }
+        await tx
+          .insert(providerSettings)
+          .values({ provider: "image", settings, encryptedKey });
+      }
+
+      revalidatePath("/platform/settings");
+      return ok(null);
+    });
+  });
+
+/* ───────────── Site course-builder prompt (AI Course Builder) ───────────── */
+
+export const getCourseBuilderSitePrompt = async (): Promise<Result<{ sitePrompt: string }>> =>
+  guard<{ sitePrompt: string }>(async () => {
+    const auth = await requirePlatform();
+
+    return scoped<Result<{ sitePrompt: string }>>(auth, async (tx) => {
+      const row = await tx.query.providerSettings.findFirst({
+        where: eq(providerSettings.provider, "course_builder"),
+      });
+      const settings = (row?.settings ?? {}) as Record<string, unknown>;
+      return ok({ sitePrompt: String(settings.sitePrompt ?? "") });
+    });
+  });
+
+const sitePromptSchema = z.object({
+  sitePrompt: z.string().trim().max(4000),
+});
+
+export const upsertCourseBuilderSitePrompt = async (
+  input: unknown
+): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = sitePromptSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requirePlatform();
+    const settings: Record<string, unknown> = { sitePrompt: parsed.data.sitePrompt };
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const existing = await tx.query.providerSettings.findFirst({
+        where: eq(providerSettings.provider, "course_builder"),
+      });
+      if (existing) {
+        await tx
+          .update(providerSettings)
+          .set({ settings, updatedAt: new Date() })
+          .where(eq(providerSettings.id, existing.id));
+      } else {
+        await tx
+          .insert(providerSettings)
+          .values({ provider: "course_builder", settings });
       }
 
       revalidatePath("/platform/settings");
