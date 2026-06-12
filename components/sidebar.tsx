@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { getSession } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
 import { SidebarItem } from "./sidebar-item";
@@ -9,7 +10,10 @@ type SidebarProps = {
   className?: string;
 };
 
-export const Sidebar = ({ className }: SidebarProps) => {
+export const Sidebar = async ({ className }: SidebarProps) => {
+  const session = await getSession();
+  const canAuthor = session?.role !== "employee";
+
   return (
     <div
       className={cn(
@@ -35,18 +39,22 @@ export const Sidebar = ({ className }: SidebarProps) => {
           iconSrc="/leaderboard.svg"
         />
         <SidebarItem label="Quests" href="/quests" iconSrc="/quests.svg" />
+        {canAuthor && (
+          <SidebarItem label="Studio" href="/studio" iconSrc="/points.svg" />
+        )}
       </div>
 
-      {/* TODO(T2): user menu (profile, sign out, user-switch for shared crew phones) */}
       <div className="flex items-center gap-x-3 p-4">
         <Image
-          src="/mascot.svg"
+          src={session?.imageSrc ?? "/mascot.svg"}
           alt="User"
           height={32}
           width={32}
           className="rounded-full border"
         />
-        <span className="text-sm font-bold text-neutral-500">Dev User</span>
+        <span className="text-sm font-bold text-neutral-500">
+          {session?.name ?? "Guest"}
+        </span>
       </div>
     </div>
   );
