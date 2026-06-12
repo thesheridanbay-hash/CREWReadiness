@@ -54,7 +54,9 @@ const PlatformSettingsPage = async () => {
           <h2 className="text-2xl font-bold text-neutral-700">Image model</h2>
           <p className="text-sm text-muted-foreground">
             Used by the AI Course Builder to generate lesson art and course
-            icons — one image at a time. Separate from the text model.
+            icons — one image at a time. Leave this blank to use your connected
+            OpenClaw (its generate_image tool) automatically; set a dedicated
+            OpenAI-compatible endpoint here only to override it.
           </p>
         </div>
         <ImageProviderForm current={image} />
