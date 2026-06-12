@@ -21,7 +21,10 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx ./scripts/seed-dev.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -52,6 +55,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
