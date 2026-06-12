@@ -1,9 +1,27 @@
+import "server-only";
+
+import { cache } from "react";
+
+import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+
+import db from "@/db/drizzle";
+import { member } from "@/db/schema";
+
+import { auth } from "./auth";
+import { getEmployeeSession } from "./employee";
+
 /**
- * TEMPORARY auth stub — replaced by Better Auth + organization plugin in T2 (D3/D11).
+ * Unified session resolution (T2 — D3/D4/D11). Replaces the P0 stub with the
+ * same claim shape: { userId, companyId, role } + display fields.
  *
- * Shape mirrors the locked decision: session claims carry { userId, companyId, role }
- * so call sites are unchanged when the real implementation lands. Do NOT add logic
- * here; T2 replaces this module wholesale.
+ * Resolution order:
+ *   1. Better Auth session (owner / manager / platform; email+password)
+ *      - platform owners: user.platformOwner flag
+ *      - company + role from the organization membership
+ *   2. Employee session (username+PIN credential path; short idle expiry)
+ *   3. DEV bypass — ONLY when DEV_AUTH_BYPASS="true" (local dev without auth
+ *      setup; never enable in production)
  */
 
 export type SessionRole = "platform" | "owner" | "manager" | "employee";
@@ -16,15 +34,79 @@ export type Session = {
   imageSrc: string;
 };
 
-const DEV_SESSION: Session = {
-  userId: "dev-user",
-  companyId: "dev-company",
-  role: "owner",
-  name: "Dev User",
-  imageSrc: "/mascot.svg",
-};
+const DEFAULT_IMAGE = "/mascot.svg";
 
-/** Returns the current session, or null when unauthenticated. */
-export const getSession = async (): Promise<Session | null> => {
-  return DEV_SESSION;
-};
+const mapMemberRole = (role: string): SessionRole =>
+  role === "owner" || role === "admin" ? "owner" : "manager";
+
+export const getSession = cache(async (): Promise<Session | null> => {
+  /* 1 — Better Auth (owner / manager / platform). */
+  const baSession = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (baSession?.user) {
+    const { user } = baSession;
+
+    // Active organization if set on the session, else first membership.
+    const memberships = await db.query.member.findMany({
+      where: eq(member.userId, user.id),
+      limit: 1,
+    });
+
+    const activeOrgId =
+      (baSession.session as { activeOrganizationId?: string | null })
+        .activeOrganizationId ?? memberships[0]?.organizationId;
+
+    const isPlatform =
+      (user as { platformOwner?: boolean | null }).platformOwner === true;
+
+    if (isPlatform) {
+      return {
+        userId: user.id,
+        // Platform owners may operate without a company context; tenant
+        // queries still require one, platform-area queries set app.is_platform.
+        companyId: activeOrgId ?? "",
+        role: "platform",
+        name: user.name || "Platform Owner",
+        imageSrc: user.image || DEFAULT_IMAGE,
+      };
+    }
+
+    if (!activeOrgId) return null; // Authenticated but company-less: no tenant access.
+
+    return {
+      userId: user.id,
+      companyId: activeOrgId,
+      role: mapMemberRole(memberships[0]?.role ?? "member"),
+      name: user.name || "User",
+      imageSrc: user.image || DEFAULT_IMAGE,
+    };
+  }
+
+  /* 2 — Employee session (PIN path). */
+  const employee = await getEmployeeSession();
+
+  if (employee) {
+    return {
+      userId: employee.userId,
+      companyId: employee.companyId,
+      role: "employee",
+      name: employee.displayName,
+      imageSrc: DEFAULT_IMAGE,
+    };
+  }
+
+  /* 3 — Explicit dev bypass. */
+  if (process.env.DEV_AUTH_BYPASS === "true") {
+    return {
+      userId: "dev-user",
+      companyId: "dev-company",
+      role: "owner",
+      name: "Dev User",
+      imageSrc: DEFAULT_IMAGE,
+    };
+  }
+
+  return null;
+});
