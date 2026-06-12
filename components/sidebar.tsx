@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth/session";
+import { getParkedCount } from "@/lib/content/coaching-queries";
 import { cn } from "@/lib/utils";
 
 import { SidebarItem } from "./sidebar-item";
@@ -13,6 +14,7 @@ type SidebarProps = {
 export const Sidebar = async ({ className }: SidebarProps) => {
   const session = await getSession();
   const canAuthor = session?.role !== "employee";
+  const parkedCount = canAuthor ? await getParkedCount() : 0;
 
   return (
     <div
@@ -41,6 +43,13 @@ export const Sidebar = async ({ className }: SidebarProps) => {
         <SidebarItem label="Quests" href="/quests" iconSrc="/quests.svg" />
         {canAuthor && (
           <SidebarItem label="Studio" href="/studio" iconSrc="/points.svg" />
+        )}
+        {canAuthor && (
+          <SidebarItem
+            label={parkedCount > 0 ? `Coaching (${parkedCount})` : "Coaching"}
+            href="/coaching"
+            iconSrc="/mascot_bad.svg"
+          />
         )}
       </div>
 
