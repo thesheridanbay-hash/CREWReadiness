@@ -13,7 +13,14 @@ const PlatformSettingsPage = async () => {
   const result = await getProviderSettingsView();
   const current = result.ok
     ? result.data
-    : { provider: null, endpoint: "", model: "", alertThresholdUsd: null, hasKey: false };
+    : {
+        provider: null,
+        endpoint: "",
+        model: "",
+        toolName: "ask_ai_hassan",
+        alertThresholdUsd: null,
+        hasKey: false,
+      };
 
   return (
     <div className="px-4">
