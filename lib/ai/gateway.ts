@@ -312,19 +312,28 @@ export const reteach = async (
   const controller = new AbortController();
   const deadline = Date.now() + AI_TIMEOUTS.reteach;
 
-  let source: AsyncIterable<string>;
+  // Pull the FIRST chunk under the deadline. A non-streaming provider (e.g.
+  // the OpenClaw MCP bridge) blocks here until its single reply is ready, so
+  // racing next() against the timeout is what actually bounds the learner's
+  // wait — a chunk-loop deadline check never runs until a chunk arrives.
+  // On timeout we abort the upstream fetch and fall back to a variant (D7).
+  let iterator: AsyncIterator<string>;
+  let firstResult: IteratorResult<string>;
 
   try {
-    source = await withTimeout(
-      adapter.streamText({
-        prompt: buildReteachPrompt({ question: args.question }),
-        maxOutputTokens: RETEACH_MAX_TOKENS,
-        signal: controller.signal,
-      }),
+    const source = await adapter.streamText({
+      prompt: buildReteachPrompt({ question: args.question }),
+      maxOutputTokens: RETEACH_MAX_TOKENS,
+      signal: controller.signal,
+    });
+    iterator = source[Symbol.asyncIterator]();
+    firstResult = await withTimeout(
+      iterator.next(),
       AI_TIMEOUTS.reteach,
       "reteach"
     );
   } catch {
+    controller.abort();
     return { kind: "fallback", reason: "timeout" };
   }
 
@@ -338,19 +347,21 @@ export const reteach = async (
   );
 
   async function* guarded(): AsyncIterable<string> {
-    for await (const chunk of source) {
+    let result = firstResult;
+    while (!result.done) {
       if (Date.now() > deadline) {
         controller.abort();
         return;
       }
 
-      const safe = guard.push(chunk);
-
+      const safe = guard.push(result.value);
       if (safe === null) {
         controller.abort();
         return;
       }
       if (safe) yield safe;
+
+      result = await iterator.next();
     }
 
     const tail = guard.flush();

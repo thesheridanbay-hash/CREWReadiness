@@ -103,6 +103,9 @@ export const Player = ({ sessionId, lessonId, initialView }: PlayerProps) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId }),
+          // Never let a stalled provider freeze the learner — fall through to
+          // the variant if the whole exchange hasn't resolved in time.
+          signal: AbortSignal.timeout(25_000),
         });
 
         const contentType = response.headers.get("content-type") ?? "";
