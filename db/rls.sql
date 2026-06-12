@@ -40,7 +40,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO app_runtime;
 
 -- Defense in depth: the runtime role must never own tables or bypass RLS.
-ALTER ROLE app_runtime NOBYPASSRLS NOSUPERUSER NOCREATEDB NOCREATEROLE;
+-- NOTE (Neon): SUPERUSER/BYPASSRLS attributes can only be altered by a
+-- superuser, which Neon does not expose — and roles are created WITHOUT
+-- them by default (a non-superuser cannot grant them at all). The explicit
+-- ALTER is therefore impossible AND unnecessary on Neon; the integration
+-- suite asserts rolbypassrls = false at runtime (tests/integration).
+ALTER ROLE app_runtime NOCREATEDB NOCREATEROLE;
 
 -- ─── 2. FORCE RLS + tenant-isolation policy on every tenant table ──────────
 --

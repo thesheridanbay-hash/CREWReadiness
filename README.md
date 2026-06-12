@@ -6,7 +6,7 @@ Built on the [duolingo-clone](https://github.com/sanidhyy/duolingo-clone) learni
 
 ## Status
 
-P0 foundation in progress — base imported from duolingo-clone with Clerk/Stripe/react-admin/hearts stripped; learning-loop contract frozen (see plan).
+**Live**: [crew-readiness.vercel.app](https://crew-readiness.vercel.app) — T1–T7 foundation complete (multi-tenant RLS, auth, learning-loop machine, AI gateway + pipelines, test infra). Database: Neon Postgres with FORCE RLS, fail-closed tenant isolation verified in production. Next: P1 employee experience (T8), P2 owner content studio (T10).
 
 ## Docs
 
