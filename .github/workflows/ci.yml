@@ -80,13 +80,25 @@ jobs:
     name: AI eval gate (D19)
     runs-on: ubuntu-latest
     needs: quality
-    # Gates prompt changes once evals/ + provider keys exist (P3/T4).
+    # Gates prompt changes (6 suites in evals/). Runs when EVAL_API_KEY is set.
+    env:
+      HAS_EVAL_KEY: ${{ secrets.EVAL_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Eval suites
-        run: |
-          if [ -d evals ] && [ -n "${{ secrets.EVAL_PROVIDER_KEY }}" ]; then
-            echo "evals: configured — runner lands with the AI gateway (T4)"
-          else
-            echo "evals: skipped (no evals/ directory or provider key yet)"
-          fi
+      - uses: actions/setup-node@v4
+        if: env.HAS_EVAL_KEY == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: env.HAS_EVAL_KEY == 'true'
+      - name: Run eval suites
+        if: env.HAS_EVAL_KEY == 'true'
+        env:
+          EVAL_API_KEY: ${{ secrets.EVAL_API_KEY }}
+          EVAL_BASE_URL: ${{ vars.EVAL_BASE_URL }}
+          EVAL_MODEL: ${{ vars.EVAL_MODEL }}
+        run: npm run evals
+      - name: Skipped
+        if: env.HAS_EVAL_KEY != 'true'
+        run: echo "evals skipped (set the EVAL_API_KEY secret to activate)"

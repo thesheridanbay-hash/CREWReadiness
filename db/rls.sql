@@ -120,6 +120,41 @@ $$;
 REVOKE ALL ON FUNCTION app_get_job_company(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app_get_job_company(uuid) TO app_runtime;
 
+-- ─── 4b. Active provider config resolution (T4 — D5) ───────────────────────
+-- provider_settings is platform-scoped (policy above), but the AI gateway
+-- runs inside TENANT transactions and needs the active provider's config.
+-- SECURITY DEFINER hands the runtime role exactly one row of read access —
+-- the active provider — without opening the table.
+
+-- VOLATILE (review finding #6): this is a configuration lookup that the
+-- platform owner can flip at any moment — never let Postgres cache it.
+CREATE OR REPLACE FUNCTION app_get_active_provider()
+RETURNS TABLE (
+  provider text,
+  encrypted_key text,
+  settings jsonb,
+  alert_threshold_usd numeric
+)
+LANGUAGE sql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.provider, p.encrypted_key, p.settings, p.alert_threshold_usd
+  FROM provider_settings p
+  WHERE (p.settings->>'active')::boolean IS TRUE
+  LIMIT 1
+$$;
+
+REVOKE ALL ON FUNCTION app_get_active_provider() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_get_active_provider() TO app_runtime;
+
+-- One ai_usage_threshold alert per company per month (review finding #7):
+-- concurrent metering transactions collide here instead of double-alerting.
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_ai_threshold_month_uq
+  ON notifications (company_id, type, date_trunc('month', created_at))
+  WHERE type = 'ai_usage_threshold';
+
 -- ─── 5. Verification (run these; both must hold) ───────────────────────────
 -- a) Runtime role must NOT bypass RLS (CI asserts this in T5):
 --      SELECT rolname, rolbypassrls, rolsuper FROM pg_roles
