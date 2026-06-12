@@ -48,6 +48,9 @@ export const Sidebar = async ({ className }: SidebarProps) => {
           <SidebarItem label="Crew" href="/crew" iconSrc="/leaderboard.svg" />
         )}
         {canAuthor && (
+          <SidebarItem label="Reports" href="/reports" iconSrc="/quests.svg" />
+        )}
+        {canAuthor && (
           <SidebarItem
             label={parkedCount > 0 ? `Coaching (${parkedCount})` : "Coaching"}
             href="/coaching"
@@ -59,6 +62,13 @@ export const Sidebar = async ({ className }: SidebarProps) => {
             label="AI Settings"
             href="/platform/settings"
             iconSrc="/mascot.svg"
+          />
+        )}
+        {session?.role === "platform" && (
+          <SidebarItem
+            label="Usage"
+            href="/platform/usage"
+            iconSrc="/points.svg"
           />
         )}
       </div>
