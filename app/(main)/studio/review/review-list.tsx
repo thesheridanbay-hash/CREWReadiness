@@ -36,7 +36,14 @@ export const ReviewList = ({ items }: { items: ReviewItem[] }) => {
           className="flex items-center justify-between gap-x-4 rounded-2xl border-2 p-4"
         >
           <div>
-            <p className="font-bold text-neutral-700">{item.title}</p>
+            <div className="flex items-center gap-x-2">
+              <p className="font-bold text-neutral-700">{item.title}</p>
+              {item.kind === "course" && (
+                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
+                  AI course
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {item.lessonCount} lesson{item.lessonCount === 1 ? "" : "s"} ·{" "}
               {item.questionCount} question{item.questionCount === 1 ? "" : "s"}
