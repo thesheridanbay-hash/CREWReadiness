@@ -6,7 +6,7 @@ Built on the [duolingo-clone](https://github.com/sanidhyy/duolingo-clone) learni
 
 ## Status
 
-Planning complete. Implementation starts at P0 (see plan).
+P0 foundation in progress — base imported from duolingo-clone with Clerk/Stripe/react-admin/hearts stripped; learning-loop contract frozen (see plan).
 
 ## Docs
 
