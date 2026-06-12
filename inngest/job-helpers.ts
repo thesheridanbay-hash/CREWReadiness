@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { aiJobs, notifications, reviewQueue } from "@/db/schema";
 import { scopedForJob } from "@/lib/db/scoped";
 
-import type { LessonDraft } from "@/lib/ai/types";
+import type { CourseDraft, LessonDraft } from "@/lib/ai/types";
 
 /**
  * Shared job-lifecycle helpers (T6 — D6). All run through scopedForJob():
@@ -98,6 +98,21 @@ export const enqueueDraftForReview = (
       companyId,
       jobId,
       courseId,
+      draft: draft as unknown as Record<string, unknown>,
+    });
+  });
+
+/**
+ * Rich course draft (AI Course Builder) into the review queue. Same D6 rule —
+ * owner approval materializes it into a new course (review.ts). courseId is
+ * null: approval creates the course, it doesn't target an existing one.
+ */
+export const enqueueCourseDraftForReview = (jobId: string, draft: CourseDraft) =>
+  scopedForJob(jobId, async (tx, companyId) => {
+    await tx.insert(reviewQueue).values({
+      companyId,
+      jobId,
+      courseId: null,
       draft: draft as unknown as Record<string, unknown>,
     });
   });

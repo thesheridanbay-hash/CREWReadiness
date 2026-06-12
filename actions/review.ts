@@ -13,10 +13,11 @@ import {
   reviewQueue,
   units,
 } from "@/db/schema";
-import { lessonDraftSchema } from "@/lib/ai/types";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/lib/errors";
 import { getSession } from "@/lib/auth/session";
 import { scoped, type ScopedTx } from "@/lib/db/scoped";
+import { classifyDraft } from "@/lib/content/draft-kind";
+import { materializeCourseDraft } from "@/lib/content/materialize-course";
 
 /**
  * Review queue actions (D6). AI drafts NEVER auto-publish — an owner approves
@@ -102,12 +103,31 @@ export const approveReviewItem = async (input: unknown): Promise<Result<null>> =
         throw new AppActionError("conflict", "This item was already reviewed.");
       }
 
-      const draft = lessonDraftSchema.safeParse(item.draft);
-      if (!draft.success) {
+      const classified = classifyDraft(item.draft);
+      if (classified.kind === "unknown") {
         throw new AppActionError("conflict", "This draft is malformed and can't be approved.");
       }
 
-      // Resolve a destination course (the draft's, else the first course).
+      // Course draft (AI Course Builder): materialize a brand-new course tree
+      // with its PENDING image queue. Image generation is a separate, explicit
+      // owner step (Generate images) — approval never spends on images.
+      if (classified.kind === "course") {
+        const result = await materializeCourseDraft(tx, auth.companyId, classified.course);
+
+        await tx
+          .update(reviewQueue)
+          .set({ status: "APPROVED", reviewedBy: auth.userId, reviewedAt: new Date() })
+          .where(eq(reviewQueue.id, item.id));
+
+        revalidatePath("/studio/review");
+        revalidatePath(`/studio/${result.courseId}`);
+        revalidatePath("/learn");
+        return ok(null);
+      }
+
+      // Lesson draft (text/voice/photo pipelines): append into an "AI Imports"
+      // unit on a destination course (the draft's, else the first course).
+      const draft = { data: classified.lesson };
       let courseId = item.courseId;
       if (!courseId) {
         const firstCourse = await tx.query.courses.findFirst({

@@ -13,6 +13,8 @@ export const EVENTS = {
   voiceRequested: "training/voice.requested",
   photoRequested: "training/photo.requested",
   variantsRequested: "training/variants.requested",
+  /** AI Course Builder: generate a full course draft from a brief. */
+  courseRequested: "course/generate.requested",
   /** AI Course Builder: drain a course's image queue sequentially. */
   courseAssetsRequested: "course/assets.requested",
 } as const;
