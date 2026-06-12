@@ -50,6 +50,7 @@ import {
   submitAnswer,
 } from "@/actions/learning-loop";
 import { upsertUserProgress } from "@/actions/user-progress";
+import { createCourse, createQuestion, publishCourse } from "@/actions/content";
 
 const ownerSession: Session = {
   userId: "user-1",
@@ -184,6 +185,57 @@ const matrix: MatrixRow[] = [
       }),
     session: null,
     expectCode: "validation",
+  },
+  {
+    name: "createCourse requires a session",
+    run: () => createCourse({ title: "Safety 101" }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "createCourse is forbidden for employees",
+    run: () => createCourse({ title: "Safety 101" }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "createCourse rejects an empty title",
+    run: () => createCourse({ title: "" }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "createQuestion rejects options with no correct answer",
+    run: () =>
+      createQuestion({
+        lessonId: 1,
+        type: "SELECT",
+        question: "Q?",
+        options: [
+          { text: "a", correct: false },
+          { text: "b", correct: false },
+        ],
+      }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "createQuestion rejects fewer than two options",
+    run: () =>
+      createQuestion({
+        lessonId: 1,
+        type: "SELECT",
+        question: "Q?",
+        options: [{ text: "only", correct: true }],
+      }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "publishCourse is forbidden for employees",
+    run: () => publishCourse({ courseId: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
   },
 ];
 
