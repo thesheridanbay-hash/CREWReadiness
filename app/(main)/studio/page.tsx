@@ -23,6 +23,12 @@ const StudioPage = async () => {
             Build the training your crew completes in the field.
           </p>
         </div>
+        <Link
+          href="/studio/review"
+          className="rounded-xl border-2 px-4 py-2 text-sm font-bold text-sky-600 hover:bg-slate-50"
+        >
+          Review queue
+        </Link>
       </div>
 
       <CreateCourseForm />
