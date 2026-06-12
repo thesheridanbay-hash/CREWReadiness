@@ -3,6 +3,7 @@ import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
 import { decayScan } from "@/inngest/functions/decay-scan";
 import { generateCourseAssets } from "@/inngest/functions/generate-course-assets";
+import { generateCourseJob } from "@/inngest/functions/generate-course";
 import { photoToTraining } from "@/inngest/functions/photo-to-training";
 import { textToTraining } from "@/inngest/functions/text-to-training";
 import { variantPregen } from "@/inngest/functions/variant-pregen";
@@ -24,6 +25,7 @@ export const { GET, POST, PUT } = serve({
     photoToTraining,
     variantPregen,
     decayScan,
+    generateCourseJob,
     generateCourseAssets,
   ],
 });
