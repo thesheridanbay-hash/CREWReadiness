@@ -51,6 +51,13 @@ export const Sidebar = async ({ className }: SidebarProps) => {
             iconSrc="/mascot_bad.svg"
           />
         )}
+        {session?.role === "platform" && (
+          <SidebarItem
+            label="AI Settings"
+            href="/platform/settings"
+            iconSrc="/mascot.svg"
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-x-3 p-4">
