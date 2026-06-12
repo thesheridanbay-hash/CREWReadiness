@@ -6,6 +6,7 @@ import { AppActionError } from "@/lib/errors";
 import { DirectAdapter } from "./adapters/direct";
 import { OpenAiImageAdapter } from "./adapters/image";
 import { McpAdapter } from "./adapters/mcp";
+import { McpImageAdapter } from "./adapters/mcp-image";
 import type { ImageProviderAdapter, ProviderAdapter } from "./adapters/types";
 import { decryptSecret } from "./crypto";
 import { createLeakGuard } from "./guard";
@@ -129,6 +130,59 @@ type ResolvedImageProvider = {
  * asset-generation jobs reach exactly that one row without opening the
  * platform-scoped table.
  */
+/**
+ * Build an image provider backed by the OpenClaw MCP `generate_image` tool,
+ * reusing the active OpenClaw connection (endpoint + key) — no separate key.
+ * Only valid when OpenClaw is the active provider.
+ */
+const buildOpenClawImageProvider = async (
+  ctx: AiContext,
+  alertOverride: number | null
+): Promise<ResolvedImageProvider> => {
+  const result = await ctx.tx.execute<{
+    provider: string | null;
+    encrypted_key: string | null;
+    settings: Record<string, unknown> | null;
+    alert_threshold_usd: string | null;
+  }>(sql`SELECT * FROM app_get_active_provider()`);
+  const row = result.rows[0];
+
+  if (row?.provider !== "openclaw") {
+    throw new AppActionError(
+      "conflict",
+      "No image provider is configured. Connect an image model in provider settings, or set OpenClaw as the active provider to use its image tool."
+    );
+  }
+
+  const settings = row.settings ?? {};
+  let apiKey = "";
+  if (row.encrypted_key) {
+    try {
+      apiKey = decryptSecret(row.encrypted_key);
+    } catch {
+      throw new AppActionError(
+        "conflict",
+        "The stored OpenClaw key could not be decrypted. Re-save it in platform settings."
+      );
+    }
+  }
+
+  return {
+    providerName: "openclaw-image",
+    alertThresholdUsd:
+      alertOverride ?? (row.alert_threshold_usd ? Number(row.alert_threshold_usd) : null),
+    adapter: new McpImageAdapter({
+      endpoint: String(settings.endpoint ?? ""),
+      apiKey,
+      toolName: "generate_image",
+      model: settings.imageModel ? String(settings.imageModel) : undefined,
+      // Let the bridge run the model fully; the host's function cap is the real
+      // ceiling (free-tier serverless ~60s; an async bridge tool removes it).
+      timeoutSeconds: 110,
+    }),
+  };
+};
+
 const resolveImageProvider = async (
   ctx: AiContext
 ): Promise<ResolvedImageProvider> => {
@@ -141,14 +195,23 @@ const resolveImageProvider = async (
 
   const row = result.rows[0];
 
+  // No dedicated image row → if OpenClaw is the active model, use its image
+  // tool automatically (zero config, no separate key).
   if (!row?.provider) {
-    throw new AppActionError(
-      "conflict",
-      "No image provider is configured. The platform owner sets one in provider settings."
-    );
+    return buildOpenClawImageProvider(ctx, null);
   }
 
   const settings = row.settings ?? {};
+  const alertThresholdUsd = row.alert_threshold_usd
+    ? Number(row.alert_threshold_usd)
+    : null;
+
+  // Dedicated image row can opt into OpenClaw explicitly.
+  if (settings.kind === "openclaw") {
+    return buildOpenClawImageProvider(ctx, alertThresholdUsd);
+  }
+
+  // Otherwise an OpenAI-compatible images endpoint.
   let apiKey = "";
   if (row.encrypted_key) {
     try {
@@ -163,9 +226,7 @@ const resolveImageProvider = async (
 
   return {
     providerName: "image",
-    alertThresholdUsd: row.alert_threshold_usd
-      ? Number(row.alert_threshold_usd)
-      : null,
+    alertThresholdUsd,
     adapter: new OpenAiImageAdapter({
       baseUrl: String(settings.baseUrl ?? settings.endpoint ?? ""),
       model: String(settings.model ?? "gpt-image-1"),
