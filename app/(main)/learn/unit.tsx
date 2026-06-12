@@ -1,4 +1,4 @@
-import { lessons, units } from "@/db/schema";
+import type { OutlineLesson } from "@/db/queries";
 
 import { LessonButton } from "./lesson-button";
 import { UnitBanner } from "./unit-banner";
@@ -8,14 +8,8 @@ type UnitProps = {
   order: number;
   title: string;
   description: string;
-  lessons: (typeof lessons.$inferSelect & {
-    completed: boolean;
-  })[];
-  activeLesson:
-    | (typeof lessons.$inferSelect & {
-        unit: typeof units.$inferSelect;
-      })
-    | undefined;
+  lessons: OutlineLesson[];
+  activeLesson: { id: number } | undefined;
   activeLessonPercentage: number;
 };
 

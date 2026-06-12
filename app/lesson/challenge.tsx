@@ -1,10 +1,18 @@
-import { questionOptions, questions } from "@/db/schema";
+import { questions } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
 import { Card } from "./card";
 
+/** Lean option shape (T8): the player feeds originals AND variants here. */
+export type ChallengeOption = {
+  id: number;
+  text: string;
+  imageSrc: string | null;
+  audioSrc: string | null;
+};
+
 type ChallengeProps = {
-  options: (typeof questionOptions.$inferSelect)[];
+  options: ChallengeOption[];
   onSelect: (id: number) => void;
   status: "correct" | "wrong" | "none";
   selectedOption?: number;

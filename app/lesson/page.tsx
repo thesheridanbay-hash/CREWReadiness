@@ -1,30 +1,24 @@
 import { redirect } from "next/navigation";
 
-import { getLesson, getUserProgress } from "@/db/queries";
+import { startOrResumeSession } from "@/actions/learning-loop";
+import { getCourseProgress } from "@/db/queries";
 
-import { Quiz } from "./quiz";
+import { Player } from "./player";
 
 const LessonPage = async () => {
-  const lessonData = getLesson();
-  const userProgressData = getUserProgress();
+  const courseProgress = await getCourseProgress();
 
-  const [lesson, userProgress] = await Promise.all([
-    lessonData,
-    userProgressData,
-  ]);
+  if (!courseProgress?.activeLessonId) return redirect("/learn");
 
-  if (!lesson || !userProgress) return redirect("/learn");
+  const result = await startOrResumeSession(courseProgress.activeLessonId);
 
-  const initialPercentage =
-    (lesson.questions.filter((question) => question.completed).length /
-      lesson.questions.length) *
-    100;
+  if (!result.ok) return redirect("/learn");
 
   return (
-    <Quiz
-      initialLessonId={lesson.id}
-      initialQuestions={lesson.questions}
-      initialPercentage={initialPercentage}
+    <Player
+      sessionId={result.data.sessionId}
+      lessonId={courseProgress.activeLessonId}
+      initialView={result.data.view}
     />
   );
 };
