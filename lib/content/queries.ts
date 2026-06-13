@@ -65,6 +65,11 @@ export const getCourseTree = cache(async (courseId: number) => {
                       orderBy: (q, { asc: a }) => [a(q.order)],
                       with: { questionOptions: true },
                     },
+                    // Lesson art (AI Course Builder) so the editor shows which
+                    // images belong to which lesson + their generation status.
+                    assets: {
+                      orderBy: (a, { asc: ascFn }) => [ascFn(a.order)],
+                    },
                   },
                 },
               },

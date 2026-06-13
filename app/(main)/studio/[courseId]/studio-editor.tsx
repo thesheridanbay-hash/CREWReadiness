@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -30,7 +31,20 @@ export type EditorQuestion = {
   explanation: string | null;
   options: EditorOption[];
 };
-export type EditorLesson = { id: number; title: string; questions: EditorQuestion[] };
+export type EditorLessonImage = {
+  id: string;
+  ref: string;
+  kind: "ICON" | "ILLUSTRATION" | "REALISTIC";
+  status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
+  src: string | null;
+};
+export type EditorLesson = {
+  id: number;
+  title: string;
+  teachingText: string | null;
+  images: EditorLessonImage[];
+  questions: EditorQuestion[];
+};
 export type EditorUnit = { id: number; title: string; lessons: EditorLesson[] };
 export type EditorModule = { id: number; title: string; units: EditorUnit[] };
 export type EditorCourse = {
@@ -193,7 +207,58 @@ const LessonBlock = ({
         onDelete={() => run(() => deleteLesson({ id: lesson.id }), "Lesson removed.")}
         disabled={disabled}
       />
-      <ul className="ml-2 mt-1 list-disc pl-4 text-sm text-neutral-600">
+
+      {lesson.teachingText && (
+        <div className="ml-2 mt-2">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+            Teaching
+          </p>
+          <p className="mt-0.5 max-h-24 overflow-y-auto whitespace-pre-wrap text-xs text-neutral-500">
+            {lesson.teachingText}
+          </p>
+        </div>
+      )}
+
+      {lesson.images.length > 0 && (
+        <div className="ml-2 mt-2">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+            Images
+          </p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {lesson.images.map((img) => (
+              <div key={img.id} className="flex flex-col items-center gap-0.5">
+                {img.src ? (
+                  <Image
+                    src={img.src}
+                    alt={img.ref}
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 rounded-md border object-cover"
+                  />
+                ) : (
+                  <div
+                    className={
+                      "flex h-14 w-14 items-center justify-center rounded-md border border-dashed text-[10px] " +
+                      (img.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
+                    }
+                  >
+                    {img.status === "FAILED"
+                      ? "failed"
+                      : img.status === "GENERATING"
+                        ? "…"
+                        : "pending"}
+                  </div>
+                )}
+                <span className="text-[10px] text-neutral-400">
+                  {img.ref} · {img.kind.toLowerCase()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ul className="ml-2 mt-2 list-disc pl-4 text-sm text-neutral-600">
         {lesson.questions.map((question) => (
           <li key={question.id} className="flex items-start justify-between gap-x-2">
             <span>{question.question}</span>
