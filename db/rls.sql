@@ -87,7 +87,8 @@ DECLARE
     'user_progress',
     'company_settings',
     'course_assets',
-    'marketplace_adoptions'
+    'marketplace_adoptions',
+    'subscriptions'
   ];
 BEGIN
   FOREACH t IN ARRAY tenant_tables LOOP
@@ -191,6 +192,44 @@ $$;
 
 REVOKE ALL ON FUNCTION app_get_public_media(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app_get_public_media(uuid) TO app_runtime;
+
+-- ─── 3d. Stripe webhook subscription writes (billing) ──────────────────────
+-- The Stripe webhook runs with NO tenant session (Stripe calls it), so it
+-- can't satisfy subscriptions' tenant_isolation policy. This SECURITY DEFINER
+-- upserts exactly one company's subscription row, with the companyId resolved
+-- from Stripe event metadata (stamped at checkout). Owners still READ their own
+-- row through normal tenant RLS.
+CREATE OR REPLACE FUNCTION app_upsert_subscription(
+  p_company_id text,
+  p_status text,
+  p_customer text,
+  p_subscription text,
+  p_trial_ends_at timestamp,
+  p_period_end timestamp
+)
+RETURNS void
+LANGUAGE sql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO subscriptions
+    (company_id, status, stripe_customer_id, stripe_subscription_id,
+     trial_ends_at, current_period_end, updated_at)
+  VALUES
+    (p_company_id, p_status, p_customer, p_subscription,
+     p_trial_ends_at, p_period_end, now())
+  ON CONFLICT (company_id) DO UPDATE SET
+    status = EXCLUDED.status,
+    stripe_customer_id = COALESCE(EXCLUDED.stripe_customer_id, subscriptions.stripe_customer_id),
+    stripe_subscription_id = COALESCE(EXCLUDED.stripe_subscription_id, subscriptions.stripe_subscription_id),
+    trial_ends_at = COALESCE(EXCLUDED.trial_ends_at, subscriptions.trial_ends_at),
+    current_period_end = EXCLUDED.current_period_end,
+    updated_at = now()
+$$;
+
+REVOKE ALL ON FUNCTION app_upsert_subscription(text, text, text, text, timestamp, timestamp) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_upsert_subscription(text, text, text, text, timestamp, timestamp) TO app_runtime;
 
 -- ─── 4. Job tenant resolution (D20/F2) ─────────────────────────────────────
 -- SECURITY DEFINER so the runtime role can resolve a job's company WITHOUT

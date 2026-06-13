@@ -24,6 +24,7 @@ import {
   questionVariants,
   questions,
   reviewQueue,
+  subscriptions,
   tags,
   units,
   userProgress,
@@ -68,6 +69,7 @@ export const TENANT_TABLES = {
   company_settings: companySettings,
   course_assets: courseAssets,
   marketplace_adoptions: marketplaceAdoptions,
+  subscriptions,
 } as const;
 
 export const TENANT_TABLE_NAMES = Object.keys(

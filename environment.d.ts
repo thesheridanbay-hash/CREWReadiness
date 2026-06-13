@@ -19,6 +19,11 @@ declare global {
 
       // dev-only auth bypass — never set in production
       DEV_AUTH_BYPASS?: string;
+
+      // Stripe billing (go-live B). Billing is inert until these are set.
+      STRIPE_SECRET_KEY?: string;
+      STRIPE_WEBHOOK_SECRET?: string;
+      STRIPE_PRICE_ID?: string;
     }
   }
 }
