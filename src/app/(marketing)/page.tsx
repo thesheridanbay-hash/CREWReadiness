@@ -10,9 +10,10 @@ const MarketingPage = () => {
     <div className="min-h-screen bg-white text-neutral-700">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-x-2">
-          <Image src="/mascot.svg" alt="CREWReadiness" width={36} height={36} />
-          <span className="text-xl font-extrabold tracking-wide text-green-600">
-            CREWReadiness
+          <Image src="/logo.svg" alt="SonarCoach" width={36} height={36} />
+          <span className="text-xl font-extrabold tracking-wide">
+            <span className="text-teal-600">Sonar</span>
+            <span className="text-green-600">Coach</span>
           </span>
         </div>
         <div className="flex items-center gap-x-3">
@@ -108,7 +109,7 @@ const MarketingPage = () => {
 
       <footer className="border-t-2">
         <div className="mx-auto max-w-5xl px-6 py-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} CREWReadiness
+          © {new Date().getFullYear()} SonarCoach
         </div>
       </footer>
     </div>

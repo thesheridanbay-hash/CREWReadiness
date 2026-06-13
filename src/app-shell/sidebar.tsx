@@ -30,10 +30,11 @@ export const Sidebar = async ({ className }: SidebarProps) => {
     >
       <Link href="/learn">
         <div className="flex items-center gap-x-3 pb-7 pl-4 pt-8">
-          <Image src="/mascot.svg" alt="Mascot" height={40} width={40} />
+          <Image src="/logo.svg" alt="SonarCoach" height={40} width={40} />
 
-          <h1 className="text-2xl font-extrabold tracking-wide text-green-600">
-            CREWReadiness
+          <h1 className="text-2xl font-extrabold tracking-wide">
+            <span className="text-teal-600">Sonar</span>
+            <span className="text-green-600">Coach</span>
           </h1>
         </div>
       </Link>

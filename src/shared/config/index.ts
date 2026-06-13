@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const siteConfig: Metadata = {
-  title: "CREWReadiness",
+  title: "SonarCoach",
   description:
     "AI-powered employee training and onboarding for landscaping companies. Field crews complete short, game-style lessons that make sure concepts stick before they hit the job site.",
   keywords: [

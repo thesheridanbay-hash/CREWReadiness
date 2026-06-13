@@ -17,7 +17,7 @@ const BillingPage = async () => {
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-neutral-700">Billing</h1>
         <p className="text-sm text-muted-foreground">
-          CREWReadiness is $99/month after your 14-day free trial. Cancel
+          SonarCoach is $99/month after your 14-day free trial. Cancel
           anytime.
         </p>
       </div>

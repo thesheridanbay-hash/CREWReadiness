@@ -1,0 +1,12 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SonarCoach">
+  <title>SonarCoach</title>
+  <desc>An upward chevron nested inside concentric sonar ping rings.</desc>
+  <g fill="none" stroke="#0d9488">
+    <!-- outer ping ring -->
+    <circle cx="24" cy="24" r="21" stroke-width="2.5" opacity="0.35"/>
+    <!-- middle ping ring -->
+    <circle cx="24" cy="24" r="14.5" stroke-width="2.5" opacity="0.6"/>
+    <!-- central upward chevron (the coach / progress) -->
+    <path d="M15 28.5 L24 18 L33 28.5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
