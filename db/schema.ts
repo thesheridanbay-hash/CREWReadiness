@@ -658,6 +658,25 @@ export const marketplaceAdoptions = pgTable("marketplace_adoptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+/* ───────────────────────── Billing (Stripe) ───────────────────────── */
+
+/**
+ * Per-company subscription (go-live B). One row per company. The OWNER reads it
+ * (tenant RLS); the Stripe WEBHOOK writes it without a session via the
+ * app_upsert_subscription SECURITY DEFINER (db/rls.sql), resolving the company
+ * from Stripe metadata. `status` is plain text (Stripe's status vocabulary +
+ * our 'expired'); a 14-day trial is seeded lazily on first owner read.
+ */
+export const subscriptions = pgTable("subscriptions", {
+  companyId: text("company_id").primaryKey(),
+  status: text("status").notNull().default("trialing"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 /* ───────────────────────── User progress ───────────────────────── */
 
 export const userProgress = pgTable("user_progress", {

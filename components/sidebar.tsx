@@ -81,6 +81,9 @@ export const Sidebar = async ({ className }: SidebarProps) => {
             iconSrc="/mascot_bad.svg"
           />
         )}
+        {canAuthor && (
+          <SidebarItem label="Billing" href="/billing" iconSrc="/points.svg" />
+        )}
         {session?.role === "platform" && (
           <SidebarItem
             label="AI Settings"

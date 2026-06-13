@@ -8,7 +8,14 @@ import { EMPLOYEE_SESSION_COOKIE } from "@/lib/auth/employee-policy";
  * the data layer: getSession() + scoped() fail closed without valid context.
  */
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/invite", "/api/auth"];
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/sign-up",
+  "/invite",
+  "/api/auth",
+  // Stripe calls this with no session; it verifies its own signature.
+  "/api/stripe/webhook",
+];
 
 const BETTER_AUTH_COOKIES = [
   "better-auth.session_token",
@@ -17,6 +24,11 @@ const BETTER_AUTH_COOKIES = [
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Public marketing landing at "/".
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
 
   if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
