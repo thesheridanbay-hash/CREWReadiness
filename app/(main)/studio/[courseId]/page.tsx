@@ -36,20 +36,34 @@ const CourseStudioPage = async ({ params }: PageProps) => {
       units: module.units.map((unit) => ({
         id: unit.id,
         title: unit.title,
-        lessons: unit.lessons.map((lesson) => ({
+        lessons: unit.lessons.map((lesson) => {
+          const audioAsset = lesson.assets.find((a) => a.kind === "AUDIO");
+          return {
           id: lesson.id,
           title: lesson.title,
           teachingText: lesson.teachingText,
-          images: lesson.assets.map((asset) => ({
-            id: asset.id,
-            ref: asset.ref,
-            kind: asset.kind,
-            status: asset.status,
-            // Generated art is served through the authed proxy.
-            src: asset.status === "GENERATED" && asset.mediaAssetId
-              ? `/api/media/${asset.mediaAssetId}`
-              : null,
-          })),
+          images: lesson.assets
+            .filter((asset) => asset.kind !== "AUDIO")
+            .map((asset) => ({
+              id: asset.id,
+              ref: asset.ref,
+              kind: asset.kind as "ICON" | "ILLUSTRATION" | "REALISTIC",
+              status: asset.status,
+              // Generated art is served through the authed proxy.
+              src: asset.status === "GENERATED" && asset.mediaAssetId
+                ? `/api/media/${asset.mediaAssetId}`
+                : null,
+            })),
+          // Voiceover (TTS) status for this lesson, if any.
+          audio: audioAsset
+            ? {
+                status: audioAsset.status,
+                src:
+                  audioAsset.status === "GENERATED" && audioAsset.mediaAssetId
+                    ? `/api/media/${audioAsset.mediaAssetId}`
+                    : null,
+              }
+            : null,
           questions: lesson.questions.map((question) => ({
             id: question.id,
             question: question.question,
@@ -61,7 +75,8 @@ const CourseStudioPage = async ({ params }: PageProps) => {
               correct: option.correct,
             })),
           })),
-        })),
+          };
+        }),
       })),
     })),
   };

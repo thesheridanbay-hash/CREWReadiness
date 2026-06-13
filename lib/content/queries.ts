@@ -110,16 +110,18 @@ export const getLessonTeaching = cache(
       });
       if (!lesson) return null;
 
-      const image = lesson.assets.find(
+      const generated = lesson.assets.filter(
         (a) => a.status === "GENERATED" && a.mediaAssetId
       );
+      const image = generated.find((a) => a.kind !== "AUDIO");
+      const audio = generated.find((a) => a.kind === "AUDIO");
       const hasContent = Boolean(lesson.teachingText || image);
       if (!hasContent) return null;
 
       return {
         text: lesson.teachingText,
         imageSrc: image?.mediaAssetId ? `/api/media/${image.mediaAssetId}` : null,
-        audioSrc: null,
+        audioSrc: audio?.mediaAssetId ? `/api/media/${audio.mediaAssetId}` : null,
       };
     });
   }

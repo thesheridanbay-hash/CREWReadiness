@@ -42,3 +42,18 @@ export interface ImageProviderAdapter {
   readonly name: string;
   generateImage(args: GenerateImageArgs): Promise<ImageResult>;
 }
+
+export type GenerateSpeechArgs = {
+  text: string;
+  /** Optional voice/style hint passed to the provider. */
+  voice?: string;
+};
+
+/**
+ * Text-to-speech (lesson voiceover). Returns audio bytes (b64) + content type,
+ * the same shape as images so the caller persists to Blob identically.
+ */
+export interface TtsProviderAdapter {
+  readonly name: string;
+  generateSpeech(args: GenerateSpeechArgs): Promise<ImageResult>;
+}
