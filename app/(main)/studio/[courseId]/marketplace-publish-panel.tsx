@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  publishCourseAsUniversal,
   publishCourseToMarketplace,
   unlistListing,
   type CourseListingInfo,
@@ -22,9 +23,12 @@ import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace/categories";
 export const MarketplacePublishPanel = ({
   courseId,
   listing,
+  isPlatform,
 }: {
   courseId: number;
   listing: CourseListingInfo;
+  /** Platform admins publish UNIVERSAL (admin-curated) listings instead. */
+  isPlatform: boolean;
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -35,11 +39,9 @@ export const MarketplacePublishPanel = ({
 
   const publish = () =>
     startTransition(async () => {
-      const result = await publishCourseToMarketplace({
-        courseId,
-        category,
-        description,
-      });
+      const result = isPlatform
+        ? await publishCourseAsUniversal({ courseId, category, description })
+        : await publishCourseToMarketplace({ courseId, category, description });
       if (!result.ok) {
         toast.error(result.error.message);
         return;
@@ -84,8 +86,9 @@ export const MarketplacePublishPanel = ({
         )}
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
-        Share this course in the public library. Other companies adopt their own
-        editable copy — your images are reused, not duplicated.
+        {isPlatform
+          ? "Publish as a Universal course — every company sees it in the library as admin-curated. They adopt their own editable copy; images are reused, not duplicated."
+          : "Share this course in the public library. Other companies adopt their own editable copy — your images are reused, not duplicated."}
       </p>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -125,7 +128,9 @@ export const MarketplacePublishPanel = ({
             ? "Saving…"
             : listing
               ? "Update listing"
-              : "Publish to marketplace"}
+              : isPlatform
+                ? "Publish as Universal"
+                : "Publish to marketplace"}
         </Button>
         {listed && (
           <Button variant="dangerOutline" disabled={pending} onClick={unlist}>

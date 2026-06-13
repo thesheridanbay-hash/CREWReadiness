@@ -111,6 +111,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
         assetStatus={assetStatus}
         translationStatus={translationStatus}
         listing={listing}
+        isPlatform={session.role === "platform"}
       />
     </div>
   );
