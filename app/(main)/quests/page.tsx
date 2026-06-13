@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import { FeedWrapper } from "@/components/feed-wrapper";
-import { StickyWrapper } from "@/components/sticky-wrapper";
+import { FeedWrapper } from "@/shared/components/feed-wrapper";
+import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { Progress } from "@/shared/ui/progress";
 import { UserProgress } from "@/components/user-progress";
 import { QUESTS } from "@/shared/constants";

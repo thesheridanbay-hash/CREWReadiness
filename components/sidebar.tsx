@@ -7,7 +7,7 @@ import { getMyNotifications } from "@/features/courses/notification-queries";
 import { cn } from "@/shared/utils";
 
 import { NotificationBell } from "./notification-bell";
-import { SidebarItem } from "./sidebar-item";
+import { SidebarItem } from "@/shared/components/sidebar-item";
 
 type SidebarProps = {
   className?: string;

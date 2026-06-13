@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/shared/ui/button";
 import {
@@ -12,13 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { useIsClient } from "@/lib/use-is-client";
-import { useExitModal } from "@/shared/store/use-exit-modal";
+import { useIsClient } from "@/shared/use-is-client";
+import { usePracticeModal } from "@/shared/store/use-practice-modal";
 
-export const ExitModal = () => {
-  const router = useRouter();
+export const PracticeModal = () => {
   const isClient = useIsClient();
-  const { isOpen, close } = useExitModal();
+  const { isOpen, close } = usePracticeModal();
 
   if (!isClient) return null;
 
@@ -27,20 +25,16 @@ export const ExitModal = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="mb-5 flex w-full items-center justify-center">
-            <Image
-              src="/mascot_sad.svg"
-              alt="Mascot Sad"
-              height={80}
-              width={80}
-            />
+            <Image src="/points.svg" alt="Points" height={100} width={100} />
           </div>
 
           <DialogTitle className="text-center text-2xl font-bold">
-            Wait, don&apos;t go!
+            Practice lesson
           </DialogTitle>
 
           <DialogDescription className="text-center text-base">
-            You&apos;re about to leave the lesson. Are you sure?
+            Use practice lessons to sharpen what you&apos;ve learned and earn
+            extra points. You cannot lose points in practice lessons.
           </DialogDescription>
         </DialogHeader>
 
@@ -52,19 +46,7 @@ export const ExitModal = () => {
               size="lg"
               onClick={close}
             >
-              Keep learning
-            </Button>
-
-            <Button
-              variant="dangerOutline"
-              className="w-full"
-              size="lg"
-              onClick={() => {
-                close();
-                router.push("/learn");
-              }}
-            >
-              End session
+              I understand
             </Button>
           </div>
         </DialogFooter>

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
-import { ExitModal } from "@/components/modals/exit-modal";
-import { PracticeModal } from "@/components/modals/practice-modal";
+import { ExitModal } from "@/shared/components/modals/exit-modal";
+import { PracticeModal } from "@/shared/components/modals/practice-modal";
 import { Toaster } from "@/shared/ui/sonner";
 import { siteConfig } from "@/shared/config";
 

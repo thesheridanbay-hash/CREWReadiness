@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import { FeedWrapper } from "@/components/feed-wrapper";
+import { FeedWrapper } from "@/shared/components/feed-wrapper";
 import { Quests } from "@/components/quests";
-import { StickyWrapper } from "@/components/sticky-wrapper";
+import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { Avatar, AvatarImage } from "@/shared/ui/avatar";
 import { Separator } from "@/shared/ui/separator";
 import { UserProgress } from "@/components/user-progress";

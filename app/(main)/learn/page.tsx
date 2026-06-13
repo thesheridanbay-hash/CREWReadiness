@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { FeedWrapper } from "@/components/feed-wrapper";
+import { FeedWrapper } from "@/shared/components/feed-wrapper";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Quests } from "@/components/quests";
-import { StickyWrapper } from "@/components/sticky-wrapper";
+import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { UserProgress } from "@/components/user-progress";
 import { getViewerLanguagePreference } from "@/features/courses/translations";
 import {
