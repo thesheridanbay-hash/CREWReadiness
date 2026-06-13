@@ -51,6 +51,7 @@ import {
 } from "@/actions/learning-loop";
 import { upsertUserProgress } from "@/actions/user-progress";
 import { createCourse, createQuestion, publishCourse } from "@/actions/content";
+import { adoptListing } from "@/actions/marketplace";
 
 const ownerSession: Session = {
   userId: "user-1",
@@ -234,6 +235,26 @@ const matrix: MatrixRow[] = [
   {
     name: "publishCourse is forbidden for employees",
     run: () => publishCourse({ courseId: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "adoptListing rejects a malformed listing id",
+    run: () => adoptListing({ listingId: "not-a-uuid" }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "adoptListing requires a session",
+    run: () =>
+      adoptListing({ listingId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910" }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "adoptListing is forbidden for employees",
+    run: () =>
+      adoptListing({ listingId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910" }),
     session: employeeSession,
     expectCode: "forbidden",
   },
