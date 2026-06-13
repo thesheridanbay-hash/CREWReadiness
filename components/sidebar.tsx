@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { getSession } from "@/lib/auth/session";
 import { getParkedCount } from "@/lib/content/coaching-queries";
+import { getMyNotifications } from "@/lib/content/notification-queries";
 import { getViewerLanguagePreference } from "@/lib/content/translations";
 import { cn } from "@/lib/utils";
 
 import { LanguageSwitcher } from "./language-switcher";
+import { NotificationBell } from "./notification-bell";
 import { SidebarItem } from "./sidebar-item";
 
 type SidebarProps = {
@@ -20,6 +22,9 @@ export const Sidebar = async ({ className }: SidebarProps) => {
   const languagePref = session
     ? await getViewerLanguagePreference()
     : { language: null, primary: "en" };
+  const notifications = session
+    ? await getMyNotifications()
+    : { items: [], unread: 0 };
 
   return (
     <div
@@ -92,17 +97,25 @@ export const Sidebar = async ({ className }: SidebarProps) => {
             primary={languagePref.primary}
           />
         )}
-        <div className="flex items-center gap-x-3">
-          <Image
-            src={session?.imageSrc ?? "/mascot.svg"}
-            alt="User"
-            height={32}
-            width={32}
-            className="rounded-full border"
-          />
-          <span className="text-sm font-bold text-neutral-500">
-            {session?.name ?? "Guest"}
-          </span>
+        <div className="flex items-center justify-between gap-x-3">
+          <div className="flex items-center gap-x-3">
+            <Image
+              src={session?.imageSrc ?? "/mascot.svg"}
+              alt="User"
+              height={32}
+              width={32}
+              className="rounded-full border"
+            />
+            <span className="text-sm font-bold text-neutral-500">
+              {session?.name ?? "Guest"}
+            </span>
+          </div>
+          {session && (
+            <NotificationBell
+              items={notifications.items}
+              unread={notifications.unread}
+            />
+          )}
         </div>
       </div>
     </div>
