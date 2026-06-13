@@ -8,6 +8,10 @@ import {
 } from "@/actions/course-translate";
 import { getCourseListing, type CourseListingInfo } from "@/actions/marketplace";
 import { getSession } from "@/lib/auth/session";
+import {
+  getAssignableTargets,
+  getCourseAssignments,
+} from "@/lib/content/assignment-queries";
 import { getCourseTree } from "@/lib/content/queries";
 import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
 
@@ -41,6 +45,11 @@ const CourseStudioPage = async ({ params }: PageProps) => {
 
   const listingResult = await getCourseListing({ courseId: Number(courseId) });
   const listing: CourseListingInfo = listingResult.ok ? listingResult.data : null;
+
+  const [assignTargets, courseAssignments] = await Promise.all([
+    getAssignableTargets(),
+    getCourseAssignments(Number(courseId)),
+  ]);
 
   const course: EditorCourse = {
     id: tree.id,
@@ -112,6 +121,8 @@ const CourseStudioPage = async ({ params }: PageProps) => {
         translationStatus={translationStatus}
         listing={listing}
         isPlatform={session.role === "platform"}
+        assignTargets={assignTargets}
+        courseAssignments={courseAssignments}
       />
     </div>
   );

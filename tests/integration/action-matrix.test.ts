@@ -57,6 +57,7 @@ import {
   publishCourseToMarketplace,
   unlistListing,
 } from "@/actions/marketplace";
+import { assignCourse, unassignCourse } from "@/actions/assignments";
 
 const ownerSession: Session = {
   userId: "user-1",
@@ -314,6 +315,42 @@ const matrix: MatrixRow[] = [
       publishCourseAsUniversal({ courseId: 1, category: "bogus" }),
     session: { ...ownerSession, role: "platform" },
     expectCode: "validation",
+  },
+  {
+    name: "assignCourse rejects when no target is given",
+    run: () => assignCourse({ courseId: 1 }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "assignCourse rejects when both targets are given",
+    run: () => assignCourse({ courseId: 1, crewId: 1, userId: "emp_x" }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "assignCourse requires a session",
+    run: () => assignCourse({ courseId: 1, crewId: 1 }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "assignCourse is forbidden for employees",
+    run: () => assignCourse({ courseId: 1, crewId: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "unassignCourse rejects a non-positive id",
+    run: () => unassignCourse({ assignmentId: 0 }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "unassignCourse is forbidden for employees",
+    run: () => unassignCourse({ assignmentId: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
   },
 ];
 
