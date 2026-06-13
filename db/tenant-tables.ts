@@ -13,6 +13,7 @@ import {
   lessonTags,
   lessonTranslations,
   lessons,
+  marketplaceAdoptions,
   mediaAssets,
   modules,
   notifications,
@@ -66,6 +67,7 @@ export const TENANT_TABLES = {
   user_progress: userProgress,
   company_settings: companySettings,
   course_assets: courseAssets,
+  marketplace_adoptions: marketplaceAdoptions,
 } as const;
 
 export const TENANT_TABLE_NAMES = Object.keys(

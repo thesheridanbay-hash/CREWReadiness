@@ -420,6 +420,15 @@ export const mediaAssets = pgTable("media_assets", {
   contentType: text("content_type").notNull(),
   kind: mediaKindEnum("kind").notNull(),
   sizeBytes: integer("size_bytes").notNull().default(0),
+  /**
+   * Cross-tenant readable when true (course marketplace): set when the owning
+   * course is published to the marketplace, so adopters' course_assets can
+   * reference the SAME blob instead of copying/regenerating. Durable — stays
+   * public if the listing is later unlisted, so existing adopters don't break.
+   * The ONLY cross-tenant read path is app_get_public_media() (db/rls.sql);
+   * the media proxy still requires an authed session. Default private.
+   */
+  public: boolean("public").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -582,6 +591,68 @@ export const courseAssets = pgTable(
     uniqueIndex("course_assets_course_ref_uq").on(t.courseId, t.ref),
   ]
 );
+
+/* ───────────────── Course marketplace (marketplace feature) ───────────────── */
+
+/** COMMUNITY = a company published its own course; UNIVERSAL = admin-curated. */
+export const marketplaceListingKindEnum = pgEnum("marketplace_listing_kind", [
+  "COMMUNITY",
+  "UNIVERSAL",
+]);
+
+export const marketplaceListingStatusEnum = pgEnum(
+  "marketplace_listing_status",
+  ["PUBLISHED", "UNLISTED"]
+);
+
+/**
+ * Public course library. NOT a standard tenant table — it has a BESPOKE RLS
+ * policy (db/rls.sql): any company may SELECT PUBLISHED rows (+ its own, +
+ * platform sees all); a company may only write its OWN COMMUNITY rows, and
+ * only platform writes UNIVERSAL rows.
+ *
+ * `snapshot` is the frozen, portable course tree (structure + asset media
+ * references + translations) serialized at publish time — the ONLY thing that
+ * crosses the tenant boundary, and only because the owner chose to publish it.
+ * Adopting deserializes it into the adopter's own company (never reads the
+ * source company's content tables). `sourceCourseId` is provenance only.
+ */
+export const marketplaceListings = pgTable("marketplace_listings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: marketplaceListingKindEnum("kind").notNull(),
+  /** Publisher company (COMMUNITY); null for platform UNIVERSAL listings. */
+  sourceCompanyId: text("source_company_id"),
+  /** Provenance only — NEVER read on adopt (the snapshot is the source). */
+  sourceCourseId: integer("source_course_id").references(() => courses.id, {
+    onDelete: "set null",
+  }),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  primaryLanguage: text("primary_language").notNull().default("en"),
+  snapshot: jsonb("snapshot").$type<Record<string, unknown>>().notNull(),
+  status: marketplaceListingStatusEnum("status").notNull().default("PUBLISHED"),
+  publishedBy: text("published_by").notNull(),
+  publishedAt: timestamp("published_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * Adoption audit (standard tenant table): one row per time a company adopts a
+ * listing into a new course. Powers "already adopted" warnings + provenance.
+ */
+export const marketplaceAdoptions = pgTable("marketplace_adoptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: text("company_id").notNull(),
+  listingId: uuid("listing_id").references(() => marketplaceListings.id, {
+    onDelete: "set null",
+  }),
+  adoptedCourseId: integer("adopted_course_id").references(() => courses.id, {
+    onDelete: "cascade",
+  }),
+  adoptedBy: text("adopted_by").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 /* ───────────────────────── User progress ───────────────────────── */
 
@@ -918,6 +989,27 @@ export const courseAssetsRelations = relations(courseAssets, ({ one }) => ({
     references: [mediaAssets.id],
   }),
 }));
+
+export const marketplaceListingsRelations = relations(
+  marketplaceListings,
+  ({ many }) => ({
+    adoptions: many(marketplaceAdoptions),
+  })
+);
+
+export const marketplaceAdoptionsRelations = relations(
+  marketplaceAdoptions,
+  ({ one }) => ({
+    listing: one(marketplaceListings, {
+      fields: [marketplaceAdoptions.listingId],
+      references: [marketplaceListings.id],
+    }),
+    adoptedCourse: one(courses, {
+      fields: [marketplaceAdoptions.adoptedCourseId],
+      references: [courses.id],
+    }),
+  })
+);
 
 /* ───────────── Better Auth tables (T2) — re-exported for the db instance ───────────── */
 
