@@ -17,7 +17,10 @@ import {
   publishCourse,
 } from "@/actions/content";
 import { Button } from "@/components/ui/button";
+import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { Result } from "@/lib/errors";
+
+import { GenerateImagesButton } from "./generate-images-button";
 
 export type EditorOption = { id: number; text: string; correct: boolean };
 export type EditorQuestion = {
@@ -40,7 +43,13 @@ export type EditorCourse = {
 const inputClass =
   "w-full rounded-lg border-2 px-3 py-1.5 text-sm outline-none focus:border-green-500";
 
-export const StudioEditor = ({ course }: { course: EditorCourse }) => {
+export const StudioEditor = ({
+  course,
+  assetStatus,
+}: {
+  course: EditorCourse;
+  assetStatus: CourseAssetStatus;
+}) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -70,18 +79,21 @@ export const StudioEditor = ({ course }: { course: EditorCourse }) => {
             {course.published ? "Published" : "Draft"}
           </span>
         </div>
-        <Button
-          variant="secondary"
-          disabled={pending}
-          onClick={() =>
-            run(
-              () => publishCourse({ courseId: course.id }),
-              "Published — your crew sees the latest version."
-            )
-          }
-        >
-          Publish
-        </Button>
+        <div className="flex items-center gap-x-2">
+          <GenerateImagesButton courseId={course.id} status={assetStatus} />
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={() =>
+              run(
+                () => publishCourse({ courseId: course.id }),
+                "Published — your crew sees the latest version."
+              )
+            }
+          >
+            Publish
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-y-4">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { getCourseAssetStatus, type CourseAssetStatus } from "@/actions/course-assets";
 import { getSession } from "@/lib/auth/session";
 import { getCourseTree } from "@/lib/content/queries";
 
@@ -19,6 +20,11 @@ const CourseStudioPage = async ({ params }: PageProps) => {
   const tree = await getCourseTree(Number(courseId));
 
   if (!tree) redirect("/studio");
+
+  const statusResult = await getCourseAssetStatus({ courseId: Number(courseId) });
+  const assetStatus: CourseAssetStatus = statusResult.ok
+    ? statusResult.data
+    : { total: 0, pending: 0, generated: 0, failed: 0 };
 
   const course: EditorCourse = {
     id: tree.id,
@@ -57,7 +63,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
       >
         ← All courses
       </Link>
-      <StudioEditor course={course} />
+      <StudioEditor course={course} assetStatus={assetStatus} />
     </div>
   );
 };
