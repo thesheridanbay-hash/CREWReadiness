@@ -9,7 +9,7 @@ import {
   markAssetFailed,
   nextPendingAssetId,
   runCourseAsset,
-} from "@/lib/content/course-asset-runner";
+} from "@/features/courses/course-asset-runner";
 import { scoped } from "@/shared/db/scoped";
 
 /**

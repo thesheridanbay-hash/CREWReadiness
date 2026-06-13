@@ -9,7 +9,7 @@ import {
   userProgress,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
+import { DEFAULT_LANGUAGE } from "@/features/courses/languages";
 import { scoped } from "@/shared/db/scoped";
 
 /** Crew roster (item 5): members + pending invites for the company. */

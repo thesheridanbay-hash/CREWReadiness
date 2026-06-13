@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { getSession } from "@/lib/auth/session";
-import { getArchivedCourses, getStudioCourses } from "@/lib/content/queries";
+import { getArchivedCourses, getStudioCourses } from "@/features/courses/queries";
 import { Button } from "@/shared/ui/button";
 
 import { ArchivedCourses } from "./archived-courses";

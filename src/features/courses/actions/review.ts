@@ -16,8 +16,8 @@ import {
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { getSession } from "@/lib/auth/session";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
-import { classifyDraft } from "@/lib/content/draft-kind";
-import { materializeCourseDraft } from "@/lib/content/materialize-course";
+import { classifyDraft } from "@/features/courses/draft-kind";
+import { materializeCourseDraft } from "@/features/courses/materialize-course";
 
 /**
  * Review queue actions (D6). AI drafts NEVER auto-publish — an owner approves

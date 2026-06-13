@@ -9,7 +9,7 @@ import {
 import { translateLesson } from "@/features/ai/gateway";
 import type { LessonTranslationResult, TranslationSource } from "@/features/ai/types";
 import { AppActionError } from "@/shared/errors";
-import { languageLabel } from "@/lib/content/languages";
+import { languageLabel } from "@/features/courses/languages";
 import type { ScopedTx } from "@/shared/db/scoped";
 
 /**

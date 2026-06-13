@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { requeueAsset, setAssetMedia } from "@/actions/course-assets";
+import { requeueAsset, setAssetMedia } from "@/features/courses/actions/course-assets";
 import { Button } from "@/shared/ui/button";
 
 export type EditableAsset = {

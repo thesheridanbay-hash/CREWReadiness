@@ -5,9 +5,9 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { approveReviewItem, rejectReviewItem } from "@/actions/review";
+import { approveReviewItem, rejectReviewItem } from "@/features/courses/actions/review";
 import { Button } from "@/shared/ui/button";
-import type { ReviewItem } from "@/lib/content/review-queries";
+import type { ReviewItem } from "@/features/courses/review-queries";
 
 export const ReviewList = ({ items }: { items: ReviewItem[] }) => {
   const router = useRouter();

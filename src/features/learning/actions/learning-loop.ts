@@ -21,7 +21,7 @@ import {
   getReadingLanguage,
   optionTextOverlay,
   questionTextOverlay,
-} from "@/lib/content/translations";
+} from "@/features/courses/translations";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { transition } from "@/features/learning/machine";

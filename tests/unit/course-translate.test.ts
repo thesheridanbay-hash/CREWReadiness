@@ -6,7 +6,7 @@ import {
   type LessonTranslationResult,
   type TranslationSource,
 } from "@/features/ai/types";
-import { planTranslationWrites } from "@/lib/content/translate-runner";
+import { planTranslationWrites } from "@/features/courses/translate-runner";
 
 /**
  * Translation is an LLM trust boundary (PR-B): the model output is stored and

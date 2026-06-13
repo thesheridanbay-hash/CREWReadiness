@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
-import { getRecentIncidents } from "@/lib/content/incident-queries";
-import { getStudioCourses } from "@/lib/content/queries";
+import { getRecentIncidents } from "@/features/courses/incident-queries";
+import { getStudioCourses } from "@/features/courses/queries";
 
 import { IncidentComposer } from "./incident-composer";
 

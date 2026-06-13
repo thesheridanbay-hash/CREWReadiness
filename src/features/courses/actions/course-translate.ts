@@ -8,8 +8,8 @@ import { getSession } from "@/lib/auth/session";
 import {
   DEFAULT_LANGUAGE,
   SUPPORTED_LANGUAGES,
-} from "@/lib/content/languages";
-import { countLessonsInCourse } from "@/lib/content/translate-runner";
+} from "@/features/courses/languages";
+import { countLessonsInCourse } from "@/features/courses/translate-runner";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 

@@ -18,15 +18,15 @@ import {
   deleteUnit,
   publishCourse,
   updateQuestion,
-} from "@/actions/content";
+} from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
-import type { CourseAssetStatus } from "@/actions/course-assets";
-import type { CourseTranslationStatus } from "@/actions/course-translate";
+import type { CourseAssetStatus } from "@/features/courses/actions/course-assets";
+import type { CourseTranslationStatus } from "@/features/courses/actions/course-translate";
 import type { CourseListingInfo } from "@/features/marketplace/actions";
 import type {
   AssignTargets,
   CourseAssignmentRow,
-} from "@/lib/content/assignment-queries";
+} from "@/features/courses/assignment-queries";
 import type { Result } from "@/shared/errors";
 
 import { AiFieldButton } from "./ai-field-button";

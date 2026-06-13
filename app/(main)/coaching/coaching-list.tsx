@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { resolveParkedConcept } from "@/features/coaching/actions";
 import { Button } from "@/shared/ui/button";
-import type { ParkedItem } from "@/lib/content/coaching-queries";
+import type { ParkedItem } from "@/features/courses/coaching-queries";
 
 export const CoachingList = ({ items }: { items: ParkedItem[] }) => {
   const router = useRouter();

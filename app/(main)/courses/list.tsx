@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { upsertUserProgress } from "@/features/learning/actions/user-progress";
 import { courses as coursesTable, userProgress } from "@/db/schema";
-import type { MyAssignment } from "@/lib/content/assignment-queries";
+import type { MyAssignment } from "@/features/courses/assignment-queries";
 
 import { Card } from "./card";
 

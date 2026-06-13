@@ -5,12 +5,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { assignCourse, unassignCourse } from "@/actions/assignments";
+import { assignCourse, unassignCourse } from "@/features/courses/actions/assignments";
 import { Button } from "@/shared/ui/button";
 import type {
   AssignTargets,
   CourseAssignmentRow,
-} from "@/lib/content/assignment-queries";
+} from "@/features/courses/assignment-queries";
 
 /**
  * Assign-this-course control in the editor (go-live A1). Owners pick a crew or

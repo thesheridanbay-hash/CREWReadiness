@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { setMyLanguageAction } from "@/actions/auth";
-import { SUPPORTED_LANGUAGES, languageLabel } from "@/lib/content/languages";
+import { SUPPORTED_LANGUAGES, languageLabel } from "@/features/courses/languages";
 
 /**
  * Self-service content-language switcher (multi-language courses). Lives in the

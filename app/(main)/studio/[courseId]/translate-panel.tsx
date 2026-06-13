@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import type {
   CourseLanguageProgress,
   CourseTranslationStatus,
-} from "@/actions/course-translate";
+} from "@/features/courses/actions/course-translate";
 import { Button } from "@/shared/ui/button";
-import { languageLabel } from "@/lib/content/languages";
+import { languageLabel } from "@/features/courses/languages";
 
 /**
  * Owner-facing "Translate to <language>" control (AI Course Builder,

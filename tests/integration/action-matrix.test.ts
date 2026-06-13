@@ -59,14 +59,14 @@ import {
   publishCourse,
   restoreCourse,
   updateLesson,
-} from "@/actions/content";
+} from "@/features/courses/actions/content";
 import {
   adoptListing,
   publishCourseAsUniversal,
   publishCourseToMarketplace,
   unlistListing,
 } from "@/features/marketplace/actions";
-import { assignCourse, unassignCourse } from "@/actions/assignments";
+import { assignCourse, unassignCourse } from "@/features/courses/actions/assignments";
 import {
   markAllNotificationsRead,
   markNotificationRead,

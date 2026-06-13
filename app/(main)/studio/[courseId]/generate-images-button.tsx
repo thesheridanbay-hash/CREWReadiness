@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { resetFailedAssets, type CourseAssetStatus } from "@/actions/course-assets";
+import { resetFailedAssets, type CourseAssetStatus } from "@/features/courses/actions/course-assets";
 import { Button } from "@/shared/ui/button";
 
 /**

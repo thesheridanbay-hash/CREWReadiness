@@ -10,7 +10,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/features/notifications/actions";
-import type { NotificationItem } from "@/lib/content/notification-queries";
+import type { NotificationItem } from "@/features/courses/notification-queries";
 
 /**
  * Notification inbox (go-live A2): a bell + unread badge in the app shell, with

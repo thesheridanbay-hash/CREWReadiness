@@ -16,7 +16,7 @@ import {
 } from "@/features/learning/actions/learning-loop";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/shared/ui/button";
-import type { LessonTeaching } from "@/lib/content/queries";
+import type { LessonTeaching } from "@/features/courses/queries";
 import type { LoopView } from "@/features/learning/views";
 import type { Result } from "@/shared/errors";
 

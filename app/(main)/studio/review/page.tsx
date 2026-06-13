@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import {
   getCourseGenerationAttempts,
   getReviewQueue,
-} from "@/lib/content/review-queries";
+} from "@/features/courses/review-queries";
 
 import { GenerationAttempts } from "./generation-attempts";
 import { ReviewList } from "./review-list";

@@ -16,7 +16,7 @@ import {
 } from "@/lib/auth/employee";
 import { PIN_PATTERN } from "@/lib/auth/pin";
 import { getSession } from "@/lib/auth/session";
-import { isSupportedLanguage } from "@/lib/content/languages";
+import { isSupportedLanguage } from "@/features/courses/languages";
 import { scoped } from "@/shared/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 

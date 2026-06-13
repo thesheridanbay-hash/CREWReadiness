@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { createCourse } from "@/actions/content";
+import { createCourse } from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
 
 export const CreateCourseForm = () => {

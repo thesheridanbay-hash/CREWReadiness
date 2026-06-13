@@ -6,9 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { deleteCourse, restoreCourse } from "@/actions/content";
+import { deleteCourse, restoreCourse } from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
-import type { ArchivedCourse } from "@/lib/content/queries";
+import type { ArchivedCourse } from "@/features/courses/queries";
 
 /**
  * Archived courses (course lifecycle): restore back to active, or permanently

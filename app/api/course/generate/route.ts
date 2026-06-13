@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth/session";
 import {
   courseBuilderInputSchema,
   type CourseBuilderInput,
-} from "@/lib/content/course-builder-schema";
+} from "@/features/courses/course-builder-schema";
 import { scoped } from "@/shared/db/scoped";
 
 /**

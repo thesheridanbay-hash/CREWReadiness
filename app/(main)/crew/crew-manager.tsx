@@ -11,8 +11,8 @@ import {
   setCrewMemberLanguageAction,
 } from "@/actions/auth";
 import { Button } from "@/shared/ui/button";
-import type { CrewMember, PendingInvite } from "@/lib/content/crew-queries";
-import { SUPPORTED_LANGUAGES, languageLabel } from "@/lib/content/languages";
+import type { CrewMember, PendingInvite } from "@/features/courses/crew-queries";
+import { SUPPORTED_LANGUAGES, languageLabel } from "@/features/courses/languages";
 
 const inputClass =
   "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";

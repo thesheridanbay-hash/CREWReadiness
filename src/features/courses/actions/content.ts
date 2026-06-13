@@ -31,7 +31,7 @@ import {
   questionCreateSchema,
   questionUpdateSchema,
   unitCreateSchema,
-} from "@/lib/content/schemas";
+} from "@/features/courses/schemas";
 
 /**
  * Owner content studio actions (T10 — D16). Hand-written per hierarchy level,

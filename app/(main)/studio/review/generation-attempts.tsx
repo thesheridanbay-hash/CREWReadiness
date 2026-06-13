@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
-import type { GenerationAttempt } from "@/lib/content/review-queries";
+import type { GenerationAttempt } from "@/features/courses/review-queries";
 
 /**
  * Course-generation attempts that failed or stalled (bugfix). Shows the captured

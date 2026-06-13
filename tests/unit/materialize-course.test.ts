@@ -14,7 +14,7 @@ import type { CourseDraft } from "@/features/ai/types";
 import {
   materializeCourseDraft,
   planCourseMaterialization,
-} from "@/lib/content/materialize-course";
+} from "@/features/courses/materialize-course";
 
 /**
  * Materializer: the pure planner (refs, ordering, kind mapping, queue) and the

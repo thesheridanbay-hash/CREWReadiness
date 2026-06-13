@@ -5,7 +5,7 @@ import {
   isSupportedLanguage,
   languageLabel,
   resolveReadingLanguage,
-} from "@/lib/content/languages";
+} from "@/features/courses/languages";
 
 /**
  * languages.ts is the single extensibility seam for multi-language courses;

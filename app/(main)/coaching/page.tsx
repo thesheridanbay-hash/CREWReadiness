@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
-import { getParkedConcepts } from "@/lib/content/coaching-queries";
+import { getParkedConcepts } from "@/features/courses/coaching-queries";
 
 import { CoachingList } from "./coaching-list";
 

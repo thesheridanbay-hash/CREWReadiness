@@ -1,4 +1,4 @@
-import { getMyAssignments } from "@/lib/content/assignment-queries";
+import { getMyAssignments } from "@/features/courses/assignment-queries";
 import { getCourses, getUserProgress } from "@/db/queries";
 
 import { List } from "./list";

@@ -5,7 +5,7 @@ import { getCompanyUsage } from "@/features/ai/usage-queries";
 import {
   getEmployeeProgress,
   getWeakConcepts,
-} from "@/lib/content/reports-queries";
+} from "@/features/courses/reports-queries";
 
 const ReportsPage = async () => {
   const session = await getSession();

@@ -6,7 +6,7 @@ import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { improveField } from "@/actions/content";
+import { improveField } from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
 
 type Field =

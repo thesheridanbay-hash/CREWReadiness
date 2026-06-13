@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { courseBuilderInputSchema } from "@/lib/content/course-builder-schema";
-import { classifyDraft, courseDraftCounts } from "@/lib/content/draft-kind";
+import { courseBuilderInputSchema } from "@/features/courses/course-builder-schema";
+import { classifyDraft, courseDraftCounts } from "@/features/courses/draft-kind";
 
 /**
  * The approve path and review list both rely on classifyDraft to tell a rich

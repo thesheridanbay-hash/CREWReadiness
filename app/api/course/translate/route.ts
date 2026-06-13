@@ -8,12 +8,12 @@ import {
   DEFAULT_LANGUAGE,
   isSupportedLanguage,
   languageLabel,
-} from "@/lib/content/languages";
+} from "@/features/courses/languages";
 import {
   countUntranslatedLessons,
   nextUntranslatedLessonId,
   translateLessonInto,
-} from "@/lib/content/translate-runner";
+} from "@/features/courses/translate-runner";
 import { scoped } from "@/shared/db/scoped";
 
 /**

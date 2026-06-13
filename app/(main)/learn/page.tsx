@@ -5,7 +5,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { Quests } from "@/components/quests";
 import { StickyWrapper } from "@/components/sticky-wrapper";
 import { UserProgress } from "@/components/user-progress";
-import { getViewerLanguagePreference } from "@/lib/content/translations";
+import { getViewerLanguagePreference } from "@/features/courses/translations";
 import {
   getCourseProgress,
   getLessonPercentage,

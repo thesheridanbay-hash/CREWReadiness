@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { startOrResumeSession } from "@/features/learning/actions/learning-loop";
 import { getCourseProgress } from "@/db/queries";
-import { getLessonTeaching } from "@/lib/content/queries";
+import { getLessonTeaching } from "@/features/courses/queries";
 
 import { Player } from "./player";
 

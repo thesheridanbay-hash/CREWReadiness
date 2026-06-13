@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCourseAssetStatus, type CourseAssetStatus } from "@/actions/course-assets";
+import { getCourseAssetStatus, type CourseAssetStatus } from "@/features/courses/actions/course-assets";
 import {
   getCourseTranslationStatus,
   type CourseTranslationStatus,
-} from "@/actions/course-translate";
+} from "@/features/courses/actions/course-translate";
 import { getCourseListing, type CourseListingInfo } from "@/features/marketplace/actions";
 import { getSession } from "@/lib/auth/session";
 import {
   getAssignableTargets,
   getCourseAssignments,
-} from "@/lib/content/assignment-queries";
-import { getCourseTree } from "@/lib/content/queries";
-import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
+} from "@/features/courses/assignment-queries";
+import { getCourseTree } from "@/features/courses/queries";
+import { DEFAULT_LANGUAGE } from "@/features/courses/languages";
 
 import { StudioEditor, type EditorCourse } from "./studio-editor";
 

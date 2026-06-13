@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { courseAssets, courses } from "@/db/schema";
-import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
+import { DEFAULT_LANGUAGE } from "@/features/courses/languages";
 import type { ScopedTx } from "@/shared/db/scoped";
 import { AppActionError } from "@/shared/errors";
 
