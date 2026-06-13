@@ -74,7 +74,7 @@ export const Card = ({
         {type === "ASSIST" && <div aria-hidden />}
         <p
           className={cn(
-            "text-sm text-neutral-600 lg:text-base",
+            "text-base font-medium text-neutral-600 lg:text-lg",
             selected && "text-sky-500",
             selected && status === "correct" && "text-green-500",
             selected && status === "wrong" && "text-rose-500"
@@ -85,7 +85,9 @@ export const Card = ({
 
         <div
           className={cn(
-            "flex h-[20px] w-[20px] items-center justify-center rounded-lg border-2 text-xs font-semibold text-neutral-400 lg:h-[30px] lg:w-[30px] lg:text-[15px]",
+            // Keyboard-shortcut hint: desktop only — pure noise on the
+            // touch-first crew view.
+            "hidden h-[20px] w-[20px] items-center justify-center rounded-lg border-2 text-xs font-semibold text-neutral-400 lg:flex lg:h-[30px] lg:w-[30px] lg:text-[15px]",
             selected && "border-sky-300 text-sky-500",
             selected &&
               status === "correct" &&
