@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { courses, lessons, modules } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
@@ -24,6 +24,7 @@ export const getStudioCourses = cache(async (): Promise<StudioCourseSummary[]> =
 
   return scoped(session, async (tx) => {
     const rows = await tx.query.courses.findMany({
+      where: isNull(courses.archivedAt),
       orderBy: [asc(courses.id)],
       with: {
         modules: { with: { units: { with: { lessons: { columns: { id: true } } } } } },
@@ -43,6 +44,35 @@ export const getStudioCourses = cache(async (): Promise<StudioCourseSummary[]> =
     }));
   });
 });
+
+export type ArchivedCourse = {
+  id: number;
+  title: string;
+  imageSrc: string;
+  archivedAt: Date;
+};
+
+/** Archived courses (owner): restorable, or permanently deletable. */
+export const getArchivedCourses = cache(
+  async (): Promise<ArchivedCourse[]> => {
+    const session = await getSession();
+    if (!session || session.role === "employee") return [];
+
+    return scoped(session, async (tx) => {
+      const rows = await tx.query.courses.findMany({
+        where: isNotNull(courses.archivedAt),
+        orderBy: [desc(courses.archivedAt)],
+        columns: { id: true, title: true, imageSrc: true, archivedAt: true },
+      });
+      return rows.map((course) => ({
+        id: course.id,
+        title: course.title,
+        imageSrc: course.imageSrc,
+        archivedAt: course.archivedAt as Date,
+      }));
+    });
+  }
+);
 
 export type CourseTree = NonNullable<Awaited<ReturnType<typeof getCourseTree>>>;
 

@@ -1,11 +1,11 @@
 import { cache } from "react";
 
-import { eq, sql } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
 
-import { userProgress } from "./schema";
+import { courses, userProgress } from "./schema";
 
 /**
  * Read queries (T1/T8): everything runs through scoped() so RLS confines
@@ -45,7 +45,9 @@ export const getCourses = cache(async () => {
 
   if (!session) return [];
 
-  return scoped(session, (tx) => tx.query.courses.findMany());
+  return scoped(session, (tx) =>
+    tx.query.courses.findMany({ where: isNull(courses.archivedAt) })
+  );
 });
 
 export const getUserProgress = cache(async () => {

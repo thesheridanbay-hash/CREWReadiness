@@ -3,9 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { getSession } from "@/lib/auth/session";
-import { getStudioCourses } from "@/lib/content/queries";
+import { getArchivedCourses, getStudioCourses } from "@/lib/content/queries";
 import { Button } from "@/components/ui/button";
 
+import { ArchivedCourses } from "./archived-courses";
 import { CourseCreator } from "./course-creator";
 
 const StudioPage = async () => {
@@ -13,7 +14,10 @@ const StudioPage = async () => {
   if (!session) redirect("/sign-in");
   if (session.role === "employee") redirect("/learn");
 
-  const courses = await getStudioCourses();
+  const [courses, archived] = await Promise.all([
+    getStudioCourses(),
+    getArchivedCourses(),
+  ]);
 
   return (
     <div className="px-4">
@@ -70,6 +74,8 @@ const StudioPage = async () => {
           </Link>
         ))}
       </div>
+
+      <ArchivedCourses courses={archived} />
     </div>
   );
 };

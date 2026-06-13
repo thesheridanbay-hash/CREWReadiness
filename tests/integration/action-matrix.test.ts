@@ -50,7 +50,14 @@ import {
   submitAnswer,
 } from "@/actions/learning-loop";
 import { upsertUserProgress } from "@/actions/user-progress";
-import { createCourse, createQuestion, publishCourse } from "@/actions/content";
+import {
+  archiveCourse,
+  createCourse,
+  createQuestion,
+  deleteCourse,
+  publishCourse,
+  restoreCourse,
+} from "@/actions/content";
 import {
   adoptListing,
   publishCourseAsUniversal,
@@ -247,6 +254,30 @@ const matrix: MatrixRow[] = [
     run: () => publishCourse({ courseId: 1 }),
     session: employeeSession,
     expectCode: "forbidden",
+  },
+  {
+    name: "archiveCourse rejects a non-positive id",
+    run: () => archiveCourse({ courseId: 0 }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "archiveCourse requires a session",
+    run: () => archiveCourse({ courseId: 1 }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "deleteCourse is forbidden for employees",
+    run: () => deleteCourse({ courseId: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "restoreCourse requires a session",
+    run: () => restoreCourse({ courseId: 1 }),
+    session: null,
+    expectCode: "unauthorized",
   },
   {
     name: "adoptListing rejects a malformed listing id",
