@@ -97,8 +97,11 @@ export const getSession = cache(async (): Promise<Session | null> => {
     };
   }
 
-  /* 3 — Explicit dev bypass. */
-  if (process.env.DEV_AUTH_BYPASS === "true") {
+  /* 3 — Explicit dev bypass — inert in production even if the env var leaks. */
+  if (
+    process.env.DEV_AUTH_BYPASS === "true" &&
+    process.env.NODE_ENV !== "production"
+  ) {
     return {
       userId: "dev-user",
       companyId: "dev-company",

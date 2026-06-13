@@ -25,11 +25,14 @@ const BETTER_AUTH_COOKIES = [
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // DEV ONLY: when DEV_AUTH_BYPASS="true", skip the cookie gate so local dev
-  // works without a real login. Mirrors the getSession() bypass in
-  // lib/auth/session.ts. Never set in production (and main deploys never carry
-  // this flag), so this is a no-op everywhere except a developer's machine.
-  if (process.env.DEV_AUTH_BYPASS === "true") {
+  // DEV ONLY: when DEV_AUTH_BYPASS="true" AND this is not a production build,
+  // skip the cookie gate so local dev works without a real login. Mirrors the
+  // getSession() bypass in features/auth/session.ts. The NODE_ENV guard makes
+  // this inert in production even if the env var leaks into a deploy.
+  if (
+    process.env.DEV_AUTH_BYPASS === "true" &&
+    process.env.NODE_ENV !== "production"
+  ) {
     return NextResponse.next();
   }
 
