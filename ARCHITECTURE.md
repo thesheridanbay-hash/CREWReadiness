@@ -3,9 +3,12 @@
 The map of how this codebase is laid out, so any machine or session can re-orient in
 30 seconds. If you built this elsewhere and lost the mental model, start here.
 
-> Status: a feature-based reshape is in progress (see "Reshape status" at the bottom).
-> This document describes BOTH today's layout and the target, and is the source of truth
-> for where things live. Plan: `~/.gstack/projects/thesheridanbay-hash-CREWReadiness/hassan-main-eng-review-reshape-plan.md`.
+> Status: the feature-based reshape is STRUCTURALLY COMPLETE on branch `chore/repo-reshape`
+> (10 green commits). All domains now live under `src/features/*`, infra under `src/shared/*`,
+> nav under `src/app-shell/*`. The "Target layout" below is now the ACTUAL layout, EXCEPT
+> `auth`, `db/`, and `app/` which move in Phase F (needs the deploy env). The domain table's
+> "Today" column reflects PRE-reshape paths — mentally map `lib/<x>` → `src/features/<x>`.
+> Plan: `~/.gstack/projects/thesheridanbay-hash-CREWReadiness/hassan-main-eng-review-reshape-plan.md`.
 
 ## What it is
 
@@ -98,11 +101,14 @@ each other only via a defined surface; `shared/` never imports `features/`; only
 ## Reshape status
 
 - [x] Phase 0 — baseline + ship infra + this map + boundary lint (WARN) + measured move order
-  - Measured 2026-06-13: typecheck/lint/unit GREEN · **0 import cycles** (acyclic, resolver-verified) · cross-feature boundary count deferred to Phase F (needs `features/*` to exist)
-- [ ] Phase 1 — shared foundation + cross-cutting hubs (auth/session, ai gateway)
-- [ ] Phase 2..N — one feature per phase (leaf→hub), move-whole then split god-file
-- [ ] Phase F — app-shell + router + db + Better Auth CLI gate + Inngest verify + lint→ERROR
+  - Measured 2026-06-13: typecheck/lint/unit GREEN · **0 import cycles** (acyclic, resolver-verified)
+- [x] Phase 1 — shared foundation → `src/shared` (errors, config, constants, store, ui, utils, db/scoped, use-is-client, modals + presentational components)
+- [x] Phase 2 — all domains → `src/features` (media, billing, marketplace, learning, ai, courses, coaching, notifications, platform) + nav → `src/app-shell` + feature UI → `features/*/ui`. `components/` removed.
+  - **10 green commits on `chore/repo-reshape`.** Every commit typecheck+lint+unit green; each commit is structural XOR behavioral; the `@/*` alias is dual-root (`src/` first, root fallback) during migration.
+- [ ] **God-file splits (behavioral) — DEFERRED to run WITH Phase F.** `ai/gateway.ts`, courses `content` actions, learning `learning-loop` actions, `studio-editor.tsx`. They change server-action / client-component behavior, which the static gates (typecheck/lint/unit) do NOT fully verify — they need runtime/E2E on a preview deploy.
+- [ ] **Phase F (needs deploy env)** — move `lib/auth` + `actions/auth` + `db/` + `app/` + `proxy.ts` + `instrumentation.ts` into `src/`; recompute Better Auth relative imports + run the Better Auth CLI generate `--dry-run` (the gate the static checks can't replace); deploy a preview + verify `GET /api/inngest` lists 7 functions and one job runs E2E; flip the boundary lint WARN→ERROR and triage the cross-feature violations.
 
-Move order (from import-graph fan-in): foundation hubs first (errors, db, auth, content,
-ai as stable targets), then leaf features (media → billing → marketplace → learning →
-coaching → notifications → platform → incidents), router/app-shell/db last.
+Why stop here: everything verifiable by static gates (typecheck/lint/unit) is done and green.
+Everything remaining (auth's Better-Auth-CLI relative imports, the router/db move, the
+god-file behavioral splits) needs runtime/deploy verification — that's Phase F, and it needs
+your Vercel/Inngest/Better-Auth environment.
