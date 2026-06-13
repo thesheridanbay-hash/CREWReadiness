@@ -4,10 +4,8 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { getParkedCount } from "@/lib/content/coaching-queries";
 import { getMyNotifications } from "@/lib/content/notification-queries";
-import { getViewerLanguagePreference } from "@/lib/content/translations";
 import { cn } from "@/lib/utils";
 
-import { LanguageSwitcher } from "./language-switcher";
 import { NotificationBell } from "./notification-bell";
 import { SidebarItem } from "./sidebar-item";
 
@@ -19,9 +17,6 @@ export const Sidebar = async ({ className }: SidebarProps) => {
   const session = await getSession();
   const canAuthor = session?.role !== "employee";
   const parkedCount = canAuthor ? await getParkedCount() : 0;
-  const languagePref = session
-    ? await getViewerLanguagePreference()
-    : { language: null, primary: "en" };
   const notifications = session
     ? await getMyNotifications()
     : { items: [], unread: 0 };
@@ -101,12 +96,6 @@ export const Sidebar = async ({ className }: SidebarProps) => {
       </div>
 
       <div className="flex flex-col gap-y-3 p-4">
-        {session && (
-          <LanguageSwitcher
-            current={languagePref.language}
-            primary={languagePref.primary}
-          />
-        )}
         <div className="flex items-center justify-between gap-x-3">
           <div className="flex items-center gap-x-3">
             <Image
