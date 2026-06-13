@@ -146,6 +146,86 @@ export const questionVariants = pgTable("question_variants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+/* ─────────────── Content translations (multi-language) ─────────────── */
+
+/**
+ * On-demand multi-language COURSE CONTENT (Phase 1, doc cmqc9bav705c207add).
+ *
+ * Base rows (lessons/questions/question_options) always hold the company's
+ * PRIMARY language (back-compat: single-language courses need zero rows
+ * here). These side tables hold every OTHER language, keyed by `lang`
+ * (validated against lib/content/languages.ts — plain text, no enum, so a new
+ * language needs no DDL). Learner reads pick their language and fall back to
+ * the primary/English when a row is missing — never blank.
+ *
+ * Tenant-scoped like all content (companyId + FORCE RLS, db/rls.sql). One row
+ * per (parent, lang). Translations are produced on demand by the PR-B
+ * translate backend; images stay SHARED across languages (no lang here).
+ */
+export const lessonTranslations = pgTable(
+  "lesson_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    lessonId: integer("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    /** Translated lesson title (base row holds the primary-language title). */
+    title: text("title"),
+    /** Translated teaching brief shown before the questions (Learn screen). */
+    teachingText: text("teaching_text"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("lesson_translations_lesson_lang_uq").on(t.lessonId, t.lang),
+  ]
+);
+
+export const questionTranslations = pgTable(
+  "question_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    questionId: integer("question_id")
+      .references(() => questions.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    /** Translated prompt text (base row holds the primary-language prompt). */
+    question: text("question").notNull(),
+    /** Translated "why" shown on the first wrong answer (EXPLAIN step). */
+    explanation: text("explanation"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("question_translations_question_lang_uq").on(
+      t.questionId,
+      t.lang
+    ),
+  ]
+);
+
+export const optionTranslations = pgTable(
+  "option_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    optionId: integer("option_id")
+      .references(() => questionOptions.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    /** Translated answer text (correctness lives only on the base row). */
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("option_translations_option_lang_uq").on(t.optionId, t.lang),
+  ]
+);
+
 /* ───────────────────────── Learning loop ───────────────────────── */
 
 export const learningSessionStatusEnum = pgEnum("learning_session_status", [
@@ -437,6 +517,13 @@ export const notifications = pgTable("notifications", {
 export const companySettings = pgTable("company_settings", {
   companyId: text("company_id").primaryKey(),
   masterPrompt: text("master_prompt"),
+  /**
+   * Company's primary content language (multi-language courses): the language
+   * base content rows are authored in, and the default a crew member sees
+   * until they pick their own. Plain text (never an enum) so new languages
+   * need no DDL — validated against lib/content/languages.ts.
+   */
+  primaryLanguage: text("primary_language").notNull().default("en"),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -506,6 +593,14 @@ export const userProgress = pgTable("user_progress", {
   activeCourseId: integer("active_course_id").references(() => courses.id, {
     onDelete: "set null",
   }),
+  /**
+   * Crew member's preferred content language (multi-language courses).
+   * NULL = inherit the company primary (company_settings.primaryLanguage);
+   * we store null rather than copying the primary so a company that switches
+   * its primary carries non-overriding members along. Resolved via
+   * resolveReadingLanguage() in lib/content/languages.ts.
+   */
+  language: text("language"),
   points: integer("points").notNull().default(0),
 });
 
@@ -640,6 +735,7 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   questions: many(questions),
   lessonTags: many(lessonTags),
   assets: many(courseAssets),
+  translations: many(lessonTranslations),
 }));
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -650,14 +746,46 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
   questionOptions: many(questionOptions),
   variants: many(questionVariants),
   attempts: many(attempts),
+  translations: many(questionTranslations),
 }));
 
 export const questionOptionsRelations = relations(
   questionOptions,
-  ({ one }) => ({
+  ({ one, many }) => ({
     question: one(questions, {
       fields: [questionOptions.questionId],
       references: [questions.id],
+    }),
+    translations: many(optionTranslations),
+  })
+);
+
+export const lessonTranslationsRelations = relations(
+  lessonTranslations,
+  ({ one }) => ({
+    lesson: one(lessons, {
+      fields: [lessonTranslations.lessonId],
+      references: [lessons.id],
+    }),
+  })
+);
+
+export const questionTranslationsRelations = relations(
+  questionTranslations,
+  ({ one }) => ({
+    question: one(questions, {
+      fields: [questionTranslations.questionId],
+      references: [questions.id],
+    }),
+  })
+);
+
+export const optionTranslationsRelations = relations(
+  optionTranslations,
+  ({ one }) => ({
+    option: one(questionOptions, {
+      fields: [optionTranslations.optionId],
+      references: [questionOptions.id],
     }),
   })
 );
