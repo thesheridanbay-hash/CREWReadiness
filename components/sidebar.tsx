@@ -3,8 +3,10 @@ import Link from "next/link";
 
 import { getSession } from "@/lib/auth/session";
 import { getParkedCount } from "@/lib/content/coaching-queries";
+import { getViewerLanguagePreference } from "@/lib/content/translations";
 import { cn } from "@/lib/utils";
 
+import { LanguageSwitcher } from "./language-switcher";
 import { SidebarItem } from "./sidebar-item";
 
 type SidebarProps = {
@@ -15,6 +17,9 @@ export const Sidebar = async ({ className }: SidebarProps) => {
   const session = await getSession();
   const canAuthor = session?.role !== "employee";
   const parkedCount = canAuthor ? await getParkedCount() : 0;
+  const languagePref = session
+    ? await getViewerLanguagePreference()
+    : { language: null, primary: "en" };
 
   return (
     <div
@@ -73,17 +78,25 @@ export const Sidebar = async ({ className }: SidebarProps) => {
         )}
       </div>
 
-      <div className="flex items-center gap-x-3 p-4">
-        <Image
-          src={session?.imageSrc ?? "/mascot.svg"}
-          alt="User"
-          height={32}
-          width={32}
-          className="rounded-full border"
-        />
-        <span className="text-sm font-bold text-neutral-500">
-          {session?.name ?? "Guest"}
-        </span>
+      <div className="flex flex-col gap-y-3 p-4">
+        {session && (
+          <LanguageSwitcher
+            current={languagePref.language}
+            primary={languagePref.primary}
+          />
+        )}
+        <div className="flex items-center gap-x-3">
+          <Image
+            src={session?.imageSrc ?? "/mascot.svg"}
+            alt="User"
+            height={32}
+            width={32}
+            className="rounded-full border"
+          />
+          <span className="text-sm font-bold text-neutral-500">
+            {session?.name ?? "Guest"}
+          </span>
+        </div>
       </div>
     </div>
   );

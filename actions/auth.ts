@@ -237,3 +237,45 @@ export const setCrewMemberLanguageAction = async (
     revalidatePath("/crew");
     return ok(null);
   });
+
+/* ── Self-service content language (crew member, shared phone) ── */
+
+const setMyLanguageSchema = z.object({
+  /** A supported code, or "" to clear (read in the company primary). */
+  language: z.string().max(16),
+});
+
+export const setMyLanguageAction = async (
+  input: z.infer<typeof setMyLanguageSchema>
+): Promise<Result<null>> =>
+  guard(async () => {
+    const parsed = setMyLanguageSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const session = await getSession();
+    if (!session) return err("unauthorized", "Sign in to continue.");
+
+    const raw = parsed.data.language.trim();
+    const language = raw === "" ? null : raw;
+    if (language !== null && !isSupportedLanguage(language))
+      return err("validation", `${language} is not a supported language.`);
+
+    // Self-scoped: the caller only ever sets their OWN preference.
+    await scoped(session, async (tx) => {
+      await tx
+        .insert(userProgress)
+        .values({
+          userId: session.userId,
+          companyId: session.companyId,
+          language,
+        })
+        .onConflictDoUpdate({
+          target: userProgress.userId,
+          set: { language },
+        });
+    });
+
+    // Refresh the learner views (sidebar lives in the layout).
+    revalidatePath("/learn");
+    return ok(null);
+  });
