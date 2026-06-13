@@ -16,11 +16,13 @@ import {
   deleteQuestion,
   deleteUnit,
   publishCourse,
+  updateQuestion,
 } from "@/actions/content";
 import { Button } from "@/components/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { Result } from "@/lib/errors";
 
+import { AssetModal, type EditableAsset } from "./asset-modal";
 import { GenerateImagesButton } from "./generate-images-button";
 
 export type EditorOption = { id: number; text: string; correct: boolean };
@@ -37,6 +39,7 @@ export type EditorLessonImage = {
   kind: "ICON" | "ILLUSTRATION" | "REALISTIC";
   status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
   src: string | null;
+  prompt: string;
 };
 export type EditorLessonAudio = {
   status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
@@ -136,6 +139,7 @@ export const StudioEditor = ({
                     {unit.lessons.map((lesson) => (
                       <LessonBlock
                         key={lesson.id}
+                        courseId={course.id}
                         lesson={lesson}
                         disabled={pending}
                         run={run}
@@ -195,16 +199,20 @@ const Row = ({
 );
 
 const LessonBlock = ({
+  courseId,
   lesson,
   disabled,
   run,
 }: {
+  courseId: number;
   lesson: EditorLesson;
   disabled: boolean;
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [showTeaching, setShowTeaching] = useState(false);
+  const [editingImage, setEditingImage] = useState<EditableAsset | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<EditorQuestion | null>(null);
 
   return (
     <div className="rounded-xl bg-slate-50 p-3">
@@ -246,19 +254,39 @@ const LessonBlock = ({
           </p>
           <div className="mt-1 flex flex-wrap gap-2">
             {lesson.images.map((img) => (
-              <div key={img.id} className="flex flex-col items-center gap-0.5">
+              <button
+                type="button"
+                key={img.id}
+                onClick={() =>
+                  setEditingImage({
+                    id: img.id,
+                    ref: img.ref,
+                    kind: img.kind,
+                    status: img.status,
+                    src: img.src,
+                    prompt: img.prompt,
+                  })
+                }
+                title="Click to regenerate or replace this image"
+                className="group flex flex-col items-center gap-0.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              >
                 {img.src ? (
-                  <Image
-                    src={img.src}
-                    alt={lesson.title}
-                    width={72}
-                    height={72}
-                    className="h-[72px] w-[72px] rounded-md border object-cover"
-                  />
+                  <div className="relative">
+                    <Image
+                      src={img.src}
+                      alt={lesson.title}
+                      width={72}
+                      height={72}
+                      className="h-[72px] w-[72px] rounded-md border object-cover transition group-hover:brightness-90"
+                    />
+                    <span className="absolute inset-0 hidden items-center justify-center rounded-md bg-black/40 text-[10px] font-bold uppercase text-white group-hover:flex">
+                      Edit
+                    </span>
+                  </div>
                 ) : (
                   <div
                     className={
-                      "flex h-[72px] w-[72px] items-center justify-center rounded-md border border-dashed text-xs " +
+                      "flex h-[72px] w-[72px] items-center justify-center rounded-md border border-dashed text-xs transition hover:bg-slate-50 " +
                       (img.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
                     }
                   >
@@ -272,7 +300,7 @@ const LessonBlock = ({
                 <span className="text-xs text-neutral-400">
                   {img.ref} · {img.kind.toLowerCase()}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -304,19 +332,41 @@ const LessonBlock = ({
         {lesson.questions.map((question) => (
           <li key={question.id} className="flex items-start justify-between gap-x-2">
             <span className="flex-1">{question.question}</span>
-            <button
-              type="button"
-              aria-label="Delete question"
-              onClick={() => run(() => deleteQuestion({ id: question.id }))}
-              disabled={disabled}
-              className="-mr-1 rounded p-1.5 text-sm font-bold leading-none text-rose-400 hover:bg-rose-50 disabled:opacity-50"
-            >
-              ×
-            </button>
+            <div className="flex shrink-0 items-center gap-x-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingQuestion(question);
+                  setShowForm(false);
+                }}
+                disabled={disabled}
+                className="rounded px-2 py-1 text-xs font-bold uppercase text-sky-600 hover:bg-sky-50 disabled:opacity-50"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                aria-label="Delete question"
+                onClick={() => run(() => deleteQuestion({ id: question.id }))}
+                disabled={disabled}
+                className="rounded p-1.5 text-sm font-bold leading-none text-rose-400 hover:bg-rose-50 disabled:opacity-50"
+              >
+                ×
+              </button>
+            </div>
           </li>
         ))}
       </ul>
-      {showForm ? (
+
+      {editingQuestion ? (
+        <QuestionForm
+          lessonId={lesson.id}
+          editing={editingQuestion}
+          disabled={disabled}
+          run={run}
+          onDone={() => setEditingQuestion(null)}
+        />
+      ) : showForm ? (
         <QuestionForm
           lessonId={lesson.id}
           disabled={disabled}
@@ -324,13 +374,24 @@ const LessonBlock = ({
           onDone={() => setShowForm(false)}
         />
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="mt-2 text-xs font-bold uppercase text-sky-600 hover:underline"
-        >
-          + Add question
-        </button>
+        <div className="mt-2">
+          <Button
+            variant="primaryOutline"
+            size="sm"
+            disabled={disabled}
+            onClick={() => setShowForm(true)}
+          >
+            + Add question
+          </Button>
+        </div>
+      )}
+
+      {editingImage && (
+        <AssetModal
+          courseId={courseId}
+          asset={editingImage}
+          onClose={() => setEditingImage(null)}
+        />
       )}
     </div>
   );
@@ -338,21 +399,27 @@ const LessonBlock = ({
 
 const QuestionForm = ({
   lessonId,
+  editing,
   disabled,
   run,
   onDone,
 }: {
   lessonId: number;
+  editing?: EditorQuestion;
   disabled: boolean;
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
   onDone: () => void;
 }) => {
-  const [question, setQuestion] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [options, setOptions] = useState<EditorOption[]>([
-    { id: 0, text: "", correct: true },
-    { id: 1, text: "", correct: false },
-  ]);
+  const [question, setQuestion] = useState(editing?.question ?? "");
+  const [explanation, setExplanation] = useState(editing?.explanation ?? "");
+  const [options, setOptions] = useState<EditorOption[]>(
+    editing
+      ? editing.options.map((o, i) => ({ id: i, text: o.text, correct: o.correct }))
+      : [
+          { id: 0, text: "", correct: true },
+          { id: 1, text: "", correct: false },
+        ]
+  );
 
   const setOption = (index: number, patch: Partial<EditorOption>) =>
     setOptions((prev) =>
@@ -375,14 +442,21 @@ const QuestionForm = ({
 
     run(
       () =>
-        createQuestion({
-          lessonId,
-          type: "SELECT",
-          question,
-          explanation: explanation || undefined,
-          options: cleaned,
-        }),
-      "Question added."
+        editing
+          ? updateQuestion({
+              questionId: editing.id,
+              question,
+              explanation: explanation || undefined,
+              options: cleaned,
+            })
+          : createQuestion({
+              lessonId,
+              type: "SELECT",
+              question,
+              explanation: explanation || undefined,
+              options: cleaned,
+            }),
+      editing ? "Question updated." : "Question added."
     );
     onDone();
   };
