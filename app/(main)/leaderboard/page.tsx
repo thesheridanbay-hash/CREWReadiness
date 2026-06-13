@@ -2,11 +2,11 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { FeedWrapper } from "@/shared/components/feed-wrapper";
-import { Quests } from "@/components/quests";
+import { Quests } from "@/features/learning/ui/quests";
 import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { Avatar, AvatarImage } from "@/shared/ui/avatar";
 import { Separator } from "@/shared/ui/separator";
-import { UserProgress } from "@/components/user-progress";
+import { UserProgress } from "@/features/learning/ui/user-progress";
 import { getTopTenUsers, getUserProgress } from "@/db/queries";
 
 const LeaderboardPage = async () => {

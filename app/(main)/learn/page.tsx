@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { FeedWrapper } from "@/shared/components/feed-wrapper";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { Quests } from "@/components/quests";
+import { LanguageSwitcher } from "@/app-shell/language-switcher";
+import { Quests } from "@/features/learning/ui/quests";
 import { StickyWrapper } from "@/shared/components/sticky-wrapper";
-import { UserProgress } from "@/components/user-progress";
+import { UserProgress } from "@/features/learning/ui/user-progress";
 import { getViewerLanguagePreference } from "@/features/courses/translations";
 import {
   getCourseProgress,

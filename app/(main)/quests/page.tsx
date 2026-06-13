@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { FeedWrapper } from "@/shared/components/feed-wrapper";
 import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { Progress } from "@/shared/ui/progress";
-import { UserProgress } from "@/components/user-progress";
+import { UserProgress } from "@/features/learning/ui/user-progress";
 import { QUESTS } from "@/shared/constants";
 import { getUserProgress } from "@/db/queries";
 
