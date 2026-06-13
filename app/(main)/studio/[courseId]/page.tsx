@@ -6,6 +6,7 @@ import {
   getCourseTranslationStatus,
   type CourseTranslationStatus,
 } from "@/actions/course-translate";
+import { getCourseListing, type CourseListingInfo } from "@/actions/marketplace";
 import { getSession } from "@/lib/auth/session";
 import { getCourseTree } from "@/lib/content/queries";
 import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
@@ -37,6 +38,9 @@ const CourseStudioPage = async ({ params }: PageProps) => {
   const translationStatus: CourseTranslationStatus = translationResult.ok
     ? translationResult.data
     : { primaryLanguage: DEFAULT_LANGUAGE, totalLessons: 0, languages: [] };
+
+  const listingResult = await getCourseListing({ courseId: Number(courseId) });
+  const listing: CourseListingInfo = listingResult.ok ? listingResult.data : null;
 
   const course: EditorCourse = {
     id: tree.id,
@@ -106,6 +110,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
         course={course}
         assetStatus={assetStatus}
         translationStatus={translationStatus}
+        listing={listing}
       />
     </div>
   );
