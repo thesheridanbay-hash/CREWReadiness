@@ -39,6 +39,17 @@ const CourseStudioPage = async ({ params }: PageProps) => {
         lessons: unit.lessons.map((lesson) => ({
           id: lesson.id,
           title: lesson.title,
+          teachingText: lesson.teachingText,
+          images: lesson.assets.map((asset) => ({
+            id: asset.id,
+            ref: asset.ref,
+            kind: asset.kind,
+            status: asset.status,
+            // Generated art is served through the authed proxy.
+            src: asset.status === "GENERATED" && asset.mediaAssetId
+              ? `/api/media/${asset.mediaAssetId}`
+              : null,
+          })),
           questions: lesson.questions.map((question) => ({
             id: question.id,
             question: question.question,
