@@ -20,10 +20,12 @@ import {
 } from "@/actions/content";
 import { Button } from "@/components/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
+import type { CourseTranslationStatus } from "@/actions/course-translate";
 import type { Result } from "@/lib/errors";
 
 import { AssetModal, type EditableAsset } from "./asset-modal";
 import { GenerateImagesButton } from "./generate-images-button";
+import { TranslatePanel } from "./translate-panel";
 
 export type EditorOption = { id: number; text: string; correct: boolean };
 export type EditorQuestion = {
@@ -68,9 +70,11 @@ const inputClass =
 export const StudioEditor = ({
   course,
   assetStatus,
+  translationStatus,
 }: {
   course: EditorCourse;
   assetStatus: CourseAssetStatus;
+  translationStatus: CourseTranslationStatus;
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -117,6 +121,8 @@ export const StudioEditor = ({
           </Button>
         </div>
       </div>
+
+      <TranslatePanel courseId={course.id} status={translationStatus} />
 
       <div className="flex flex-col gap-y-4">
         {course.modules.map((module) => (
