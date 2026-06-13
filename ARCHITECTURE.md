@@ -105,10 +105,12 @@ each other only via a defined surface; `shared/` never imports `features/`; only
 - [x] Phase 1 — shared foundation → `src/shared` (errors, config, constants, store, ui, utils, db/scoped, use-is-client, modals + presentational components)
 - [x] Phase 2 — all domains → `src/features` (media, billing, marketplace, learning, ai, courses, coaching, notifications, platform) + nav → `src/app-shell` + feature UI → `features/*/ui`. `components/` removed.
   - **10 green commits on `chore/repo-reshape`.** Every commit typecheck+lint+unit green; each commit is structural XOR behavioral; the `@/*` alias is dual-root (`src/` first, root fallback) during migration.
-- [ ] **God-file splits (behavioral) — DEFERRED to run WITH Phase F.** `ai/gateway.ts`, courses `content` actions, learning `learning-loop` actions, `studio-editor.tsx`. They change server-action / client-component behavior, which the static gates (typecheck/lint/unit) do NOT fully verify — they need runtime/E2E on a preview deploy.
-- [ ] **Phase F (needs deploy env)** — move `lib/auth` + `actions/auth` + `db/` + `app/` + `proxy.ts` + `instrumentation.ts` into `src/`; recompute Better Auth relative imports + run the Better Auth CLI generate `--dry-run` (the gate the static checks can't replace); deploy a preview + verify `GET /api/inngest` lists 7 functions and one job runs E2E; flip the boundary lint WARN→ERROR and triage the cross-feature violations.
+- [x] **Phase F — auth/db/app/proxy/instrumentation/inngest → `src/`.** `auth.ts`'s `../../db` relative imports stay correct (both moved one level deeper); build registers `ƒ Proxy (Middleware)`; app boots and all routes return 200 with `DEV_AUTH_BYPASS=true`. Boundary lint flipped to **ERROR** (`import/no-cycle` + `shared/` value-import leaf rule), verified to fire on a planted violation.
+- [x] **God-file splits (behavior-preserving, build-verified).** `ai/gateway.ts` 762→525 (`provider-resolvers.ts`); `learning-loop.ts` 626→330 (`learning-loop-internal.ts`); `content.ts` 565→520 (`content-helpers.ts`); `studio-editor.tsx` 603→235 (`studio-editor-types.ts` + `row.tsx` + `question-form.tsx` + `lesson-block.tsx`). Verbatim moves; typecheck + lint (0 unused) + unit + build green.
 
-Why stop here: everything verifiable by static gates (typecheck/lint/unit) is done and green.
-Everything remaining (auth's Better-Auth-CLI relative imports, the router/db move, the
-god-file behavioral splits) needs runtime/deploy verification — that's Phase F, and it needs
-your Vercel/Inngest/Better-Auth environment.
+> **VERIFY BEFORE MERGING TO `main`** (main auto-deploys to production). The auth/db/app
+> move and the god-file splits change server-action / Better-Auth-CLI / React behavior the
+> static gates can't fully confirm. On a **preview deploy**, E2E-verify: owner sign-in works
+> (and Better Auth CLI `generate --dry-run` is clean), `GET /api/inngest` lists 7 functions
+> and one job runs end-to-end, and the studio editor still saves a question. Do NOT merge
+> unverified.
