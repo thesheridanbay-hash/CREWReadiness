@@ -1,5 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
+
+import { Wordmark } from "@/shared/components/wordmark";
 
 /**
  * Public marketing landing (go-live B). Lives at "/" (made public in proxy.ts).
@@ -9,13 +10,7 @@ const MarketingPage = () => {
   return (
     <div className="min-h-screen bg-white text-neutral-700">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-x-2">
-          <Image src="/logo.svg" alt="SonarCoach" width={36} height={36} />
-          <span className="text-xl font-extrabold tracking-wide">
-            <span className="text-teal-600">Sonar</span>
-            <span className="text-green-600">Coach</span>
-          </span>
-        </div>
+        <Wordmark iconSize={36} textClass="text-xl" />
         <div className="flex items-center gap-x-3">
           <Link
             href="/sign-in"

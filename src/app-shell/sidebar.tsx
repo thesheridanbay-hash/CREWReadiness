@@ -8,6 +8,7 @@ import { cn } from "@/shared/utils";
 
 import { NotificationBell } from "./notification-bell";
 import { SidebarItem } from "@/shared/components/sidebar-item";
+import { Wordmark } from "@/shared/components/wordmark";
 
 type SidebarProps = {
   className?: string;
@@ -29,14 +30,7 @@ export const Sidebar = async ({ className }: SidebarProps) => {
       )}
     >
       <Link href="/learn">
-        <div className="flex items-center gap-x-3 pb-7 pl-4 pt-8">
-          <Image src="/logo.svg" alt="SonarCoach" height={40} width={40} />
-
-          <h1 className="text-2xl font-extrabold tracking-wide">
-            <span className="text-teal-600">Sonar</span>
-            <span className="text-green-600">Coach</span>
-          </h1>
-        </div>
+        <Wordmark iconSize={40} textClass="text-2xl" className="pb-7 pl-4 pt-8" />
       </Link>
 
       <div className="flex flex-1 flex-col gap-y-2">
