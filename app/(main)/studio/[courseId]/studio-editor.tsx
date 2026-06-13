@@ -32,6 +32,7 @@ import type { Result } from "@/lib/errors";
 import { AssetModal, type EditableAsset } from "./asset-modal";
 import { AssignPanel } from "./assign-panel";
 import { GenerateImagesButton } from "./generate-images-button";
+import { LessonTeachingEditor } from "./lesson-teaching-editor";
 import { MarketplacePublishPanel } from "./marketplace-publish-panel";
 import { TranslatePanel } from "./translate-panel";
 
@@ -267,7 +268,6 @@ const LessonBlock = ({
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
 }) => {
   const [showForm, setShowForm] = useState(false);
-  const [showTeaching, setShowTeaching] = useState(false);
   const [editingImage, setEditingImage] = useState<EditableAsset | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<EditorQuestion | null>(null);
 
@@ -279,30 +279,10 @@ const LessonBlock = ({
         disabled={disabled}
       />
 
-      {lesson.teachingText && (
-        <div className="ml-2 mt-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
-            Teaching
-          </p>
-          <p
-            className={
-              "mt-0.5 whitespace-pre-wrap text-xs text-neutral-500" +
-              (showTeaching ? "" : " line-clamp-3")
-            }
-          >
-            {lesson.teachingText}
-          </p>
-          {lesson.teachingText.length > 160 && (
-            <button
-              type="button"
-              onClick={() => setShowTeaching((v) => !v)}
-              className="mt-0.5 text-xs font-bold text-sky-600 hover:underline"
-            >
-              {showTeaching ? "Show less" : "Show more"}
-            </button>
-          )}
-        </div>
-      )}
+      <LessonTeachingEditor
+        lessonId={lesson.id}
+        initial={lesson.teachingText ?? ""}
+      />
 
       {lesson.images.length > 0 && (
         <div className="ml-2 mt-2">

@@ -14,6 +14,8 @@ import {
   questions,
   units,
 } from "@/db/schema";
+import { improveText } from "@/lib/ai/gateway";
+import type { ImproveFieldKind } from "@/lib/ai/prompts";
 import { EVENTS, inngest } from "@/inngest/client";
 import type { Session } from "@/lib/auth/session";
 import { getSession } from "@/lib/auth/session";
@@ -262,6 +264,115 @@ export const createLesson = async (input: unknown): Promise<Result<{ id: number 
         .returning();
       revalidatePath(`/studio/${parent.module.courseId}`);
       return ok({ id: row.id });
+    });
+  });
+
+/* ───────────────── Lesson edit + AI-magic per-field ───────────────── */
+
+const updateLessonSchema = z.object({
+  lessonId: z.number().int().positive(),
+  title: z.string().trim().min(1).max(200).optional(),
+  teachingText: z.string().max(6000).nullable().optional(),
+});
+
+/** Manual lesson edit: title and/or teaching text (markdown). */
+export const updateLesson = async (input: unknown): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = updateLessonSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const set: Partial<{ title: string; teachingText: string | null }> = {};
+      if (parsed.data.title !== undefined) set.title = parsed.data.title;
+      if (parsed.data.teachingText !== undefined)
+        set.teachingText = parsed.data.teachingText;
+      if (Object.keys(set).length === 0) return ok(null);
+
+      const [row] = await tx
+        .update(lessons)
+        .set(set)
+        .where(eq(lessons.id, parsed.data.lessonId))
+        .returning({ id: lessons.id });
+      if (!row) return err("not_found", "Lesson not found.");
+      revalidatePath("/studio", "layout");
+      revalidatePath("/learn");
+      return ok(null);
+    });
+  });
+
+const improveFieldSchema = z.object({
+  field: z.enum([
+    "lessonTeaching",
+    "lessonTitle",
+    "questionPrompt",
+    "explanation",
+    "option",
+  ]),
+  id: z.number().int().positive(),
+  instruction: z.string().trim().max(1000).optional(),
+});
+
+/**
+ * AI-magic: rewrite/format ONE field in place. Loads the current value from the
+ * DB (trusted, RLS-scoped), runs the text model (optionally with the owner's
+ * instruction), persists the result, and returns it. Mirrors the image
+ * regenerate-with-prompt flow for text.
+ */
+export const improveField = async (
+  input: unknown
+): Promise<Result<{ text: string }>> =>
+  guard<{ text: string }>(async () => {
+    const parsed = improveFieldSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+    const { field, id, instruction } = parsed.data;
+
+    return scoped<Result<{ text: string }>>(auth, async (tx) => {
+      let current = "";
+      if (field === "lessonTeaching" || field === "lessonTitle") {
+        const lesson = await tx.query.lessons.findFirst({
+          where: eq(lessons.id, id),
+        });
+        if (!lesson) return err("not_found", "Lesson not found.");
+        current = field === "lessonTitle" ? lesson.title : lesson.teachingText ?? "";
+      } else if (field === "questionPrompt" || field === "explanation") {
+        const question = await tx.query.questions.findFirst({
+          where: eq(questions.id, id),
+        });
+        if (!question) return err("not_found", "Question not found.");
+        current =
+          field === "explanation" ? question.explanation ?? "" : question.question;
+      } else {
+        const option = await tx.query.questionOptions.findFirst({
+          where: eq(questionOptions.id, id),
+        });
+        if (!option) return err("not_found", "Answer option not found.");
+        current = option.text;
+      }
+
+      const text = await improveText(
+        { tx, companyId: auth.companyId },
+        { fieldKind: field as ImproveFieldKind, current, instruction }
+      );
+
+      if (field === "lessonTitle") {
+        await tx.update(lessons).set({ title: text }).where(eq(lessons.id, id));
+      } else if (field === "lessonTeaching") {
+        await tx.update(lessons).set({ teachingText: text }).where(eq(lessons.id, id));
+      } else if (field === "questionPrompt") {
+        await tx.update(questions).set({ question: text }).where(eq(questions.id, id));
+      } else if (field === "explanation") {
+        await tx.update(questions).set({ explanation: text }).where(eq(questions.id, id));
+      } else {
+        await tx.update(questionOptions).set({ text }).where(eq(questionOptions.id, id));
+      }
+
+      revalidatePath("/studio", "layout");
+      revalidatePath("/learn");
+      return ok({ text });
     });
   });
 

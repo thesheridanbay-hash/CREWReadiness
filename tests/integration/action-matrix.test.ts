@@ -55,8 +55,10 @@ import {
   createCourse,
   createQuestion,
   deleteCourse,
+  improveField,
   publishCourse,
   restoreCourse,
+  updateLesson,
 } from "@/actions/content";
 import {
   adoptListing,
@@ -278,6 +280,30 @@ const matrix: MatrixRow[] = [
     run: () => restoreCourse({ courseId: 1 }),
     session: null,
     expectCode: "unauthorized",
+  },
+  {
+    name: "updateLesson is forbidden for employees",
+    run: () => updateLesson({ lessonId: 1, teachingText: "hi" }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "improveField rejects an unknown field",
+    run: () => improveField({ field: "bogus", id: 1 }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "improveField requires a session",
+    run: () => improveField({ field: "lessonTeaching", id: 1 }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "improveField is forbidden for employees",
+    run: () => improveField({ field: "lessonTeaching", id: 1 }),
+    session: employeeSession,
+    expectCode: "forbidden",
   },
   {
     name: "adoptListing rejects a malformed listing id",

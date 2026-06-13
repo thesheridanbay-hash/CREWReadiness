@@ -22,15 +22,18 @@ import {
   buildImagePrompt,
   buildLessonPrompt,
   buildPhotoPrompt,
+  buildImproveTextPrompt,
   buildReteachPrompt,
   buildTranslatePrompt,
   buildVariantPrompt,
   type CourseBrief,
+  type ImproveFieldKind,
 } from "./prompts";
 import {
   AI_TIMEOUTS,
   buildLessonTranslationSchema,
   courseDraftSchema,
+  improvedTextSchema,
   lessonDraftSchema,
   photoAnalysisSchema,
   variantBatchSchema,
@@ -403,6 +406,30 @@ export const translateLesson = async (
   );
 
   return data;
+};
+
+/**
+ * Improve/format ONE lesson field (AI-magic editing). Uses the text provider;
+ * the owner's optional instruction is sandwiched as data. Returns the new text.
+ */
+export const improveText = async (
+  ctx: AiContext,
+  args: { fieldKind: ImproveFieldKind; current: string; instruction?: string }
+): Promise<string> => {
+  const { adapter, providerName, alertThresholdUsd } =
+    await resolveProvider(ctx);
+
+  const { data, usage } = await validated(
+    improvedTextSchema,
+    () =>
+      adapter.generateJson({ prompt: buildImproveTextPrompt(args) }),
+    AI_TIMEOUTS.improveText,
+    "improveText"
+  );
+
+  await recordUsage(ctx, "improveText", providerName, usage, alertThresholdUsd);
+
+  return data.text;
 };
 
 export const generateVariants = async (
