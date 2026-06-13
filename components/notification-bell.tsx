@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/actions/notifications";
+} from "@/features/notifications/actions";
 import type { NotificationItem } from "@/lib/content/notification-queries";
 
 /**

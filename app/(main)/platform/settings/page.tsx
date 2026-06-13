@@ -4,7 +4,7 @@ import {
   getCourseBuilderSitePrompt,
   getImageProviderView,
   getProviderSettingsView,
-} from "@/actions/platform";
+} from "@/features/platform/actions";
 import { getSession } from "@/lib/auth/session";
 
 import { ImageProviderForm } from "./image-form";

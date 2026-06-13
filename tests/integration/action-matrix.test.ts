@@ -70,7 +70,7 @@ import { assignCourse, unassignCourse } from "@/actions/assignments";
 import {
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/actions/notifications";
+} from "@/features/notifications/actions";
 
 const ownerSession: Session = {
   userId: "user-1",

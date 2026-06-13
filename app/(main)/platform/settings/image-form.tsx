@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { upsertImageProviderSettings, type ImageProviderView } from "@/actions/platform";
+import { upsertImageProviderSettings, type ImageProviderView } from "@/features/platform/actions";
 import { Button } from "@/shared/ui/button";
 
 const inputClass =

@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { resolveParkedConcept } from "@/actions/coaching";
+import { resolveParkedConcept } from "@/features/coaching/actions";
 import { Button } from "@/shared/ui/button";
 import type { ParkedItem } from "@/lib/content/coaching-queries";
 

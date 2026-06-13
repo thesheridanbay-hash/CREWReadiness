@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { upsertCourseBuilderSitePrompt } from "@/actions/platform";
+import { upsertCourseBuilderSitePrompt } from "@/features/platform/actions";
 import { Button } from "@/shared/ui/button";
 
 /**
