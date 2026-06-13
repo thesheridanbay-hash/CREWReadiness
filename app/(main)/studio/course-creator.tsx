@@ -31,7 +31,7 @@ export const CourseCreator = () => {
           Create manually
         </button>
         <button type="button" className={tabClass(mode === "ai")} onClick={() => setMode("ai")}>
-          ✨ Build with AI
+          Build with AI
         </button>
       </div>
 

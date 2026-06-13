@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { getSession } from "@/lib/auth/session";
 import { getStudioCourses } from "@/lib/content/queries";
+import { Button } from "@/components/ui/button";
 
 import { CourseCreator } from "./course-creator";
 
@@ -23,12 +24,9 @@ const StudioPage = async () => {
             Build the training your crew completes in the field.
           </p>
         </div>
-        <Link
-          href="/studio/review"
-          className="rounded-xl border-2 px-4 py-2 text-sm font-bold text-sky-600 hover:bg-slate-50"
-        >
-          Review queue
-        </Link>
+        <Button asChild variant="primaryOutline">
+          <Link href="/studio/review">Review queue</Link>
+        </Button>
       </div>
 
       <CourseCreator />

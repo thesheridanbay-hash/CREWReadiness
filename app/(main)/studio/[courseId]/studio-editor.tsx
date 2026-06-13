@@ -85,7 +85,7 @@ export const StudioEditor = ({
 
   return (
     <div className="mt-3">
-      <div className="mb-6 flex items-center justify-between gap-x-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-x-3">
           <h1 className="text-2xl font-bold text-neutral-700">{course.title}</h1>
           <span
@@ -204,9 +204,10 @@ const LessonBlock = ({
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
 }) => {
   const [showForm, setShowForm] = useState(false);
+  const [showTeaching, setShowTeaching] = useState(false);
 
   return (
-    <div className="rounded-lg bg-slate-50 p-3">
+    <div className="rounded-xl bg-slate-50 p-3">
       <Row
         label={`Lesson: ${lesson.title} (${lesson.questions.length} q)`}
         onDelete={() => run(() => deleteLesson({ id: lesson.id }), "Lesson removed.")}
@@ -215,18 +216,32 @@ const LessonBlock = ({
 
       {lesson.teachingText && (
         <div className="ml-2 mt-2">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+          <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
             Teaching
           </p>
-          <p className="mt-0.5 max-h-24 overflow-y-auto whitespace-pre-wrap text-xs text-neutral-500">
+          <p
+            className={
+              "mt-0.5 whitespace-pre-wrap text-xs text-neutral-500" +
+              (showTeaching ? "" : " line-clamp-3")
+            }
+          >
             {lesson.teachingText}
           </p>
+          {lesson.teachingText.length > 160 && (
+            <button
+              type="button"
+              onClick={() => setShowTeaching((v) => !v)}
+              className="mt-0.5 text-xs font-bold text-sky-600 hover:underline"
+            >
+              {showTeaching ? "Show less" : "Show more"}
+            </button>
+          )}
         </div>
       )}
 
       {lesson.images.length > 0 && (
         <div className="ml-2 mt-2">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+          <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
             Images
           </p>
           <div className="mt-1 flex flex-wrap gap-2">
@@ -235,15 +250,15 @@ const LessonBlock = ({
                 {img.src ? (
                   <Image
                     src={img.src}
-                    alt={img.ref}
-                    width={56}
-                    height={56}
-                    className="h-14 w-14 rounded-md border object-cover"
+                    alt={lesson.title}
+                    width={72}
+                    height={72}
+                    className="h-[72px] w-[72px] rounded-md border object-cover"
                   />
                 ) : (
                   <div
                     className={
-                      "flex h-14 w-14 items-center justify-center rounded-md border border-dashed text-[10px] " +
+                      "flex h-[72px] w-[72px] items-center justify-center rounded-md border border-dashed text-xs " +
                       (img.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
                     }
                   >
@@ -254,7 +269,7 @@ const LessonBlock = ({
                         : "pending"}
                   </div>
                 )}
-                <span className="text-[10px] text-neutral-400">
+                <span className="text-xs text-neutral-400">
                   {img.ref} · {img.kind.toLowerCase()}
                 </span>
               </div>
@@ -265,7 +280,7 @@ const LessonBlock = ({
 
       {lesson.audio && (
         <div className="ml-2 mt-2">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+          <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
             Voiceover
           </p>
           {lesson.audio.src ? (
@@ -285,15 +300,16 @@ const LessonBlock = ({
         </div>
       )}
 
-      <ul className="ml-2 mt-2 list-disc pl-4 text-sm text-neutral-600">
+      <ul className="ml-2 mt-2 flex flex-col gap-y-1 pl-1 text-sm text-neutral-600">
         {lesson.questions.map((question) => (
           <li key={question.id} className="flex items-start justify-between gap-x-2">
-            <span>{question.question}</span>
+            <span className="flex-1">{question.question}</span>
             <button
               type="button"
+              aria-label="Delete question"
               onClick={() => run(() => deleteQuestion({ id: question.id }))}
               disabled={disabled}
-              className="text-xs font-bold uppercase text-rose-400 hover:underline disabled:opacity-50"
+              className="-mr-1 rounded p-1.5 text-sm font-bold leading-none text-rose-400 hover:bg-rose-50 disabled:opacity-50"
             >
               ×
             </button>

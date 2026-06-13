@@ -31,6 +31,7 @@ export const AiCourseWizard = () => {
   const [topics, setTopics] = useState("");
   const [employeeLevel, setEmployeeLevel] = useState("");
   const [style, setStyle] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
 
   const canSubmit = Boolean(idea.trim() || title.trim() || topics.trim() || goals.trim());
 
@@ -141,11 +142,23 @@ export const AiCourseWizard = () => {
           onChange={(event) => setIdea(event.target.value)}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Describe it in plain words. The fields below are optional — fill in
-          what helps.
+          Describe it in plain words — that&apos;s all you need. Add structure
+          below only if you want to.
         </p>
       </div>
 
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowDetails((v) => !v)}
+          className="text-sm font-bold text-sky-600 hover:underline"
+        >
+          {showDetails ? "− Hide details" : "+ Add details (optional)"}
+        </button>
+      </div>
+
+      {showDetails && (
+        <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-bold text-neutral-700">
@@ -222,8 +235,10 @@ export const AiCourseWizard = () => {
           onChange={(event) => setGoals(event.target.value)}
         />
       </div>
+        </>
+      )}
 
-      <div className="flex items-center justify-between gap-x-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="text-xs text-muted-foreground">
           Connect your models in{" "}
           <Link href="/platform/settings" className="font-bold underline">
