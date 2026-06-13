@@ -366,6 +366,10 @@ export const assignments = pgTable(
       onDelete: "cascade",
     }),
     assignedBy: text("assigned_by").notNull(),
+    /** Optional completion deadline; null = no due date. Overdue is computed. */
+    dueDate: timestamp("due_date"),
+    /** Required training (vs optional/self-serve). Default required. */
+    required: boolean("required").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [

@@ -22,9 +22,14 @@ import { Button } from "@/components/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { CourseTranslationStatus } from "@/actions/course-translate";
 import type { CourseListingInfo } from "@/actions/marketplace";
+import type {
+  AssignTargets,
+  CourseAssignmentRow,
+} from "@/lib/content/assignment-queries";
 import type { Result } from "@/lib/errors";
 
 import { AssetModal, type EditableAsset } from "./asset-modal";
+import { AssignPanel } from "./assign-panel";
 import { GenerateImagesButton } from "./generate-images-button";
 import { MarketplacePublishPanel } from "./marketplace-publish-panel";
 import { TranslatePanel } from "./translate-panel";
@@ -75,12 +80,16 @@ export const StudioEditor = ({
   translationStatus,
   listing,
   isPlatform,
+  assignTargets,
+  courseAssignments,
 }: {
   course: EditorCourse;
   assetStatus: CourseAssetStatus;
   translationStatus: CourseTranslationStatus;
   listing: CourseListingInfo;
   isPlatform: boolean;
+  assignTargets: AssignTargets;
+  courseAssignments: CourseAssignmentRow[];
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -127,6 +136,12 @@ export const StudioEditor = ({
           </Button>
         </div>
       </div>
+
+      <AssignPanel
+        courseId={course.id}
+        targets={assignTargets}
+        current={courseAssignments}
+      />
 
       <TranslatePanel courseId={course.id} status={translationStatus} />
 
