@@ -51,7 +51,11 @@ import {
 } from "@/actions/learning-loop";
 import { upsertUserProgress } from "@/actions/user-progress";
 import { createCourse, createQuestion, publishCourse } from "@/actions/content";
-import { adoptListing } from "@/actions/marketplace";
+import {
+  adoptListing,
+  publishCourseToMarketplace,
+  unlistListing,
+} from "@/actions/marketplace";
 
 const ownerSession: Session = {
   userId: "user-1",
@@ -255,6 +259,44 @@ const matrix: MatrixRow[] = [
     name: "adoptListing is forbidden for employees",
     run: () =>
       adoptListing({ listingId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910" }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "publishCourseToMarketplace rejects an unknown category",
+    run: () =>
+      publishCourseToMarketplace({
+        courseId: 1,
+        category: "not-a-category",
+        description: "x",
+      }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "publishCourseToMarketplace is forbidden for employees",
+    run: () =>
+      publishCourseToMarketplace({ courseId: 1, category: "safety" }),
+    session: employeeSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "publishCourseToMarketplace requires a session",
+    run: () =>
+      publishCourseToMarketplace({ courseId: 1, category: "safety" }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "unlistListing rejects a malformed id",
+    run: () => unlistListing({ listingId: "nope" }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "unlistListing is forbidden for employees",
+    run: () =>
+      unlistListing({ listingId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910" }),
     session: employeeSession,
     expectCode: "forbidden",
   },
