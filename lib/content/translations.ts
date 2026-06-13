@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { and, eq, inArray } from "drizzle-orm";
 
 import {
@@ -6,7 +8,8 @@ import {
   questionTranslations,
   userProgress,
 } from "@/db/schema";
-import type { ScopedTx } from "@/lib/db/scoped";
+import { getSession } from "@/lib/auth/session";
+import { scoped, type ScopedTx } from "@/lib/db/scoped";
 
 import { DEFAULT_LANGUAGE, resolveReadingLanguage } from "./languages";
 
@@ -47,6 +50,32 @@ export const getReadingLanguage = async (
 
   return { lang, primary, needsOverlay: lang !== primary };
 };
+
+/**
+ * The viewer's RAW language preference (null = inherit) + the company primary,
+ * for the self-service language switcher. Unlike getReadingLanguage this keeps
+ * the null so the picker can show "Default" vs an explicit choice.
+ */
+export const getViewerLanguagePreference = cache(
+  async (): Promise<{ language: string | null; primary: string }> => {
+    const session = await getSession();
+    if (!session) return { language: null, primary: DEFAULT_LANGUAGE };
+
+    return scoped(session, async (tx) => {
+      const progress = await tx.query.userProgress.findFirst({
+        where: eq(userProgress.userId, session.userId),
+        columns: { language: true },
+      });
+      const settings = await tx.query.companySettings.findFirst({
+        columns: { primaryLanguage: true },
+      });
+      return {
+        language: progress?.language ?? null,
+        primary: settings?.primaryLanguage ?? DEFAULT_LANGUAGE,
+      };
+    });
+  }
+);
 
 /** Lesson title + teaching text in `lang`, or null when untranslated. */
 export const lessonTeachingOverlay = async (
