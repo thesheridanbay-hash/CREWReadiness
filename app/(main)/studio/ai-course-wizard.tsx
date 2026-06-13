@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * AI Course Builder wizard (reference items 3 + 5). The owner describes the

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { resolveParkedConcept } from "@/actions/coaching";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { ParkedItem } from "@/lib/content/coaching-queries";
 
 export const CoachingList = ({ items }: { items: ParkedItem[] }) => {

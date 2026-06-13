@@ -8,7 +8,7 @@ import {
   categoryLabel,
 } from "@/lib/marketplace/categories";
 import { getMarketplaceListings } from "@/lib/marketplace/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils";
 
 type PageProps = {
   searchParams: Promise<{ category?: string; q?: string }>;

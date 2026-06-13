@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { approveReviewItem, rejectReviewItem } from "@/actions/review";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { ReviewItem } from "@/lib/content/review-queries";
 
 export const ReviewList = ({ items }: { items: ReviewItem[] }) => {

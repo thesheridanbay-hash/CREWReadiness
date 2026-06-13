@@ -3,7 +3,7 @@
 import { aiJobs } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { courseBuilderInputSchema } from "@/lib/content/course-builder-schema";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 import { EVENTS, inngest } from "@/inngest/client";

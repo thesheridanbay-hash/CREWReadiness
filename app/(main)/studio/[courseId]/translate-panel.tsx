@@ -9,7 +9,7 @@ import type {
   CourseLanguageProgress,
   CourseTranslationStatus,
 } from "@/actions/course-translate";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { languageLabel } from "@/lib/content/languages";
 
 /**

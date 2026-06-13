@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { FeedWrapper } from "@/components/feed-wrapper";
 import { Quests } from "@/components/quests";
 import { StickyWrapper } from "@/components/sticky-wrapper";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage } from "@/shared/ui/avatar";
+import { Separator } from "@/shared/ui/separator";
 import { UserProgress } from "@/components/user-progress";
 import { getTopTenUsers, getUserProgress } from "@/db/queries";
 

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { adoptListing } from "@/actions/marketplace";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * Adopt a listing into the current company (course marketplace). Calls the

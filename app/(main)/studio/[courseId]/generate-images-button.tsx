@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { resetFailedAssets, type CourseAssetStatus } from "@/actions/course-assets";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * Drives synchronous, one-at-a-time image generation (AI Course Builder, free

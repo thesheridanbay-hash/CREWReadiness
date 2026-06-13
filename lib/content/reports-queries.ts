@@ -3,7 +3,7 @@ import { cache } from "react";
 import { sql } from "drizzle-orm";
 
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Reporting (T9 — D21): live SQL aggregates over the append-only attempts log.

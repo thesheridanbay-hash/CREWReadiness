@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { BillingStatus } from "@/lib/billing/status";
 
 /**

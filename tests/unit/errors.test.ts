@@ -8,7 +8,7 @@ vi.mock("@sentry/nextjs", () => ({
   captureRequestError: vi.fn(),
 }));
 
-import { TenantContextError } from "@/lib/db/scoped";
+import { TenantContextError } from "@/shared/db/scoped";
 import { AppActionError, err, fromZod, guard, ok } from "@/shared/errors";
 
 describe("Result envelope (T7/D15)", () => {

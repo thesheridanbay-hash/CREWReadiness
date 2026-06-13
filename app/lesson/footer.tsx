@@ -1,8 +1,8 @@
 import { CheckCircle, XCircle } from "lucide-react";
 import { useKey, useMedia } from "react-use";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/utils";
 
 type FooterProps = {
   onCheck: () => void;

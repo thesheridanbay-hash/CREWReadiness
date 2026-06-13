@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "@/shared/ui/progress";
 import { useExitModal } from "@/shared/store/use-exit-modal";
 
 type HeaderProps = {

@@ -10,7 +10,7 @@ import { translateLesson } from "@/lib/ai/gateway";
 import type { LessonTranslationResult, TranslationSource } from "@/lib/ai/types";
 import { AppActionError } from "@/shared/errors";
 import { languageLabel } from "@/lib/content/languages";
-import type { ScopedTx } from "@/lib/db/scoped";
+import type { ScopedTx } from "@/shared/db/scoped";
 
 /**
  * Per-lesson translation work (multi-language courses, PR-B). Shared by the

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/ui/dialog";
 import { useIsClient } from "@/lib/use-is-client";
 import { usePracticeModal } from "@/shared/store/use-practice-modal";
 

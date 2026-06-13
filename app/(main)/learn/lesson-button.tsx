@@ -4,8 +4,8 @@ import { Check, Crown, Star } from "lucide-react";
 import Link from "next/link";
 import { CircularProgressbarWithChildren } from "react-circular-progressbar";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/utils";
 
 import "react-circular-progressbar/dist/styles.css";
 

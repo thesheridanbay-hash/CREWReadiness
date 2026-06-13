@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { upsertCourseBuilderSitePrompt } from "@/actions/platform";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * Platform-wide "master prompt" for the AI Course Builder. Applies to every

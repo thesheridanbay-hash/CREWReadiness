@@ -8,7 +8,7 @@ import {
   courseBuilderInputSchema,
   type CourseBuilderInput,
 } from "@/lib/content/course-builder-schema";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Synchronous AI course generation (AI Course Builder).

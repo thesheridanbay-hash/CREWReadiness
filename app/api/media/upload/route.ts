@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { mediaAssets } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 import { stripJpegMetadata } from "@/lib/media/strip-exif";
 import { validateUpload, type MediaKind } from "@/lib/media/policy";
 

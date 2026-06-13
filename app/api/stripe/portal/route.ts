@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { subscriptions } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { isStripeConfigured, stripe } from "@/lib/billing/stripe";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Open the Stripe billing portal (manage/cancel/update card) for the company's

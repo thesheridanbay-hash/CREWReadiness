@@ -1,5 +1,5 @@
 import { questions } from "@/db/schema";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils";
 
 import { Card } from "./card";
 

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import db from "@/db/drizzle";
 import { mediaAssets } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Authed media proxy (T11 — D9/F8). Field photos contain faces, customer

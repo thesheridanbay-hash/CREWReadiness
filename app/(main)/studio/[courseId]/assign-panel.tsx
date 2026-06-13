@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { assignCourse, unassignCourse } from "@/actions/assignments";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type {
   AssignTargets,
   CourseAssignmentRow,

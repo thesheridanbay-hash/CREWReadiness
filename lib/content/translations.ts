@@ -9,7 +9,7 @@ import {
   userProgress,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { scoped, type ScopedTx } from "@/lib/db/scoped";
+import { scoped, type ScopedTx } from "@/shared/db/scoped";
 
 import { DEFAULT_LANGUAGE, resolveReadingLanguage } from "./languages";
 

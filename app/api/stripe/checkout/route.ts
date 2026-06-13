@@ -8,7 +8,7 @@ import {
   isStripeConfigured,
   stripe,
 } from "@/lib/billing/stripe";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Start a Stripe Checkout for the $99/mo plan (go-live B). Owner/manager only.

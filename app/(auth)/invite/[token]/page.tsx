@@ -5,7 +5,7 @@ import { use, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { acceptEmployeeInviteAction } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 const inputClass =
   "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-green-500";

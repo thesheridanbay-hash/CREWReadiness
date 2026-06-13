@@ -10,7 +10,7 @@ import {
 } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /** Crew roster (item 5): members + pending invites for the company. */
 

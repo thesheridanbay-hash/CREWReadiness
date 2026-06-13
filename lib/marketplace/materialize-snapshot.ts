@@ -10,7 +10,7 @@ import {
   questions,
   units,
 } from "@/db/schema";
-import type { ScopedTx } from "@/lib/db/scoped";
+import type { ScopedTx } from "@/shared/db/scoped";
 
 import type { CourseSnapshot } from "./snapshot";
 

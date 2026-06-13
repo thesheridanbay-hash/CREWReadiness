@@ -4,7 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { parkedConcepts } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /** Coaching queue (T12 — D23): parked concepts awaiting in-person coaching. */
 

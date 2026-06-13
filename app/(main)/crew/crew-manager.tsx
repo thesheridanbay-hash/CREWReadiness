@@ -10,7 +10,7 @@ import {
   resetEmployeePinAction,
   setCrewMemberLanguageAction,
 } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { CrewMember, PendingInvite } from "@/lib/content/crew-queries";
 import { SUPPORTED_LANGUAGES, languageLabel } from "@/lib/content/languages";
 

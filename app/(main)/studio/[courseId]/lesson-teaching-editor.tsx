@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { updateLesson } from "@/actions/content";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 import { AiFieldButton } from "./ai-field-button";
 

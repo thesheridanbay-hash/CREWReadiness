@@ -15,7 +15,7 @@ import {
   type LoopActionResult,
 } from "@/actions/learning-loop";
 import { Markdown } from "@/components/markdown";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { LessonTeaching } from "@/lib/content/queries";
 import type { LoopView } from "@/lib/learning-loop/views";
 import type { Result } from "@/shared/errors";

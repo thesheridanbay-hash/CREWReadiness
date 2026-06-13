@@ -19,7 +19,7 @@ import {
   publishCourse,
   updateQuestion,
 } from "@/actions/content";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { CourseTranslationStatus } from "@/actions/course-translate";
 import type { CourseListingInfo } from "@/actions/marketplace";

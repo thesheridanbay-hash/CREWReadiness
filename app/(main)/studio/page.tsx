@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { getSession } from "@/lib/auth/session";
 import { getArchivedCourses, getStudioCourses } from "@/lib/content/queries";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 import { ArchivedCourses } from "./archived-courses";
 import { CourseCreator } from "./course-creator";

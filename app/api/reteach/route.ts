@@ -5,7 +5,7 @@ import { z } from "zod";
 import { learningSessions, questionOptions, questions } from "@/db/schema";
 import { reteach, type ReteachResult } from "@/lib/ai/gateway";
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Live reteach stream (T8/D7). POST { sessionId } while the session is in the

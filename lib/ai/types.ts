@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { ScopedTx } from "@/lib/db/scoped";
+import type { ScopedTx } from "@/shared/db/scoped";
 
 /**
  * AI gateway contracts (T4 — D5/D19). All adapter outputs are zod-validated

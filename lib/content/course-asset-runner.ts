@@ -6,7 +6,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { courseAssets, courses, mediaAssets } from "@/db/schema";
 import { generateImage, generateSpeech } from "@/lib/ai/gateway";
 import type { ImageResult } from "@/lib/ai/types";
-import type { ScopedTx } from "@/lib/db/scoped";
+import type { ScopedTx } from "@/shared/db/scoped";
 
 /**
  * Shared course-image work (AI Course Builder), used by BOTH the synchronous

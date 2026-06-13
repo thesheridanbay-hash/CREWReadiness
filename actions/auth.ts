@@ -17,7 +17,7 @@ import {
 import { PIN_PATTERN } from "@/lib/auth/pin";
 import { getSession } from "@/lib/auth/session";
 import { isSupportedLanguage } from "@/lib/content/languages";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**

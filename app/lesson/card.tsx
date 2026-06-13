@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useAudio, useKey } from "react-use";
 
 import { questions } from "@/db/schema";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils";
 
 type CardProps = {
   id: number;

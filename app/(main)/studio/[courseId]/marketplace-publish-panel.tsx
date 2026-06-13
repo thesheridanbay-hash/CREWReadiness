@@ -11,7 +11,7 @@ import {
   unlistListing,
   type CourseListingInfo,
 } from "@/actions/marketplace";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace/categories";
 
 /**

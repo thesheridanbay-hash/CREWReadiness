@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import type { ZodError } from "zod";
 
-import { TenantContextError } from "@/lib/db/scoped";
+import { TenantContextError } from "@/shared/db/scoped";
 
 /**
  * Typed result envelope (T7 — D15).

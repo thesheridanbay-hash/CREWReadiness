@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { aiJobs } from "@/db/schema";
 import { generateCourse } from "@/lib/ai/gateway";
 import type { CourseBrief } from "@/lib/ai/prompts";
-import { scopedForJob } from "@/lib/db/scoped";
+import { scopedForJob } from "@/shared/db/scoped";
 
 import { EVENTS, inngest, jobIdFrom } from "../client";
 import {

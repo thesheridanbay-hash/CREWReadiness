@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { upsertImageProviderSettings, type ImageProviderView } from "@/actions/platform";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 const inputClass =
   "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";

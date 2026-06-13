@@ -3,7 +3,7 @@ import { cache } from "react";
 import { sql } from "drizzle-orm";
 
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * AI usage surfaces (T13 — D25). Per-company spend for owners; cross-company

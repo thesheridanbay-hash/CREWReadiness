@@ -10,7 +10,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/content/languages";
 import { countLessonsInCourse } from "@/lib/content/translate-runner";
-import { scoped, type ScopedTx } from "@/lib/db/scoped";
+import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**

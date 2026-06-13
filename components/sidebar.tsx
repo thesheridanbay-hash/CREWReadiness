@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { getParkedCount } from "@/lib/content/coaching-queries";
 import { getMyNotifications } from "@/lib/content/notification-queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils";
 
 import { NotificationBell } from "./notification-bell";
 import { SidebarItem } from "./sidebar-item";

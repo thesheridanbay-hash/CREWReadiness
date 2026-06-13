@@ -5,7 +5,7 @@ import type { PropsWithChildren } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * Billing paywall (go-live B). When an owner/manager's trial has ended with no

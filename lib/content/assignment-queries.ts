@@ -4,7 +4,7 @@ import { asc, eq, sql } from "drizzle-orm";
 
 import { crews, employeeCredentials } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Assignment reads (go-live A1). Owners assign courses to crews/members with a

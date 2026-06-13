@@ -7,7 +7,7 @@ import {
   mediaProxyPath,
   runCourseAsset,
 } from "@/lib/content/course-asset-runner";
-import { scopedForJob } from "@/lib/db/scoped";
+import { scopedForJob } from "@/shared/db/scoped";
 
 import { EVENTS, inngest, jobIdFrom } from "../client";
 import { markJobRunning, markJobSucceeded, safeDeadLetter } from "../job-helpers";

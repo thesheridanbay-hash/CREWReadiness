@@ -15,7 +15,7 @@ import {
 } from "@/db/schema";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { getSession } from "@/lib/auth/session";
-import { scoped, type ScopedTx } from "@/lib/db/scoped";
+import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { classifyDraft } from "@/lib/content/draft-kind";
 import { materializeCourseDraft } from "@/lib/content/materialize-course";
 

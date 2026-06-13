@@ -10,7 +10,7 @@ import {
   nextPendingAssetId,
   runCourseAsset,
 } from "@/lib/content/course-asset-runner";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Generate ONE course image (AI Course Builder), synchronously.

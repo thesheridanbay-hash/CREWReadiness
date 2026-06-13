@@ -14,7 +14,7 @@ import {
   nextUntranslatedLessonId,
   translateLessonInto,
 } from "@/lib/content/translate-runner";
-import { scoped } from "@/lib/db/scoped";
+import { scoped } from "@/shared/db/scoped";
 
 /**
  * Translate a course's text into one language (multi-language courses, PR-B),
