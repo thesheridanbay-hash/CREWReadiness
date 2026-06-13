@@ -142,3 +142,27 @@ export const getCourseAssetStatus = async (
       return ok(row);
     });
   });
+
+/**
+ * Reset FAILED assets back to PENDING so the owner can retry them (the
+ * synchronous image loop only picks PENDING). Returns how many were reset.
+ */
+export const resetFailedAssets = async (
+  input: unknown
+): Promise<Result<{ reset: number }>> =>
+  guard<{ reset: number }>(async () => {
+    const parsed = courseIdSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireOwner();
+
+    return scoped<Result<{ reset: number }>>(auth, async (tx) => {
+      const result = await tx.execute<{ id: string }>(sql`
+        UPDATE course_assets SET status = 'PENDING', error = NULL, updated_at = now()
+        WHERE course_id = ${parsed.data.courseId} AND status = 'FAILED'
+        RETURNING id
+      `);
+      revalidatePath(`/studio/${parsed.data.courseId}`);
+      return ok({ reset: result.rows.length });
+    });
+  });
