@@ -132,7 +132,14 @@ export type AiOperation =
   | "transcribeVoice"
   | "generateImage"
   | "generateSpeech"
-  | "translateLesson";
+  | "translateLesson"
+  | "improveText";
+
+/** One improved field (AI-magic per-field editing). Bound generously — markdown
+ * teaching text is the longest field. */
+export const improvedTextSchema = z.object({
+  text: z.string().min(1).max(6000),
+});
 
 /* ─────────── Lesson translation (multi-language, PR-B) ─────────── */
 
@@ -272,4 +279,6 @@ export const AI_TIMEOUTS: Record<AiOperation, number> = {
   generateSpeech: 280_000,
   // One lesson's text translation — comparable to a single lesson generation.
   translateLesson: 120_000,
+  // Single-field rewrite/format — small + interactive, keep it snappy.
+  improveText: 90_000,
 };
