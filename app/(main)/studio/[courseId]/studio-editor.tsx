@@ -29,6 +29,7 @@ import type {
 } from "@/lib/content/assignment-queries";
 import type { Result } from "@/lib/errors";
 
+import { AiFieldButton } from "./ai-field-button";
 import { AssetModal, type EditableAsset } from "./asset-modal";
 import { AssignPanel } from "./assign-panel";
 import { GenerateImagesButton } from "./generate-images-button";
@@ -370,6 +371,16 @@ const LessonBlock = ({
           <li key={question.id} className="flex items-start justify-between gap-x-2">
             <span className="flex-1">{question.question}</span>
             <div className="flex shrink-0 items-center gap-x-1">
+              <AiFieldButton
+                field="questionPrompt"
+                id={question.id}
+                label="question"
+                suggestions={[
+                  "Make it a job-site scenario",
+                  "Simpler words",
+                  "Shorter",
+                ]}
+              />
               <button
                 type="button"
                 onClick={() => {
