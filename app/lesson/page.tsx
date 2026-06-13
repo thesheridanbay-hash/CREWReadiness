@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { startOrResumeSession } from "@/actions/learning-loop";
 import { getCourseProgress } from "@/db/queries";
+import { getLessonTeaching } from "@/lib/content/queries";
 
 import { Player } from "./player";
 
@@ -10,7 +11,10 @@ const LessonPage = async () => {
 
   if (!courseProgress?.activeLessonId) return redirect("/learn");
 
-  const result = await startOrResumeSession(courseProgress.activeLessonId);
+  const [result, teaching] = await Promise.all([
+    startOrResumeSession(courseProgress.activeLessonId),
+    getLessonTeaching(courseProgress.activeLessonId),
+  ]);
 
   if (!result.ok) return redirect("/learn");
 
@@ -19,6 +23,7 @@ const LessonPage = async () => {
       sessionId={result.data.sessionId}
       lessonId={courseProgress.activeLessonId}
       initialView={result.data.view}
+      teaching={teaching}
     />
   );
 };

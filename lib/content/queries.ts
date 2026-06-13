@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { asc, eq } from "drizzle-orm";
 
-import { courses, modules } from "@/db/schema";
+import { courses, lessons, modules } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
 
@@ -82,3 +82,45 @@ export const getCourseTree = cache(async (courseId: number) => {
     return course ?? null;
   });
 });
+
+/**
+ * Lesson teaching content for the LEARNER (any role, incl. crew): the
+ * plain-language brief + a representative generated image (+ voiceover audio
+ * once TTS lands). Powers the "Learn" screen shown before the questions.
+ * Returns null when the lesson has no teaching content (questions-only).
+ */
+export type LessonTeaching = {
+  text: string | null;
+  imageSrc: string | null;
+  audioSrc: string | null;
+};
+
+export const getLessonTeaching = cache(
+  async (lessonId: number): Promise<LessonTeaching | null> => {
+    const session = await getSession();
+    if (!session) return null;
+
+    return scoped(session, async (tx) => {
+      const lesson = await tx.query.lessons.findFirst({
+        where: eq(lessons.id, lessonId),
+        columns: { id: true, teachingText: true },
+        with: {
+          assets: { orderBy: (a, { asc: ascFn }) => [ascFn(a.order)] },
+        },
+      });
+      if (!lesson) return null;
+
+      const image = lesson.assets.find(
+        (a) => a.status === "GENERATED" && a.mediaAssetId
+      );
+      const hasContent = Boolean(lesson.teachingText || image);
+      if (!hasContent) return null;
+
+      return {
+        text: lesson.teachingText,
+        imageSrc: image?.mediaAssetId ? `/api/media/${image.mediaAssetId}` : null,
+        audioSrc: null,
+      };
+    });
+  }
+);
