@@ -23,11 +23,13 @@ import {
   buildLessonPrompt,
   buildPhotoPrompt,
   buildReteachPrompt,
+  buildTranslatePrompt,
   buildVariantPrompt,
   type CourseBrief,
 } from "./prompts";
 import {
   AI_TIMEOUTS,
+  buildLessonTranslationSchema,
   courseDraftSchema,
   lessonDraftSchema,
   photoAnalysisSchema,
@@ -37,7 +39,9 @@ import {
   type CourseDraft,
   type ImageResult,
   type LessonDraft,
+  type LessonTranslationResult,
   type PhotoAnalysis,
+  type TranslationSource,
   type VariantDraft,
 } from "./types";
 
@@ -341,6 +345,54 @@ export const generateLesson = async (
   );
 
   await recordUsage(ctx, "generateLesson", providerName, usage, alertThresholdUsd);
+
+  return data;
+};
+
+/**
+ * Translate ONE lesson's content into a target language (multi-language
+ * courses, PR-B). Uses the TEXT provider. The source carries the
+ * primary-language strings; the validator pins the model's output to the same
+ * question/option counts so the caller can map translations back onto base ids
+ * by index. Validated + metered like every other text op; the per-lesson
+ * translate runner persists the result into the translation tables.
+ */
+export const translateLesson = async (
+  ctx: AiContext,
+  args: {
+    targetLanguageLabel: string;
+    source: TranslationSource;
+  }
+): Promise<LessonTranslationResult> => {
+  const { adapter, providerName, alertThresholdUsd } =
+    await resolveProvider(ctx);
+
+  const payload = JSON.stringify({
+    title: args.source.title,
+    teachingText: args.source.teachingText,
+    questions: args.source.questions,
+  });
+
+  const { data, usage } = await validated(
+    buildLessonTranslationSchema(args.source),
+    () =>
+      adapter.generateJson({
+        prompt: buildTranslatePrompt({
+          targetLanguageLabel: args.targetLanguageLabel,
+          payload,
+        }),
+      }),
+    AI_TIMEOUTS.translateLesson,
+    "translateLesson"
+  );
+
+  await recordUsage(
+    ctx,
+    "translateLesson",
+    providerName,
+    usage,
+    alertThresholdUsd
+  );
 
   return data;
 };
