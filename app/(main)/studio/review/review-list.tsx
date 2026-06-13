@@ -39,7 +39,7 @@ export const ReviewList = ({ items }: { items: ReviewItem[] }) => {
             <div className="flex items-center gap-x-2">
               <p className="font-bold text-neutral-700">{item.title}</p>
               {item.kind === "course" && (
-                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
+                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
                   AI course
                 </span>
               )}

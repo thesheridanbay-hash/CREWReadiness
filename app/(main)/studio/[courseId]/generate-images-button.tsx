@@ -106,10 +106,11 @@ export const GenerateImagesButton = ({
     <div className="flex items-center gap-x-2">
       {running && (
         <span className="text-xs font-medium text-muted-foreground">
-          {remaining} left{failedSoFar > 0 ? ` · ${failedSoFar} failed` : ""}
+          {status.total - remaining}/{status.total} done
+          {failedSoFar > 0 ? ` · ${failedSoFar} failed` : ""}
         </span>
       )}
-      <Button variant="primaryOutline" disabled={running} onClick={() => run(retryMode)}>
+      <Button variant="primary" disabled={running} onClick={() => run(retryMode)}>
         {running
           ? "Generating…"
           : retryMode
