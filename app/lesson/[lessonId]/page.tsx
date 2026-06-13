@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { startOrResumeSession } from "@/actions/learning-loop";
+import { getLessonTeaching } from "@/lib/content/queries";
 
 import { Player } from "../player";
 
@@ -14,7 +15,10 @@ const LessonIdPage = async ({ params }: LessonIdPageProps) => {
 
   if (!Number.isInteger(id) || id <= 0) return redirect("/learn");
 
-  const result = await startOrResumeSession(id);
+  const [result, teaching] = await Promise.all([
+    startOrResumeSession(id),
+    getLessonTeaching(id),
+  ]);
 
   if (!result.ok) return redirect("/learn");
 
@@ -23,6 +27,7 @@ const LessonIdPage = async ({ params }: LessonIdPageProps) => {
       sessionId={result.data.sessionId}
       lessonId={id}
       initialView={result.data.view}
+      teaching={teaching}
     />
   );
 };

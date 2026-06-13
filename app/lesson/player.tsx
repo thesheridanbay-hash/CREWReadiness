@@ -15,6 +15,7 @@ import {
   type LoopActionResult,
 } from "@/actions/learning-loop";
 import { Button } from "@/components/ui/button";
+import type { LessonTeaching } from "@/lib/content/queries";
 import type { LoopView } from "@/lib/learning-loop/views";
 import type { Result } from "@/lib/errors";
 
@@ -34,6 +35,8 @@ type PlayerProps = {
   sessionId: string;
   lessonId: number;
   initialView: LoopView;
+  /** Teaching content shown before the questions (AI Course Builder). */
+  teaching?: LessonTeaching | null;
 };
 
 const newKey = () =>
@@ -41,10 +44,21 @@ const newKey = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export const Player = ({ sessionId, lessonId, initialView }: PlayerProps) => {
+export const Player = ({
+  sessionId,
+  lessonId,
+  initialView,
+  teaching,
+}: PlayerProps) => {
   const router = useRouter();
   const { width, height } = useWindowSize();
   const [pending, startTransition] = useTransition();
+
+  // "Learn" step: show the teaching content before the questions. Skipped when
+  // there's nothing to teach or the lesson is already complete (resumed).
+  const [phase, setPhase] = useState<"teach" | "quiz">(
+    teaching && initialView.type !== "COMPLETE" ? "teach" : "quiz"
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
@@ -194,6 +208,48 @@ export const Player = ({ sessionId, lessonId, initialView }: PlayerProps) => {
     view.progress.total > 0
       ? (view.progress.completed / view.progress.total) * 100
       : 0;
+
+  /* ── LEARN (teaching step, before the questions) ── */
+  if (phase === "teach" && teaching) {
+    return (
+      <>
+        <Header percentage={percentage} />
+        <div className="flex-1">
+          <div className="flex h-full items-center justify-center px-6 py-8">
+            <div className="flex w-full max-w-[600px] flex-col gap-y-6">
+              <p className="text-sm font-bold uppercase tracking-wide text-sky-600">
+                Learn this first
+              </p>
+              {teaching.imageSrc && (
+                <div className="relative mx-auto aspect-video w-full max-w-[480px] overflow-hidden rounded-2xl border-2">
+                  <Image
+                    src={teaching.imageSrc}
+                    alt=""
+                    fill
+                    sizes="480px"
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              {teaching.text && (
+                <p className="whitespace-pre-wrap text-base font-medium leading-relaxed text-neutral-700">
+                  {teaching.text}
+                </p>
+              )}
+              {teaching.audioSrc && (
+                <audio controls src={teaching.audioSrc} className="w-full">
+                  <track kind="captions" />
+                </audio>
+              )}
+              <Button variant="secondary" size="lg" onClick={() => setPhase("quiz")}>
+                Start questions
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   /* ── COMPLETE ── */
   if (view.type === "COMPLETE") {
