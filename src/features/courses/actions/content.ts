@@ -17,10 +17,8 @@ import {
 import { improveText } from "@/features/ai/gateway";
 import type { ImproveFieldKind } from "@/features/ai/prompts";
 import { EVENTS, inngest } from "@/inngest/client";
-import type { Session } from "@/features/auth/session";
-import { getSession } from "@/features/auth/session";
-import { scoped, type ScopedTx } from "@/shared/db/scoped";
-import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
+import { scoped } from "@/shared/db/scoped";
+import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import {
   courseCreateSchema,
   courseUpdateSchema,
@@ -32,6 +30,7 @@ import {
   questionUpdateSchema,
   unitCreateSchema,
 } from "@/features/courses/schemas";
+import { nextOrder, requireAuthor } from "./content-helpers";
 
 /**
  * Owner content studio actions (T10 — D16). Hand-written per hierarchy level,
@@ -39,28 +38,6 @@ import {
  * Display order is computed server-side. Publishing bumps the content version
  * and enqueues variant regeneration (D7) — guarded so it never blocks publish.
  */
-
-const requireAuthor = async (): Promise<Session> => {
-  const auth = await getSession();
-  if (!auth) throw new AppActionError("unauthorized", "Sign in to continue.");
-  if (auth.role === "employee") {
-    throw new AppActionError("forbidden", "Only owners and managers can edit content.");
-  }
-  return auth;
-};
-
-const nextOrder = async (
-  tx: ScopedTx,
-  table: typeof modules | typeof units | typeof lessons | typeof questions,
-  column: "course_id" | "module_id" | "unit_id" | "lesson_id",
-  parentId: number
-): Promise<number> => {
-  const result = await tx.execute<{ next: number }>(sql`
-    SELECT COALESCE(MAX("order"), 0) + 1 AS next
-    FROM ${table} WHERE ${sql.raw(column)} = ${parentId}
-  `);
-  return result.rows[0]?.next ?? 1;
-};
 
 /* ───────────────────────── Course ───────────────────────── */
 
