@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { transition } from "@/lib/learning-loop/machine";
+import { transition } from "@/features/learning/machine";
 import type {
   LearningLoopSession,
   TransitionContext,
-} from "@/lib/learning-loop/types";
+} from "@/features/learning/types";
 import {
   nextViewShape,
   pickVariantIndex,
   summarizeEffects,
-} from "@/lib/learning-loop/views";
+} from "@/features/learning/views";
 
 /** View-shape mapping (T8): machine transitions → what the player renders. */
 

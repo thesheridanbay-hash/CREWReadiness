@@ -48,8 +48,8 @@ import {
   acknowledgeExplain,
   startOrResumeSession,
   submitAnswer,
-} from "@/actions/learning-loop";
-import { upsertUserProgress } from "@/actions/user-progress";
+} from "@/features/learning/actions/learning-loop";
+import { upsertUserProgress } from "@/features/learning/actions/user-progress";
 import {
   archiveCourse,
   createCourse,

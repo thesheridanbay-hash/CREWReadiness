@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { startOrResumeSession } from "@/actions/learning-loop";
+import { startOrResumeSession } from "@/features/learning/actions/learning-loop";
 import { getCourseProgress } from "@/db/queries";
 import { getLessonTeaching } from "@/lib/content/queries";
 

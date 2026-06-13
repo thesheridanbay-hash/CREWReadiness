@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 
 import db from "@/db/drizzle";
 import { notifications } from "@/db/schema";
-import { needsRetraining } from "@/lib/learning-loop/decay";
+import { needsRetraining } from "@/features/learning/decay";
 
 import { inngest } from "../client";
 

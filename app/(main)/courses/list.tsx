@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { upsertUserProgress } from "@/actions/user-progress";
+import { upsertUserProgress } from "@/features/learning/actions/user-progress";
 import { courses as coursesTable, userProgress } from "@/db/schema";
 import type { MyAssignment } from "@/lib/content/assignment-queries";
 

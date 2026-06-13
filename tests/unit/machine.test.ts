@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { transition } from "@/lib/learning-loop/machine";
+import { transition } from "@/features/learning/machine";
 import {
   LOOP_CONFIG,
   type LearningLoopEvent,
   type LearningLoopSession,
   type TransitionContext,
-} from "@/lib/learning-loop/types";
+} from "@/features/learning/types";
 
 /**
  * Exhaustive transition coverage for the learning-loop machine (T3).

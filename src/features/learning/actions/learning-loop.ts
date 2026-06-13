@@ -24,12 +24,12 @@ import {
 } from "@/lib/content/translations";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
-import { transition } from "@/lib/learning-loop/machine";
+import { transition } from "@/features/learning/machine";
 import type {
   LearningLoopEvent,
   LearningLoopSession,
   TransitionContext,
-} from "@/lib/learning-loop/types";
+} from "@/features/learning/types";
 import {
   nextViewShape,
   pickVariantIndex,
@@ -37,7 +37,7 @@ import {
   type LoopView,
   type ProgressView,
   type QuestionSurfaceView,
-} from "@/lib/learning-loop/views";
+} from "@/features/learning/views";
 
 /**
  * Learning-loop actions (T8 — wires the pure machine, T3, into the product).

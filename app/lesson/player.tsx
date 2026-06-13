@@ -13,11 +13,11 @@ import {
   completeReteach,
   submitAnswer,
   type LoopActionResult,
-} from "@/actions/learning-loop";
+} from "@/features/learning/actions/learning-loop";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/shared/ui/button";
 import type { LessonTeaching } from "@/lib/content/queries";
-import type { LoopView } from "@/lib/learning-loop/views";
+import type { LoopView } from "@/features/learning/views";
 import type { Result } from "@/shared/errors";
 
 import { Challenge } from "./challenge";

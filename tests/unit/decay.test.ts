@@ -5,7 +5,7 @@ import {
   isStale,
   needsRetraining,
   selectDecayedConcepts,
-} from "@/lib/learning-loop/decay";
+} from "@/features/learning/decay";
 
 /** Memory-loop decay triggers (P5 — D13). */
 
