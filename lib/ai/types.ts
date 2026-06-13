@@ -176,5 +176,7 @@ export const AI_TIMEOUTS: Record<AiOperation, number> = {
   generateVariants: 60_000,
   analyzePhoto: 120_000,
   transcribeVoice: 300_000,
-  generateImage: 120_000,
+  // Image gen (esp. OpenClaw) lands ~120s+; keep well under the 300s route cap
+  // so a slow-but-valid image isn't aborted by our own timeout.
+  generateImage: 280_000,
 };

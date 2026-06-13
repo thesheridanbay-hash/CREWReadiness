@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { ZERO_USAGE, type ImageResult } from "../types";
 import type { GenerateImageArgs, ImageProviderAdapter } from "./types";
 
@@ -48,7 +50,13 @@ export class McpImageAdapter implements ImageProviderAdapter {
       throw new Error("OpenClaw MCP endpoint or key is not configured.");
     }
 
-    const toolArgs: Record<string, unknown> = { prompt: args.prompt };
+    const toolArgs: Record<string, unknown> = {
+      prompt: args.prompt,
+      // A UNIQUE session per image: back-to-back jobs sharing the bridge's
+      // public session caused "Command failed" errors. Isolating each request
+      // avoids that contention.
+      sessionId: `crew-img-${randomUUID()}`,
+    };
     if (this.config.model) toolArgs.model = this.config.model;
     if (this.config.timeoutSeconds) toolArgs.timeoutSeconds = this.config.timeoutSeconds;
 
