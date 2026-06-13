@@ -27,7 +27,7 @@ import type {
   AssignTargets,
   CourseAssignmentRow,
 } from "@/lib/content/assignment-queries";
-import type { Result } from "@/lib/errors";
+import type { Result } from "@/shared/errors";
 
 import { AiFieldButton } from "./ai-field-button";
 import { AssetModal, type EditableAsset } from "./asset-modal";

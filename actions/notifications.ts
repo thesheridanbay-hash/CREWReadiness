@@ -7,7 +7,7 @@ import { z } from "zod";
 import { notifications } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
-import { err, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**
  * Notification actions (go-live A2). A user can only mark THEIR OWN

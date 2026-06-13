@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { courseAssets, courses } from "@/db/schema";
 import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
 import type { ScopedTx } from "@/lib/db/scoped";
-import { AppActionError } from "@/lib/errors";
+import { AppActionError } from "@/shared/errors";
 
 import { courseSnapshotSchema, type CourseSnapshot } from "./snapshot";
 

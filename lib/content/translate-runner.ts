@@ -8,7 +8,7 @@ import {
 } from "@/db/schema";
 import { translateLesson } from "@/lib/ai/gateway";
 import type { LessonTranslationResult, TranslationSource } from "@/lib/ai/types";
-import { AppActionError } from "@/lib/errors";
+import { AppActionError } from "@/shared/errors";
 import { languageLabel } from "@/lib/content/languages";
 import type { ScopedTx } from "@/lib/db/scoped";
 

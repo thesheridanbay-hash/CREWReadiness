@@ -9,7 +9,7 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 import { TenantContextError } from "@/lib/db/scoped";
-import { AppActionError, err, fromZod, guard, ok } from "@/lib/errors";
+import { AppActionError, err, fromZod, guard, ok } from "@/shared/errors";
 
 describe("Result envelope (T7/D15)", () => {
   beforeEach(() => {

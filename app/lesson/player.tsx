@@ -18,7 +18,7 @@ import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import type { LessonTeaching } from "@/lib/content/queries";
 import type { LoopView } from "@/lib/learning-loop/views";
-import type { Result } from "@/lib/errors";
+import type { Result } from "@/shared/errors";
 
 import { Challenge } from "./challenge";
 import { Footer } from "./footer";

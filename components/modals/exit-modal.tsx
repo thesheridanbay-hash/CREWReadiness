@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsClient } from "@/lib/use-is-client";
-import { useExitModal } from "@/store/use-exit-modal";
+import { useExitModal } from "@/shared/store/use-exit-modal";
 
 export const ExitModal = () => {
   const router = useRouter();

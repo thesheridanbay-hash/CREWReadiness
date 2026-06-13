@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 import { ExitModal } from "@/components/modals/exit-modal";
 import { PracticeModal } from "@/components/modals/practice-modal";
 import { Toaster } from "@/components/ui/sonner";
-import { siteConfig } from "@/config";
+import { siteConfig } from "@/shared/config";
 
 import "./globals.css";
 

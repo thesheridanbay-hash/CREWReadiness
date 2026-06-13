@@ -23,7 +23,7 @@ import {
   questionTextOverlay,
 } from "@/lib/content/translations";
 import { scoped, type ScopedTx } from "@/lib/db/scoped";
-import { err, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { transition } from "@/lib/learning-loop/machine";
 import type {
   LearningLoopEvent,

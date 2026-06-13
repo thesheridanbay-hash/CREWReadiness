@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { QUESTS } from "@/constants";
+import { QUESTS } from "@/shared/constants";
 
 type QuestsProps = { points: number };
 

@@ -12,7 +12,7 @@ import {
 } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
-import { AppActionError, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**
  * Assignment actions (go-live A1). Owners/managers assign a course to a crew OR

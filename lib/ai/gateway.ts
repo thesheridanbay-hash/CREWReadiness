@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import type { z } from "zod";
 
-import { AppActionError } from "@/lib/errors";
+import { AppActionError } from "@/shared/errors";
 
 import { DirectAdapter } from "./adapters/direct";
 import { OpenAiImageAdapter } from "./adapters/image";

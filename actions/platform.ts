@@ -8,7 +8,7 @@ import { providerSettings } from "@/db/schema";
 import { encryptSecret, isProviderKeyConfigError } from "@/lib/ai/crypto";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
-import { AppActionError, err, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**
  * Platform-owner AI provider configuration (D5). provider_settings is

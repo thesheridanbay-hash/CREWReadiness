@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { parkedConcepts } from "@/db/schema";
-import { AppActionError, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
 

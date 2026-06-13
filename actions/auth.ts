@@ -18,7 +18,7 @@ import { PIN_PATTERN } from "@/lib/auth/pin";
 import { getSession } from "@/lib/auth/session";
 import { isSupportedLanguage } from "@/lib/content/languages";
 import { scoped } from "@/lib/db/scoped";
-import { err, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { err, fromZod, guard, ok, type Result } from "@/shared/errors";
 
 /**
  * Employee auth actions (T2 — D4). Envelope-wrapped (T7). Manager/owner-only

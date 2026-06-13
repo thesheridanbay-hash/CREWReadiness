@@ -20,7 +20,7 @@ import { EVENTS, inngest } from "@/inngest/client";
 import type { Session } from "@/lib/auth/session";
 import { getSession } from "@/lib/auth/session";
 import { scoped, type ScopedTx } from "@/lib/db/scoped";
-import { AppActionError, err, fromZod, guard, ok, type Result } from "@/lib/errors";
+import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import {
   courseCreateSchema,
   courseUpdateSchema,
