@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { languageLabel } from "@/features/courses/languages";
 import { categoryLabel } from "@/features/marketplace/categories";
 import { getListingDetail } from "@/features/marketplace/queries";

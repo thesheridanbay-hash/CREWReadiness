@@ -5,7 +5,7 @@ import {
   getImageProviderView,
   getProviderSettingsView,
 } from "@/features/platform/actions";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 
 import { ImageProviderForm } from "./image-form";
 import { ProviderForm } from "./provider-form";

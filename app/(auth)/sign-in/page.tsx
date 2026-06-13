@@ -5,9 +5,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { employeeSignInAction } from "@/actions/auth";
+import { employeeSignInAction } from "@/features/auth/actions";
 import { Button } from "@/shared/ui/button";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/features/auth/client";
 
 type Tab = "crew" | "office";
 

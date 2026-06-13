@@ -8,7 +8,7 @@ import {
   employeeInvites,
   userProgress,
 } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { DEFAULT_LANGUAGE } from "@/features/courses/languages";
 import { scoped } from "@/shared/db/scoped";
 

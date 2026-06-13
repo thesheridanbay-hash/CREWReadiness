@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { aiJobs, reviewQueue } from "@/db/schema";
 import { generateCourse } from "@/features/ai/gateway";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import {
   courseBuilderInputSchema,
   type CourseBuilderInput,

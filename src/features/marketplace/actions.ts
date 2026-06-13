@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { courses, marketplaceAdoptions, marketplaceListings } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import { isMarketplaceCategory } from "@/features/marketplace/categories";

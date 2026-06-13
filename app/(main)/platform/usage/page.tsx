@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getPlatformUsage } from "@/features/ai/usage-queries";
 
 const PlatformUsagePage = async () => {

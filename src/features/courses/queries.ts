@@ -3,7 +3,7 @@ import { cache } from "react";
 import { asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { courses, lessons, modules } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
 import { getReadingLanguage, lessonTeachingOverlay } from "./translations";

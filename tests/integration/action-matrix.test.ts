@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Session } from "@/lib/auth/session";
+import type { Session } from "@/features/auth/session";
 
 /**
  * Server-action matrix (T5 — D18): every action must prove success,
@@ -36,14 +36,14 @@ vi.mock("next/navigation", () => ({
     });
   },
 }));
-vi.mock("@/lib/auth/session", () => ({
+vi.mock("@/features/auth/session", () => ({
   getSession: async () => sessionState.current,
 }));
 
 import {
   acceptEmployeeInviteAction,
   createEmployeeInviteAction,
-} from "@/actions/auth";
+} from "@/features/auth/actions";
 import {
   acknowledgeExplain,
   startOrResumeSession,

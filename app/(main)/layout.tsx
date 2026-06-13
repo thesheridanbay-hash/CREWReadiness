@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 import { BillingGate } from "@/features/billing/ui/billing-gate";
 import { MobileHeader } from "@/app-shell/mobile-header";
 import { Sidebar } from "@/app-shell/sidebar";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getBillingStatus, isOwnerBlocked } from "@/features/billing/status";
 
 const MainLayout = async ({ children }: PropsWithChildren) => {

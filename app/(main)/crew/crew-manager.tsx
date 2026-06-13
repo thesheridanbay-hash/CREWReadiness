@@ -9,7 +9,7 @@ import {
   createEmployeeInviteAction,
   resetEmployeePinAction,
   setCrewMemberLanguageAction,
-} from "@/actions/auth";
+} from "@/features/auth/actions";
 import { Button } from "@/shared/ui/button";
 import type { CrewMember, PendingInvite } from "@/features/courses/crew-queries";
 import { SUPPORTED_LANGUAGES, languageLabel } from "@/features/courses/languages";

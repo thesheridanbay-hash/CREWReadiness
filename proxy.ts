@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { EMPLOYEE_SESSION_COOKIE } from "@/lib/auth/employee-policy";
+import { EMPLOYEE_SESSION_COOKIE } from "@/features/auth/employee-policy";
 
 /**
  * Route protection (T2). Optimistic cookie-presence check only — middleware

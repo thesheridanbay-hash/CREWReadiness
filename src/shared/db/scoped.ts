@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 
 import db from "@/db/drizzle";
-import type { Session } from "@/lib/auth/session";
+import type { Session } from "@/features/auth/session";
 
 /**
  * Tenant-scoped query layer (T1 — D14/D20).

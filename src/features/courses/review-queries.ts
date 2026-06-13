@@ -3,7 +3,7 @@ import { cache } from "react";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { aiJobs, reviewQueue } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 import { classifyDraft, courseDraftCounts } from "@/features/courses/draft-kind";
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getParkedCount } from "@/features/courses/coaching-queries";
 import { getMyNotifications } from "@/features/courses/notification-queries";
 import { cn } from "@/shared/utils";

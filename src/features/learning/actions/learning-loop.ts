@@ -16,7 +16,7 @@ import {
   questions,
   userProgress,
 } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import {
   getReadingLanguage,
   optionTextOverlay,

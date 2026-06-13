@@ -13,9 +13,9 @@ import {
   employeeSignIn,
   employeeSignOut,
   resetEmployeePin,
-} from "@/lib/auth/employee";
-import { PIN_PATTERN } from "@/lib/auth/pin";
-import { getSession } from "@/lib/auth/session";
+} from "@/features/auth/employee";
+import { PIN_PATTERN } from "@/features/auth/pin";
+import { getSession } from "@/features/auth/session";
 import { isSupportedLanguage } from "@/features/courses/languages";
 import { scoped } from "@/shared/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/shared/errors";

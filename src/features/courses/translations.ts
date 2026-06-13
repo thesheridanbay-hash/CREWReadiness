@@ -8,7 +8,7 @@ import {
   questionTranslations,
   userProgress,
 } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
 
 import { DEFAULT_LANGUAGE, resolveReadingLanguage } from "./languages";

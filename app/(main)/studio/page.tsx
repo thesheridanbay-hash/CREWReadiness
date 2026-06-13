@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getArchivedCourses, getStudioCourses } from "@/features/courses/queries";
 import { Button } from "@/shared/ui/button";
 

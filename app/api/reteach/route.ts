@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { learningSessions, questionOptions, questions } from "@/db/schema";
 import { reteach, type ReteachResult } from "@/features/ai/gateway";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
 /**

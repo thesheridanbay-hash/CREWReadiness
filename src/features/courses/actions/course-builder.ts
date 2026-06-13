@@ -1,7 +1,7 @@
 "use server";
 
 import { aiJobs } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { courseBuilderInputSchema } from "@/features/courses/course-builder-schema";
 import { scoped } from "@/shared/db/scoped";
 import { AppActionError, fromZod, guard, ok, type Result } from "@/shared/errors";

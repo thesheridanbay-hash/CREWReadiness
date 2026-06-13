@@ -3,7 +3,7 @@ import { cache } from "react";
 import { desc, eq, sql } from "drizzle-orm";
 
 import { notifications } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
 /**

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getBillingStatus } from "@/features/billing/status";
 
 import { BillingPanel } from "./billing-panel";

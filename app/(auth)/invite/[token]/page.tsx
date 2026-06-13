@@ -4,7 +4,7 @@ import { use, useState, useTransition } from "react";
 
 import { toast } from "sonner";
 
-import { acceptEmployeeInviteAction } from "@/actions/auth";
+import { acceptEmployeeInviteAction } from "@/features/auth/actions";
 import { Button } from "@/shared/ui/button";
 
 const inputClass =

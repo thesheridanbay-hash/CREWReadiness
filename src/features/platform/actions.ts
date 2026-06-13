@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { providerSettings } from "@/db/schema";
 import { encryptSecret, isProviderKeyConfigError } from "@/features/ai/crypto";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
 

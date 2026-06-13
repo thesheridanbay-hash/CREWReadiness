@@ -1,4 +1,4 @@
-import type { SessionRole } from "@/lib/auth/session";
+import type { SessionRole } from "@/features/auth/session";
 
 /**
  * Upload policy (T11 — D9/F8): per-kind type + size allowlists, pure so the

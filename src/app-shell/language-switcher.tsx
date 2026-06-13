@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { setMyLanguageAction } from "@/actions/auth";
+import { setMyLanguageAction } from "@/features/auth/actions";
 import { SUPPORTED_LANGUAGES, languageLabel } from "@/features/courses/languages";
 
 /**

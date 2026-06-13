@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { eq, isNull, sql } from "drizzle-orm";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
 import { courses, userProgress } from "./schema";

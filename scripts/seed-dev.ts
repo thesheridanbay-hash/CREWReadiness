@@ -4,7 +4,7 @@ import { neonConfig, Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 
-import * as schema from "../db/schema";
+import * as schema from "../src/db/schema";
 
 /**
  * Dev seed (T1): one landscaping starter course for the dev company so the

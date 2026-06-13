@@ -17,8 +17,8 @@ import {
 import { improveText } from "@/features/ai/gateway";
 import type { ImproveFieldKind } from "@/features/ai/prompts";
 import { EVENTS, inngest } from "@/inngest/client";
-import type { Session } from "@/lib/auth/session";
-import { getSession } from "@/lib/auth/session";
+import type { Session } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped, type ScopedTx } from "@/shared/db/scoped";
 import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
 import {

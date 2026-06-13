@@ -7,8 +7,8 @@ import {
   registerFailure,
   sessionExpiry,
   shouldRefreshSession,
-} from "@/lib/auth/employee-policy";
-import { PIN_PATTERN, hashPin, verifyPin } from "@/lib/auth/pin";
+} from "@/features/auth/employee-policy";
+import { PIN_PATTERN, hashPin, verifyPin } from "@/features/auth/pin";
 
 describe("PIN hashing (T2/D4)", () => {
   it("hashes and verifies a PIN", async () => {

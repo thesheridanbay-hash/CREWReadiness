@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { getCrewRoster } from "@/features/courses/crew-queries";
 
 import { CrewManager } from "./crew-manager";

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/features/auth/client";
 
 const inputClass =
   "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-green-500";

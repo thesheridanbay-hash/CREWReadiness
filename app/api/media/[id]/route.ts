@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import db from "@/db/drizzle";
 import { mediaAssets } from "@/db/schema";
-import { getSession } from "@/lib/auth/session";
+import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
 /**
