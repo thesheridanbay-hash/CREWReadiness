@@ -107,10 +107,15 @@ const resolveProvider = async (ctx: AiContext): Promise<ResolvedProvider> => {
         toolName: String(settings.toolName ?? "ask_ai_hassan"),
         model: settings.model ? String(settings.model) : undefined,
         thinking: settings.thinking ? String(settings.thinking) : undefined,
+        // Bridge work budget. The gateway's per-op withTimeout is the real
+        // bound; this just stops the bridge self-aborting a long call. Default
+        // must clear the longest op (generateCourse, ~270s) — 120 silently
+        // strangled full-course generation (it fits small calls but not a
+        // ~2-min course build).
         timeoutSeconds:
           typeof settings.timeoutSeconds === "number"
             ? settings.timeoutSeconds
-            : 120,
+            : 290,
       }),
     };
   }
