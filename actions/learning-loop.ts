@@ -17,6 +17,11 @@ import {
   userProgress,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
+import {
+  getReadingLanguage,
+  optionTextOverlay,
+  questionTextOverlay,
+} from "@/lib/content/translations";
 import { scoped, type ScopedTx } from "@/lib/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/lib/errors";
 import { transition } from "@/lib/learning-loop/machine";
@@ -123,7 +128,8 @@ const providerConfigured = async (tx: ScopedTx): Promise<boolean> => {
 
 const originalSurface = async (
   tx: ScopedTx,
-  questionId: number
+  questionId: number,
+  overlayLang: string | null
 ): Promise<QuestionSurfaceView | null> => {
   const question = await tx.query.questions.findFirst({
     where: eq(questions.id, questionId),
@@ -132,14 +138,31 @@ const originalSurface = async (
 
   if (!question) return null;
 
+  // Overlay the learner's language onto the prompt + options; each field falls
+  // back to the base (primary-language) text when its translation is missing.
+  let prompt = question.question;
+  let optionText = new Map<number, string>();
+  if (overlayLang) {
+    const [questionOverlay, optionOverlay] = [
+      await questionTextOverlay(tx, question.id, overlayLang),
+      await optionTextOverlay(
+        tx,
+        question.questionOptions.map((o) => o.id),
+        overlayLang
+      ),
+    ];
+    if (questionOverlay?.question) prompt = questionOverlay.question;
+    optionText = optionOverlay;
+  }
+
   return {
     kind: "ORIGINAL",
     questionId: question.id,
-    prompt: question.question,
+    prompt,
     questionType: question.type,
     options: question.questionOptions.map((option) => ({
       ref: option.id,
-      text: option.text,
+      text: optionText.get(option.id) ?? option.text,
       imageSrc: option.imageSrc,
       audioSrc: option.audioSrc,
     })),
@@ -150,7 +173,8 @@ const originalSurface = async (
 const variantOrOriginalSurface = async (
   tx: ScopedTx,
   questionId: number,
-  cycle: number
+  cycle: number,
+  overlayLang: string | null
 ): Promise<QuestionSurfaceView | null> => {
   const variants = await tx.query.questionVariants.findMany({
     where: eq(questionVariants.questionId, questionId),
@@ -159,7 +183,7 @@ const variantOrOriginalSurface = async (
 
   const index = pickVariantIndex(variants.length, questionId, cycle);
 
-  if (index < 0) return originalSurface(tx, questionId);
+  if (index < 0) return originalSurface(tx, questionId, overlayLang);
 
   const variant = variants[index];
 
@@ -187,16 +211,29 @@ const hydrateCurrentView = async (
     return { type: "COMPLETE", pointsEarned, progress, banner };
   }
 
+  // Resolve the learner's reading language once; null = render base content.
+  const reading = await getReadingLanguage(tx, row.userId);
+  const overlayLang = reading.needsOverlay ? reading.lang : null;
+
   if (row.step === "EXPLAIN" && row.activeQuestionId !== null) {
     const question = await tx.query.questions.findFirst({
       where: eq(questions.id, row.activeQuestionId),
       columns: { explanation: true },
     });
+    let explanation = question?.explanation ?? null;
+    if (overlayLang) {
+      const overlay = await questionTextOverlay(
+        tx,
+        row.activeQuestionId,
+        overlayLang
+      );
+      if (overlay?.explanation) explanation = overlay.explanation;
+    }
     return {
       type: "EXPLAIN",
       questionId: row.activeQuestionId,
       explanation:
-        question?.explanation ??
+        explanation ??
         "Take another look at the question — think about what keeps you and the crew safe.",
       progress,
     };
@@ -212,8 +249,13 @@ const hydrateCurrentView = async (
 
   const surface =
     row.reteachCycle > 0
-      ? await variantOrOriginalSurface(tx, row.activeQuestionId, row.reteachCycle)
-      : await originalSurface(tx, row.activeQuestionId);
+      ? await variantOrOriginalSurface(
+          tx,
+          row.activeQuestionId,
+          row.reteachCycle,
+          overlayLang
+        )
+      : await originalSurface(tx, row.activeQuestionId, overlayLang);
 
   if (!surface) return { type: "COMPLETE", pointsEarned, progress, banner };
 

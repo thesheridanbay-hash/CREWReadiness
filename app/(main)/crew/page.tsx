@@ -10,7 +10,7 @@ const CrewPage = async () => {
   if (!session) redirect("/sign-in");
   if (session.role === "employee") redirect("/learn");
 
-  const { members, invites } = await getCrewRoster();
+  const { members, invites, primaryLanguage } = await getCrewRoster();
 
   return (
     <div className="px-4">
@@ -21,7 +21,11 @@ const CrewPage = async () => {
           phone — no email needed.
         </p>
       </div>
-      <CrewManager members={members} invites={invites} />
+      <CrewManager
+        members={members}
+        invites={invites}
+        primaryLanguage={primaryLanguage}
+      />
     </div>
   );
 };

@@ -1,10 +1,12 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { employeeCredentials, userProgress } from "@/db/schema";
 import {
   acceptEmployeeInvite,
   createEmployeeInvite,
@@ -14,6 +16,8 @@ import {
 } from "@/lib/auth/employee";
 import { PIN_PATTERN } from "@/lib/auth/pin";
 import { getSession } from "@/lib/auth/session";
+import { isSupportedLanguage } from "@/lib/content/languages";
+import { scoped } from "@/lib/db/scoped";
 import { err, fromZod, guard, ok, type Result } from "@/lib/errors";
 
 /**
@@ -173,5 +177,63 @@ export const resetEmployeePinAction = async (
     if (!done) return err("not_found", "Employee not found in your company.");
 
     revalidatePath("/");
+    return ok(null);
+  });
+
+/* ── Crew member content language (multi-language courses, PR-C) ── */
+
+const setLanguageSchema = z.object({
+  targetUserId: z.string().min(1),
+  /** A supported code, or "" to clear the override (inherit company primary). */
+  language: z.string().max(16),
+});
+
+export const setCrewMemberLanguageAction = async (
+  input: z.infer<typeof setLanguageSchema>
+): Promise<Result<null>> =>
+  guard(async () => {
+    const parsed = setLanguageSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const session = await getSession();
+
+    if (!session) return err("unauthorized", "Sign in to continue.");
+    if (session.role !== "owner" && session.role !== "manager")
+      return err("forbidden", "Only owners and managers can set crew languages.");
+
+    const raw = parsed.data.language.trim();
+    const language = raw === "" ? null : raw;
+    if (language !== null && !isSupportedLanguage(language))
+      return err("validation", `${language} is not a supported language.`);
+
+    const outcome = await scoped(session, async (tx) => {
+      // Only set a language for an actual member of THIS company — never mint a
+      // stray user_progress row for an arbitrary id.
+      const member = await tx.query.employeeCredentials.findFirst({
+        where: and(
+          eq(employeeCredentials.companyId, session.companyId),
+          eq(employeeCredentials.userId, parsed.data.targetUserId)
+        ),
+      });
+      if (!member) return "not_found" as const;
+
+      await tx
+        .insert(userProgress)
+        .values({
+          userId: parsed.data.targetUserId,
+          companyId: session.companyId,
+          language,
+        })
+        .onConflictDoUpdate({
+          target: userProgress.userId,
+          set: { language },
+        });
+      return "ok" as const;
+    });
+
+    if (outcome === "not_found")
+      return err("not_found", "Employee not found in your company.");
+
+    revalidatePath("/crew");
     return ok(null);
   });

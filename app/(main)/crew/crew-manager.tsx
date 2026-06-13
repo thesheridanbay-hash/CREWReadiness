@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import {
   createEmployeeInviteAction,
   resetEmployeePinAction,
+  setCrewMemberLanguageAction,
 } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import type { CrewMember, PendingInvite } from "@/lib/content/crew-queries";
+import { SUPPORTED_LANGUAGES, languageLabel } from "@/lib/content/languages";
 
 const inputClass =
   "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";
@@ -18,9 +20,11 @@ const inputClass =
 export const CrewManager = ({
   members,
   invites,
+  primaryLanguage,
 }: {
   members: CrewMember[];
   invites: PendingInvite[];
+  primaryLanguage: string;
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -56,6 +60,21 @@ export const CrewManager = ({
         return;
       }
       toast.success("PIN reset. Share the new PIN with them.");
+      router.refresh();
+    });
+  };
+
+  const setLanguage = (userId: string, language: string) => {
+    startTransition(async () => {
+      const result = await setCrewMemberLanguageAction({
+        targetUserId: userId,
+        language,
+      });
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success("Language updated.");
       router.refresh();
     });
   };
@@ -153,36 +172,66 @@ export const CrewManager = ({
           </p>
         ) : (
           <div className="flex flex-col gap-y-2">
-            {members.map((member) => (
-              <div
-                key={member.userId}
-                className="flex items-center justify-between gap-x-3 rounded-xl border-2 p-3"
-              >
-                <span className="font-medium text-neutral-700">
-                  {member.displayName}{" "}
-                  <span className="text-muted-foreground">@{member.username}</span>
-                  {member.locked && (
-                    <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
-                      Locked
-                    </span>
-                  )}
-                </span>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => {
-                    const pin = window.prompt(
-                      `New PIN for ${member.displayName} (4-6 digits):`
-                    );
-                    if (pin && /^\d{4,6}$/.test(pin)) resetPin(member.userId, pin);
-                    else if (pin) toast.error("PIN must be 4-6 digits.");
-                  }}
-                  className="text-xs font-bold uppercase text-amber-600 hover:underline disabled:opacity-50"
+            {members.map((member) => {
+              // An explicit pref equal to the primary is shown as "Default".
+              const selectedLanguage =
+                member.language && member.language !== primaryLanguage
+                  ? member.language
+                  : "";
+              return (
+                <div
+                  key={member.userId}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-3"
                 >
-                  Reset PIN
-                </button>
-              </div>
-            ))}
+                  <span className="font-medium text-neutral-700">
+                    {member.displayName}{" "}
+                    <span className="text-muted-foreground">@{member.username}</span>
+                    {member.locked && (
+                      <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                        Locked
+                      </span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-x-3">
+                    <select
+                      aria-label={`Course language for ${member.displayName}`}
+                      disabled={pending}
+                      value={selectedLanguage}
+                      onChange={(event) =>
+                        setLanguage(member.userId, event.target.value)
+                      }
+                      className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-neutral-700 outline-none focus:border-green-500 disabled:opacity-50"
+                    >
+                      <option value="">
+                        Default · {languageLabel(primaryLanguage)}
+                      </option>
+                      {SUPPORTED_LANGUAGES.filter(
+                        (language) => language.code !== primaryLanguage
+                      ).map((language) => (
+                        <option key={language.code} value={language.code}>
+                          {language.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        const pin = window.prompt(
+                          `New PIN for ${member.displayName} (4-6 digits):`
+                        );
+                        if (pin && /^\d{4,6}$/.test(pin))
+                          resetPin(member.userId, pin);
+                        else if (pin) toast.error("PIN must be 4-6 digits.");
+                      }}
+                      className="text-xs font-bold uppercase text-amber-600 hover:underline disabled:opacity-50"
+                    >
+                      Reset PIN
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

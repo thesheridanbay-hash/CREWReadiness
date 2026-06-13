@@ -6,6 +6,8 @@ import { courses, lessons, modules } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/lib/db/scoped";
 
+import { getReadingLanguage, lessonTeachingOverlay } from "./translations";
+
 /** Studio read queries (T10): scoped, office-role pages call these. */
 
 export type StudioCourseSummary = {
@@ -115,11 +117,21 @@ export const getLessonTeaching = cache(
       );
       const image = generated.find((a) => a.kind !== "AUDIO");
       const audio = generated.find((a) => a.kind === "AUDIO");
-      const hasContent = Boolean(lesson.teachingText || image);
+
+      // Overlay the learner's language onto the teaching text; fall back to the
+      // base (primary-language) text when this lesson isn't translated yet.
+      let text = lesson.teachingText;
+      const reading = await getReadingLanguage(tx, session.userId);
+      if (reading.needsOverlay) {
+        const overlay = await lessonTeachingOverlay(tx, lesson.id, reading.lang);
+        if (overlay?.teachingText) text = overlay.teachingText;
+      }
+
+      const hasContent = Boolean(text || image);
       if (!hasContent) return null;
 
       return {
-        text: lesson.teachingText,
+        text,
         imageSrc: image?.mediaAssetId ? `/api/media/${image.mediaAssetId}` : null,
         audioSrc: audio?.mediaAssetId ? `/api/media/${audio.mediaAssetId}` : null,
       };
