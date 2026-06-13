@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import { courseAssets, courses, mediaAssets } from "@/db/schema";
-import { generateImage } from "@/lib/ai/gateway";
+import { generateImage, generateSpeech } from "@/lib/ai/gateway";
 import type { ImageResult } from "@/lib/ai/types";
 import type { ScopedTx } from "@/lib/db/scoped";
 
@@ -93,13 +93,26 @@ export const runCourseAsset = async (
     return { ref: asset?.ref ?? assetId, kind: asset?.kind ?? "", status: "SKIPPED" };
   }
 
-  const result = await generateImage(
-    { tx, companyId, jobId },
-    { prompt: asset.prompt, kind: imageKindFor(asset.kind) }
-  );
+  // AUDIO assets are lesson voiceovers (TTS of the teaching text); everything
+  // else is an image. Both return bytes we persist to Blob identically.
+  let result: ImageResult;
+  let ext: string;
+  let mediaKind: "PHOTO" | "VOICE";
+  if (asset.kind === "AUDIO") {
+    result = await generateSpeech({ tx, companyId, jobId }, { text: asset.prompt });
+    ext = "mp3";
+    mediaKind = "VOICE";
+  } else {
+    result = await generateImage(
+      { tx, companyId, jobId },
+      { prompt: asset.prompt, kind: imageKindFor(asset.kind) }
+    );
+    ext = "png";
+    mediaKind = "PHOTO";
+  }
   const { bytes, contentType } = await toBytes(result);
 
-  const blob = await put(`course-assets/${companyId}/${randomUUID()}.png`, bytes, {
+  const blob = await put(`course-assets/${companyId}/${randomUUID()}.${ext}`, bytes, {
     access: "public",
     contentType,
     addRandomSuffix: true,
@@ -112,7 +125,7 @@ export const runCourseAsset = async (
       uploadedBy: "ai",
       pathname: blob.url,
       contentType,
-      kind: "PHOTO",
+      kind: mediaKind,
       sizeBytes: bytes.byteLength,
     })
     .returning();

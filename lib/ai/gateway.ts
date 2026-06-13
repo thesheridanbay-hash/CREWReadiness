@@ -7,7 +7,12 @@ import { DirectAdapter } from "./adapters/direct";
 import { OpenAiImageAdapter } from "./adapters/image";
 import { McpAdapter } from "./adapters/mcp";
 import { McpImageAdapter } from "./adapters/mcp-image";
-import type { ImageProviderAdapter, ProviderAdapter } from "./adapters/types";
+import { McpTtsAdapter } from "./adapters/mcp-tts";
+import type {
+  ImageProviderAdapter,
+  ProviderAdapter,
+  TtsProviderAdapter,
+} from "./adapters/types";
 import { decryptSecret } from "./crypto";
 import { createLeakGuard } from "./guard";
 import { recordUsage } from "./meter";
@@ -424,6 +429,76 @@ export const generateImage = async (
   );
 
   await recordUsage(ctx, "generateImage", providerName, result.usage, alertThresholdUsd);
+
+  return result;
+};
+
+type ResolvedTtsProvider = {
+  adapter: TtsProviderAdapter;
+  providerName: string;
+  alertThresholdUsd: number | null;
+};
+
+/** Resolve a TTS provider via the active OpenClaw connection (generate_tts_audio). */
+const resolveTtsProvider = async (ctx: AiContext): Promise<ResolvedTtsProvider> => {
+  const result = await ctx.tx.execute<{
+    provider: string | null;
+    encrypted_key: string | null;
+    settings: Record<string, unknown> | null;
+    alert_threshold_usd: string | null;
+  }>(sql`SELECT * FROM app_get_active_provider()`);
+  const row = result.rows[0];
+
+  if (row?.provider !== "openclaw") {
+    throw new AppActionError(
+      "conflict",
+      "Voiceover needs OpenClaw as the active provider (its generate_tts_audio tool)."
+    );
+  }
+
+  const settings = row.settings ?? {};
+  let apiKey = "";
+  if (row.encrypted_key) {
+    try {
+      apiKey = decryptSecret(row.encrypted_key);
+    } catch {
+      throw new AppActionError(
+        "conflict",
+        "The stored OpenClaw key could not be decrypted. Re-save it in platform settings."
+      );
+    }
+  }
+
+  return {
+    providerName: "openclaw-tts",
+    alertThresholdUsd: row.alert_threshold_usd ? Number(row.alert_threshold_usd) : null,
+    adapter: new McpTtsAdapter({
+      endpoint: String(settings.endpoint ?? ""),
+      apiKey,
+      toolName: "generate_tts_audio",
+      voice: settings.ttsVoice ? String(settings.ttsVoice) : undefined,
+      timeoutSeconds: 270,
+    }),
+  };
+};
+
+/**
+ * Generate ONE lesson voiceover (AI Course Builder). Called by the asset
+ * pipeline for AUDIO assets; bytes are persisted to Blob like images.
+ */
+export const generateSpeech = async (
+  ctx: AiContext,
+  args: { text: string; voice?: string }
+): Promise<ImageResult> => {
+  const { adapter, providerName, alertThresholdUsd } = await resolveTtsProvider(ctx);
+
+  const result = await withTimeout(
+    adapter.generateSpeech({ text: args.text, voice: args.voice }),
+    AI_TIMEOUTS.generateSpeech,
+    "generateSpeech"
+  );
+
+  await recordUsage(ctx, "generateSpeech", providerName, result.usage, alertThresholdUsd);
 
   return result;
 };

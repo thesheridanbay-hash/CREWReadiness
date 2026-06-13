@@ -114,7 +114,7 @@ export const GenerateImagesButton = ({
           ? "Generating…"
           : retryMode
             ? `Retry ${status.failed} failed`
-            : `Generate images (${status.pending})`}
+            : `Generate media (${status.pending})`}
       </Button>
     </div>
   );

@@ -92,7 +92,10 @@ describe("planCourseMaterialization", () => {
       prompt: "a friendly lawnmower mascot",
       order: 0,
     });
-    expect(plan.assetCount).toBe(3); // icon + 2 lesson assets
+    expect(plan.assetCount).toBe(5); // icon + 2 images + 2 lesson voiceovers
+    const lessonsPlan = plan.modules[0].units[0].lessons;
+    expect(lessonsPlan[0].audio).toMatchObject({ ref: "V3", kind: "AUDIO", order: 3 });
+    expect(lessonsPlan[1].audio).toMatchObject({ ref: "V4", kind: "AUDIO", order: 4 });
   });
 
   it("assigns 1-based display order at every level", () => {
@@ -146,7 +149,7 @@ describe("materializeCourseDraft", () => {
       unitCount: 1,
       lessonCount: 2,
       questionCount: 2,
-      assetCount: 3,
+      assetCount: 5,
     });
     expect(rowsFor(calls, courses)).toHaveLength(1);
     expect(rowsFor(calls, modules)).toHaveLength(1);
@@ -191,12 +194,17 @@ describe("materializeCourseDraft", () => {
     expect(firstAsset.lessonId).toBeNull();
 
     const allAssets = rowsFor(calls, courseAssets);
-    expect(allAssets).toHaveLength(3);
+    expect(allAssets).toHaveLength(5); // icon + 2 images + 2 voiceovers
     const lessonArt = allAssets.filter((a) => a.kind !== "ICON");
-    expect(lessonArt.map((a) => a.ref)).toEqual(["A1", "A2"]);
-    // Lesson art carries a lessonId (attaches to a lesson); icon does not.
+    expect(lessonArt.map((a) => a.ref)).toEqual(["A1", "A2", "V3", "V4"]);
+    // Lesson art + voiceovers carry a lessonId (attach to a lesson); icon does not.
     for (const art of lessonArt) {
       expect(art.lessonId).not.toBeNull();
     }
+    // Voiceovers are AUDIO assets.
+    expect(allAssets.filter((a) => a.kind === "AUDIO").map((a) => a.ref)).toEqual([
+      "V3",
+      "V4",
+    ]);
   });
 });

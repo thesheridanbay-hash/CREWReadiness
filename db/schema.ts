@@ -441,11 +441,13 @@ export const companySettings = pgTable("company_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-/** Course icon vs. lesson artwork. ICON rows carry a null lessonId. */
+/** Course icon, lesson artwork, or a lesson voiceover (AUDIO). ICON rows carry
+ * a null lessonId; AUDIO is the spoken teachingText for a lesson. */
 export const courseAssetKindEnum = pgEnum("course_asset_kind", [
   "ICON",
   "ILLUSTRATION",
   "REALISTIC",
+  "AUDIO",
 ]);
 
 /**

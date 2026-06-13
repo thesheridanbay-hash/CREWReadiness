@@ -38,11 +38,16 @@ export type EditorLessonImage = {
   status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
   src: string | null;
 };
+export type EditorLessonAudio = {
+  status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
+  src: string | null;
+};
 export type EditorLesson = {
   id: number;
   title: string;
   teachingText: string | null;
   images: EditorLessonImage[];
+  audio: EditorLessonAudio | null;
   questions: EditorQuestion[];
 };
 export type EditorUnit = { id: number; title: string; lessons: EditorLesson[] };
@@ -255,6 +260,28 @@ const LessonBlock = ({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {lesson.audio && (
+        <div className="ml-2 mt-2">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400">
+            Voiceover
+          </p>
+          {lesson.audio.src ? (
+            <audio controls src={lesson.audio.src} className="mt-1 h-8 w-full max-w-xs">
+              <track kind="captions" />
+            </audio>
+          ) : (
+            <p
+              className={
+                "mt-0.5 text-xs " +
+                (lesson.audio.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
+              }
+            >
+              {lesson.audio.status === "FAILED" ? "failed" : "pending"}
+            </p>
+          )}
         </div>
       )}
 

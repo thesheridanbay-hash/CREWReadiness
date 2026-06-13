@@ -32,10 +32,13 @@ import type { CourseDraft } from "@/lib/ai/types";
 
 export type PlannedAsset = {
   ref: string;
-  kind: "ICON" | "ILLUSTRATION" | "REALISTIC";
+  kind: "ICON" | "ILLUSTRATION" | "REALISTIC" | "AUDIO";
   prompt: string;
   order: number;
 };
+
+/** Cap the voiceover text so a long lesson doesn't make a runaway audio clip. */
+const TTS_MAX_CHARS = 2000;
 
 export type PlannedQuestion = {
   question: string;
@@ -51,6 +54,8 @@ export type PlannedLesson = {
   questions: PlannedQuestion[];
   /** Lesson artwork (illustration/realistic) — never the course icon. */
   assets: PlannedAsset[];
+  /** Voiceover (TTS of the teaching text), if there's text to speak. */
+  audio: PlannedAsset | null;
 };
 
 export type PlannedUnit = {
@@ -94,20 +99,8 @@ export const planCourseMaterialization = (
     units: module.units.map((unit, uIdx) => ({
       title: unit.title,
       order: uIdx + 1,
-      lessons: unit.lessons.map((lesson, lIdx) => ({
-        title: lesson.title,
-        teachingText: lesson.teachingText,
-        order: lIdx + 1,
-        questions: lesson.questions.map((question, qIdx) => ({
-          question: question.question,
-          explanation: question.explanation,
-          order: qIdx + 1,
-          options: question.options.map((option) => ({
-            text: option.text,
-            correct: option.correct,
-          })),
-        })),
-        assets: lesson.assets.map((asset) => {
+      lessons: unit.lessons.map((lesson, lIdx) => {
+        const assets: PlannedAsset[] = lesson.assets.map((asset) => {
           assetSeq += 1;
           return {
             ref: `A${assetSeq}`,
@@ -115,8 +108,39 @@ export const planCourseMaterialization = (
             prompt: asset.prompt,
             order: assetSeq,
           };
-        }),
-      })),
+        });
+
+        // One voiceover per lesson (TTS of the teaching text), queued after
+        // the lesson's images.
+        let audio: PlannedAsset | null = null;
+        const speech = lesson.teachingText.trim();
+        if (speech) {
+          assetSeq += 1;
+          audio = {
+            ref: `V${assetSeq}`,
+            kind: "AUDIO",
+            prompt: speech.slice(0, TTS_MAX_CHARS),
+            order: assetSeq,
+          };
+        }
+
+        return {
+          title: lesson.title,
+          teachingText: lesson.teachingText,
+          order: lIdx + 1,
+          questions: lesson.questions.map((question, qIdx) => ({
+            question: question.question,
+            explanation: question.explanation,
+            order: qIdx + 1,
+            options: question.options.map((option) => ({
+              text: option.text,
+              correct: option.correct,
+            })),
+          })),
+          assets,
+          audio,
+        };
+      }),
     })),
   }));
 
@@ -232,9 +256,12 @@ export const materializeCourseDraft = async (
           );
         }
 
-        if (plannedLesson.assets.length > 0) {
+        const lessonAssets = plannedLesson.audio
+          ? [...plannedLesson.assets, plannedLesson.audio]
+          : plannedLesson.assets;
+        if (lessonAssets.length > 0) {
           await tx.insert(courseAssets).values(
-            plannedLesson.assets.map((asset) => ({
+            lessonAssets.map((asset) => ({
               companyId,
               courseId: course.id,
               lessonId: lesson.id,

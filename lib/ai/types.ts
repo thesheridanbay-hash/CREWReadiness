@@ -130,7 +130,8 @@ export type AiOperation =
   | "generateVariants"
   | "analyzePhoto"
   | "transcribeVoice"
-  | "generateImage";
+  | "generateImage"
+  | "generateSpeech";
 
 /** Result of an image generation: bytes (b64) or a URL, plus content type. */
 export type ImageResult = {
@@ -179,4 +180,6 @@ export const AI_TIMEOUTS: Record<AiOperation, number> = {
   // Image gen (esp. OpenClaw) lands ~120s+; keep well under the 300s route cap
   // so a slow-but-valid image isn't aborted by our own timeout.
   generateImage: 280_000,
+  // TTS voiceover via OpenClaw; same generous budget under the 300s route cap.
+  generateSpeech: 280_000,
 };
