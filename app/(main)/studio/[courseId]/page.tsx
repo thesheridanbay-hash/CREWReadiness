@@ -2,8 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCourseAssetStatus, type CourseAssetStatus } from "@/actions/course-assets";
+import {
+  getCourseTranslationStatus,
+  type CourseTranslationStatus,
+} from "@/actions/course-translate";
 import { getSession } from "@/lib/auth/session";
 import { getCourseTree } from "@/lib/content/queries";
+import { DEFAULT_LANGUAGE } from "@/lib/content/languages";
 
 import { StudioEditor, type EditorCourse } from "./studio-editor";
 
@@ -25,6 +30,13 @@ const CourseStudioPage = async ({ params }: PageProps) => {
   const assetStatus: CourseAssetStatus = statusResult.ok
     ? statusResult.data
     : { total: 0, pending: 0, generated: 0, failed: 0 };
+
+  const translationResult = await getCourseTranslationStatus({
+    courseId: Number(courseId),
+  });
+  const translationStatus: CourseTranslationStatus = translationResult.ok
+    ? translationResult.data
+    : { primaryLanguage: DEFAULT_LANGUAGE, totalLessons: 0, languages: [] };
 
   const course: EditorCourse = {
     id: tree.id,
@@ -90,7 +102,11 @@ const CourseStudioPage = async ({ params }: PageProps) => {
       >
         ← All courses
       </Link>
-      <StudioEditor course={course} assetStatus={assetStatus} />
+      <StudioEditor
+        course={course}
+        assetStatus={assetStatus}
+        translationStatus={translationStatus}
+      />
     </div>
   );
 };
