@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { marketplaceListings } from "@/db/schema";
 import { TENANT_TABLES, TENANT_TABLE_NAMES } from "@/db/tenant-tables";
 
 import { makeDb, seedCompany, testDatabaseUrl, withTenant } from "./fixtures";
@@ -116,6 +117,119 @@ describe.skipIf(!enabled)("RLS tenant isolation (request path)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe.skipIf(!enabled)(
+  "marketplace_listings bespoke RLS (public read / owner write)",
+  () => {
+    const companyA = `mk-a-${randomUUID().slice(0, 8)}`;
+    const companyB = `mk-b-${randomUUID().slice(0, 8)}`;
+    let ctx: ReturnType<typeof makeDb>;
+    let publishedId: string;
+    let unlistedId: string;
+
+    beforeAll(async () => {
+      ctx = makeDb();
+      const made = await withTenant(ctx.db, companyA, async (tx) => {
+        const [pub] = await tx
+          .insert(marketplaceListings)
+          .values({
+            kind: "COMMUNITY",
+            sourceCompanyId: companyA,
+            category: "safety",
+            title: "A published",
+            snapshot: {},
+            status: "PUBLISHED",
+            publishedBy: "t",
+          })
+          .returning();
+        const [unl] = await tx
+          .insert(marketplaceListings)
+          .values({
+            kind: "COMMUNITY",
+            sourceCompanyId: companyA,
+            category: "safety",
+            title: "A unlisted",
+            snapshot: {},
+            status: "UNLISTED",
+            publishedBy: "t",
+          })
+          .returning();
+        return { publishedId: pub.id, unlistedId: unl.id };
+      });
+      publishedId = made.publishedId;
+      unlistedId = made.unlistedId;
+    });
+
+    afterAll(async () => {
+      await ctx?.pool.end();
+    });
+
+    it("another company CAN read a PUBLISHED listing", async () => {
+      const rows = await withTenant(ctx.db, companyB, (tx) =>
+        tx
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, publishedId))
+      );
+      expect(rows).toHaveLength(1);
+    });
+
+    it("another company CANNOT read an UNLISTED listing", async () => {
+      const rows = await withTenant(ctx.db, companyB, (tx) =>
+        tx
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, unlistedId))
+      );
+      expect(rows).toHaveLength(0);
+    });
+
+    it("the owner CAN read its own UNLISTED listing", async () => {
+      const rows = await withTenant(ctx.db, companyA, (tx) =>
+        tx
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, unlistedId))
+      );
+      expect(rows).toHaveLength(1);
+    });
+
+    it("another company CANNOT update someone else's listing", async () => {
+      const updated = await withTenant(ctx.db, companyB, (tx) =>
+        tx
+          .update(marketplaceListings)
+          .set({ title: "hijacked" })
+          .where(eq(marketplaceListings.id, publishedId))
+          .returning({ id: marketplaceListings.id })
+      );
+      expect(updated).toHaveLength(0);
+
+      const [row] = await withTenant(ctx.db, companyA, (tx) =>
+        tx
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, publishedId))
+      );
+      expect(row.title).toBe("A published");
+    });
+
+    it("a company CANNOT publish a listing claiming another company as source", async () => {
+      await expect(
+        withTenant(ctx.db, companyB, (tx) =>
+          tx.insert(marketplaceListings).values({
+            kind: "COMMUNITY",
+            sourceCompanyId: companyA,
+            category: "safety",
+            title: "smuggled",
+            snapshot: {},
+            status: "PUBLISHED",
+            publishedBy: "t",
+          })
+        )
+      ).rejects.toThrow();
+    });
+  }
+);
 
 describe.skipIf(!enabled)("runtime role posture (D14/F1)", () => {
   it("the connected role has neither BYPASSRLS nor SUPERUSER", async () => {

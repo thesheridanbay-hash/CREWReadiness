@@ -86,7 +86,8 @@ DECLARE
     'notifications',
     'user_progress',
     'company_settings',
-    'course_assets'
+    'course_assets',
+    'marketplace_adoptions'
   ];
 BEGIN
   FOREACH t IN ARRAY tenant_tables LOOP
@@ -111,6 +112,85 @@ DROP POLICY IF EXISTS platform_only ON provider_settings;
 CREATE POLICY platform_only ON provider_settings
   USING (current_setting('app.is_platform', true) = 'true')
   WITH CHECK (current_setting('app.is_platform', true) = 'true');
+
+-- ─── 3b. marketplace_listings: public library, bespoke RLS (marketplace) ───
+-- NOT the standard tenant_isolation policy (that would hide every other
+-- company's listings, defeating the marketplace). Instead:
+--   * SELECT: anyone may read PUBLISHED rows; a company also reads its OWN
+--     rows (any status); platform reads all.
+--   * INSERT/UPDATE/DELETE: a company may write only its OWN COMMUNITY rows;
+--     platform writes UNIVERSAL rows. No company can touch another's listing.
+-- The snapshot is content the publisher deliberately exposed; adopting writes
+-- only into the adopter's own company under normal tenant_isolation.
+
+ALTER TABLE marketplace_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace_listings FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS marketplace_select ON marketplace_listings;
+CREATE POLICY marketplace_select ON marketplace_listings
+  FOR SELECT
+  USING (
+    status = 'PUBLISHED'
+    OR source_company_id = current_setting('app.company_id', true)
+    OR current_setting('app.is_platform', true) = 'true'
+  );
+
+DROP POLICY IF EXISTS marketplace_insert ON marketplace_listings;
+CREATE POLICY marketplace_insert ON marketplace_listings
+  FOR INSERT
+  WITH CHECK (
+    (kind = 'COMMUNITY'
+       AND source_company_id = current_setting('app.company_id', true))
+    OR (kind = 'UNIVERSAL'
+       AND current_setting('app.is_platform', true) = 'true')
+  );
+
+DROP POLICY IF EXISTS marketplace_update ON marketplace_listings;
+CREATE POLICY marketplace_update ON marketplace_listings
+  FOR UPDATE
+  USING (
+    (kind = 'COMMUNITY'
+       AND source_company_id = current_setting('app.company_id', true))
+    OR (kind = 'UNIVERSAL'
+       AND current_setting('app.is_platform', true) = 'true')
+  )
+  WITH CHECK (
+    (kind = 'COMMUNITY'
+       AND source_company_id = current_setting('app.company_id', true))
+    OR (kind = 'UNIVERSAL'
+       AND current_setting('app.is_platform', true) = 'true')
+  );
+
+DROP POLICY IF EXISTS marketplace_delete ON marketplace_listings;
+CREATE POLICY marketplace_delete ON marketplace_listings
+  FOR DELETE
+  USING (
+    (kind = 'COMMUNITY'
+       AND source_company_id = current_setting('app.company_id', true))
+    OR (kind = 'UNIVERSAL'
+       AND current_setting('app.is_platform', true) = 'true')
+  );
+
+-- ─── 3c. Public media read (marketplace shared assets) ─────────────────────
+-- Adopted courses reference the SAME blobs as the source (no copy/regen).
+-- media_assets keeps its pure tenant_isolation policy; this SECURITY DEFINER
+-- is the ONLY cross-tenant read path, and only for rows explicitly marked
+-- public (set when the owning course is published to the marketplace). The
+-- media proxy still requires an authed session before calling it.
+CREATE OR REPLACE FUNCTION app_get_public_media(p_media_id uuid)
+RETURNS TABLE (pathname text, content_type text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT m.pathname, m.content_type
+  FROM media_assets m
+  WHERE m.id = p_media_id AND m.public IS TRUE
+$$;
+
+REVOKE ALL ON FUNCTION app_get_public_media(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_get_public_media(uuid) TO app_runtime;
 
 -- ─── 4. Job tenant resolution (D20/F2) ─────────────────────────────────────
 -- SECURITY DEFINER so the runtime role can resolve a job's company WITHOUT
