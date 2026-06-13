@@ -16,9 +16,8 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
-  // ── Architecture guard (added Phase 0 of the repo reshape) ──────────────────
-  // import/no-cycle is LIVE in WARN so the baseline stays green. Flip to "error"
-  // in Phase F once the feature layout lands and cycles are triaged to zero.
+  // ── Architecture guard (repo reshape) ───────────────────────────────────────
+  // No import cycles, anywhere. Zero today; this keeps it that way (CI-blocking).
   {
     files: ["**/*.ts", "**/*.tsx"],
     plugins: { import: importPlugin },
@@ -26,25 +25,34 @@ const eslintConfig = [
       "import/resolver": { typescript: { project: "./tsconfig.json" } },
     },
     rules: {
-      "import/no-cycle": ["warn", { maxDepth: 6 }],
+      "import/no-cycle": ["error", { maxDepth: 6 }],
     },
   },
-  // ── Feature-boundary guard — STAGED for Phase F ─────────────────────────────
-  // eslint-plugin-boundaries is installed. It cannot enforce until src/features/*
-  // exists, so it is intentionally NOT wired yet. In Phase F, add this block and
-  // flip it to "error":
-  //   settings: { "boundaries/elements": [
-  //     { type: "app",       pattern: "src/app/**" },
-  //     { type: "app-shell", pattern: "src/app-shell/**" },
-  //     { type: "feature",   pattern: "src/features/*/**", capture: ["name"] },
-  //     { type: "shared",    pattern: "src/shared/**" },
-  //   ] },
-  //   rules: { "boundaries/element-types": ["error", { default: "disallow", rules: [
-  //     { from: "shared",             disallow: ["feature", "app", "app-shell"] },
-  //     { from: "feature",            allow: ["shared"] },        // + type-only cross-feature
-  //     { from: ["app", "app-shell"], allow: ["feature", "shared"] },
-  //   ] }] }
-  //   // root proxy.ts is exempt (infra that imports a feature policy).
+  // ── Feature-boundary guard: shared/ must stay a leaf ────────────────────────
+  // src/shared/** may not make VALUE imports up into features/app/app-shell.
+  // Type-only imports ARE allowed (e.g. shared/db/scoped.ts importing the auth
+  // Session type for signatures). Cross-feature value imports between features
+  // are permitted and kept safe from cycles by import/no-cycle above.
+  // (eslint-plugin-boundaries is installed if per-feature surface rules are
+  // wanted later; this lighter rule enforces the load-bearing invariant.)
+  {
+    files: ["src/shared/**/*.ts", "src/shared/**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/features/*", "@/app/*", "@/app-shell/*"],
+              allowTypeImports: true,
+              message:
+                "shared/ is a leaf: no value imports from features/app/app-shell (type-only is allowed).",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;
