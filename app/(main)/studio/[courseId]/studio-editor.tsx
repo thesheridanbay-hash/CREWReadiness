@@ -74,11 +74,13 @@ export const StudioEditor = ({
   assetStatus,
   translationStatus,
   listing,
+  isPlatform,
 }: {
   course: EditorCourse;
   assetStatus: CourseAssetStatus;
   translationStatus: CourseTranslationStatus;
   listing: CourseListingInfo;
+  isPlatform: boolean;
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -128,7 +130,11 @@ export const StudioEditor = ({
 
       <TranslatePanel courseId={course.id} status={translationStatus} />
 
-      <MarketplacePublishPanel courseId={course.id} listing={listing} />
+      <MarketplacePublishPanel
+        courseId={course.id}
+        listing={listing}
+        isPlatform={isPlatform}
+      />
 
       <div className="flex flex-col gap-y-4">
         {course.modules.map((module) => (

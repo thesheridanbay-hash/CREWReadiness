@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -198,6 +198,108 @@ export const publishCourseToMarketplace = async (
     );
   });
 
+const requirePlatform = async () => {
+  const auth = await getSession();
+  if (!auth) throw new AppActionError("unauthorized", "Sign in to continue.");
+  if (auth.role !== "platform") {
+    throw new AppActionError(
+      "forbidden",
+      "Only the platform admin can publish universal courses."
+    );
+  }
+  return auth;
+};
+
+/**
+ * Publish (or re-publish) a course as a UNIVERSAL (admin-curated) listing
+ * (course marketplace, PR-5). Platform-admin only. Same serialize + flag-media
+ * mechanics as community publishing, but the listing has no source company and
+ * kind UNIVERSAL (RLS lets only platform write those). Idempotent per course.
+ */
+export const publishCourseAsUniversal = async (
+  input: unknown
+): Promise<Result<{ listingId: string; updated: boolean }>> =>
+  guard<{ listingId: string; updated: boolean }>(async () => {
+    const parsed = publishSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+    if (!isMarketplaceCategory(parsed.data.category)) {
+      return err("validation", "Choose a valid category.");
+    }
+
+    const auth = await requirePlatform();
+    const { courseId, category, description } = parsed.data;
+
+    return scoped<Result<{ listingId: string; updated: boolean }>>(
+      auth,
+      async (tx) => {
+        const course = await tx.query.courses.findFirst({
+          where: eq(courses.id, courseId),
+        });
+        if (!course) throw new AppActionError("not_found", "Course not found.");
+
+        const snapshot = await serializeCourse(tx, courseId, {
+          category,
+          description,
+        });
+
+        await tx.execute(sql`
+          UPDATE media_assets SET public = true
+          WHERE id IN (
+            SELECT media_asset_id FROM course_assets
+            WHERE course_id = ${courseId}
+              AND media_asset_id IS NOT NULL
+              AND status = 'GENERATED'
+          )
+        `);
+
+        const existing = await tx.query.marketplaceListings.findFirst({
+          where: and(
+            eq(marketplaceListings.kind, "UNIVERSAL"),
+            eq(marketplaceListings.sourceCourseId, courseId)
+          ),
+        });
+
+        if (existing) {
+          await tx
+            .update(marketplaceListings)
+            .set({
+              category,
+              title: course.title,
+              description,
+              primaryLanguage: snapshot.primaryLanguage,
+              snapshot,
+              status: "PUBLISHED",
+              updatedAt: new Date(),
+            })
+            .where(eq(marketplaceListings.id, existing.id));
+          revalidatePath("/studio");
+          revalidatePath("/marketplace");
+          return ok({ listingId: existing.id, updated: true });
+        }
+
+        const [listing] = await tx
+          .insert(marketplaceListings)
+          .values({
+            kind: "UNIVERSAL",
+            sourceCompanyId: null,
+            sourceCourseId: courseId,
+            category,
+            title: course.title,
+            description,
+            primaryLanguage: snapshot.primaryLanguage,
+            snapshot,
+            status: "PUBLISHED",
+            publishedBy: auth.userId,
+          })
+          .returning();
+
+        revalidatePath("/studio");
+        revalidatePath("/marketplace");
+        return ok({ listingId: listing.id, updated: false });
+      }
+    );
+  });
+
 const listingIdSchema = z.object({ listingId: z.string().uuid() });
 
 /** Take a listing down (owner only; RLS allows only your own COMMUNITY row).
@@ -226,12 +328,18 @@ export const unlistListing = async (
 
 export type CourseListingInfo = {
   listingId: string;
+  kind: "COMMUNITY" | "UNIVERSAL";
   status: "PUBLISHED" | "UNLISTED";
   category: string;
   description: string;
 } | null;
 
-/** The company's COMMUNITY listing for a course, if any (for the publish UI). */
+/**
+ * The listing for a course, if any (for the publish UI). A normal owner sees
+ * their own COMMUNITY listing; the platform admin sees the course's UNIVERSAL
+ * listing. (A universal listing's sourceCourseId points at the platform's own
+ * course, so it never collides with another company's courseId.)
+ */
 export const getCourseListing = async (
   input: unknown
 ): Promise<Result<CourseListingInfo>> =>
@@ -246,14 +354,17 @@ export const getCourseListing = async (
     return scoped<Result<CourseListingInfo>>(auth, async (tx) => {
       const listing = await tx.query.marketplaceListings.findFirst({
         where: and(
-          eq(marketplaceListings.kind, "COMMUNITY"),
-          eq(marketplaceListings.sourceCompanyId, auth.companyId),
-          eq(marketplaceListings.sourceCourseId, parsed.data.courseId)
+          eq(marketplaceListings.sourceCourseId, parsed.data.courseId),
+          or(
+            eq(marketplaceListings.sourceCompanyId, auth.companyId),
+            eq(marketplaceListings.kind, "UNIVERSAL")
+          )
         ),
       });
       if (!listing) return ok(null);
       return ok({
         listingId: listing.id,
+        kind: listing.kind,
         status: listing.status,
         category: listing.category,
         description: listing.description,

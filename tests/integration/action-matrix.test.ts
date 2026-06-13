@@ -53,6 +53,7 @@ import { upsertUserProgress } from "@/actions/user-progress";
 import { createCourse, createQuestion, publishCourse } from "@/actions/content";
 import {
   adoptListing,
+  publishCourseAsUniversal,
   publishCourseToMarketplace,
   unlistListing,
 } from "@/actions/marketplace";
@@ -299,6 +300,20 @@ const matrix: MatrixRow[] = [
       unlistListing({ listingId: "8f7e6d5c-4b3a-2910-8f7e-6d5c4b3a2910" }),
     session: employeeSession,
     expectCode: "forbidden",
+  },
+  {
+    name: "publishCourseAsUniversal is forbidden for non-platform owners",
+    run: () =>
+      publishCourseAsUniversal({ courseId: 1, category: "safety" }),
+    session: ownerSession,
+    expectCode: "forbidden",
+  },
+  {
+    name: "publishCourseAsUniversal rejects an unknown category",
+    run: () =>
+      publishCourseAsUniversal({ courseId: 1, category: "bogus" }),
+    session: { ...ownerSession, role: "platform" },
+    expectCode: "validation",
   },
 ];
 
