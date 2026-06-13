@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { hasExif, isJpeg, stripJpegMetadata } from "@/lib/media/strip-exif";
-import { validateUpload } from "@/lib/media/policy";
+import { hasExif, isJpeg, stripJpegMetadata } from "@/features/media/strip-exif";
+import { validateUpload } from "@/features/media/policy";
 
 /** Build a minimal valid-enough JPEG: SOI, optional APP1, APP0, SOS+data, EOI. */
 const buildJpeg = (withExif: boolean): Uint8Array => {

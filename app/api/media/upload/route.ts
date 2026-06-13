@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { mediaAssets } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/shared/db/scoped";
-import { stripJpegMetadata } from "@/lib/media/strip-exif";
-import { validateUpload, type MediaKind } from "@/lib/media/policy";
+import { stripJpegMetadata } from "@/features/media/strip-exif";
+import { validateUpload, type MediaKind } from "@/features/media/policy";
 
 /**
  * Server-side upload (T11 — D9/F8). The browser POSTs the raw file here; the
