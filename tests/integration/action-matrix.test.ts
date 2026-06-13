@@ -58,6 +58,10 @@ import {
   unlistListing,
 } from "@/actions/marketplace";
 import { assignCourse, unassignCourse } from "@/actions/assignments";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/actions/notifications";
 
 const ownerSession: Session = {
   userId: "user-1",
@@ -351,6 +355,24 @@ const matrix: MatrixRow[] = [
     run: () => unassignCourse({ assignmentId: 1 }),
     session: employeeSession,
     expectCode: "forbidden",
+  },
+  {
+    name: "markNotificationRead rejects a non-positive id",
+    run: () => markNotificationRead({ id: 0 }),
+    session: ownerSession,
+    expectCode: "validation",
+  },
+  {
+    name: "markNotificationRead requires a session",
+    run: () => markNotificationRead({ id: 1 }),
+    session: null,
+    expectCode: "unauthorized",
+  },
+  {
+    name: "markAllNotificationsRead requires a session",
+    run: () => markAllNotificationsRead(),
+    session: null,
+    expectCode: "unauthorized",
   },
 ];
 
