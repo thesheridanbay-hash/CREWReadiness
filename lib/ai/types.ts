@@ -258,7 +258,9 @@ export const ZERO_USAGE: Usage = { inputTokens: 0, outputTokens: 0, costUsd: 0 }
 /** Per-operation timeouts (ms). Reteach is tight: timeout → pre-gen variant (D7). */
 export const AI_TIMEOUTS: Record<AiOperation, number> = {
   generateLesson: 120_000,
-  generateCourse: 180_000,
+  // Single attempt now (no retry) — give the big call generous headroom under
+  // the 300s route cap instead of two short attempts that overrun it.
+  generateCourse: 270_000,
   reteach: 8_000,
   generateVariants: 60_000,
   analyzePhoto: 120_000,
