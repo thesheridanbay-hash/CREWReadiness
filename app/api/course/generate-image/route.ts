@@ -25,7 +25,12 @@ import { scoped } from "@/lib/db/scoped";
  */
 export const maxDuration = 300;
 
-const bodySchema = z.object({ courseId: z.number().int().positive() });
+const bodySchema = z.object({
+  courseId: z.number().int().positive(),
+  // Optional: regenerate ONE specific asset (the feedback-driven fix path)
+  // instead of draining the next pending one.
+  assetId: z.string().uuid().optional(),
+});
 
 export async function POST(request: NextRequest) {
   const auth = await getSession();
@@ -51,11 +56,12 @@ export async function POST(request: NextRequest) {
   }
   const { courseId } = parsed.data;
 
-  // Pick the next PENDING asset (RLS scopes to this company).
+  // A specific target asset (regenerate one) or the next PENDING in the queue.
+  // RLS scopes everything to this company.
   const assetId = await scoped(auth, async (tx) => {
     const course = await tx.query.courses.findFirst({ where: eq(courses.id, courseId) });
     if (!course) return undefined;
-    return nextPendingAssetId(tx, courseId);
+    return parsed.data.assetId ?? (await nextPendingAssetId(tx, courseId));
   });
 
   if (assetId === undefined) {

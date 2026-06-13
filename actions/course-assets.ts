@@ -144,6 +144,84 @@ export const getCourseAssetStatus = async (
   });
 
 /**
+ * Re-queue ONE asset for (re)generation, optionally with a refined prompt — the
+ * feedback-driven "fix this image" path. Keeps the existing media so the editor
+ * still shows the old version until the new one lands. The owner then triggers
+ * generation (Generate media, or an immediate single-asset run).
+ */
+const requeueSchema = z.object({
+  assetId: z.string().uuid(),
+  prompt: z.string().trim().max(4000).optional(),
+});
+
+export const requeueAsset = async (
+  input: unknown
+): Promise<Result<{ courseId: number }>> =>
+  guard<{ courseId: number }>(async () => {
+    const parsed = requeueSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireOwner();
+
+    return scoped<Result<{ courseId: number }>>(auth, async (tx) => {
+      const result = await tx.execute<{ course_id: number }>(sql`
+        UPDATE course_assets
+        SET status = 'PENDING', error = NULL,
+            prompt = COALESCE(${parsed.data.prompt ?? null}::text, prompt),
+            updated_at = now()
+        WHERE id = ${parsed.data.assetId}
+        RETURNING course_id
+      `);
+      const row = result.rows[0];
+      if (!row) throw new AppActionError("not_found", "Asset not found.");
+      revalidatePath(`/studio/${row.course_id}`);
+      return ok({ courseId: row.course_id });
+    });
+  });
+
+/**
+ * Attach an uploaded media asset to a course asset (manual replacement). The
+ * UPDATE…FROM join only matches when BOTH rows are visible under the tenant's
+ * RLS context, so a cross-company attach is impossible. ICON also updates the
+ * course card image.
+ */
+const setMediaSchema = z.object({
+  assetId: z.string().uuid(),
+  mediaAssetId: z.string().uuid(),
+});
+
+export const setAssetMedia = async (
+  input: unknown
+): Promise<Result<{ courseId: number }>> =>
+  guard<{ courseId: number }>(async () => {
+    const parsed = setMediaSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireOwner();
+
+    return scoped<Result<{ courseId: number }>>(auth, async (tx) => {
+      const result = await tx.execute<{ course_id: number; kind: string }>(sql`
+        UPDATE course_assets ca
+        SET status = 'GENERATED', media_asset_id = ${parsed.data.mediaAssetId},
+            error = NULL, updated_at = now()
+        FROM media_assets m
+        WHERE ca.id = ${parsed.data.assetId} AND m.id = ${parsed.data.mediaAssetId}
+        RETURNING ca.course_id, ca.kind
+      `);
+      const row = result.rows[0];
+      if (!row) throw new AppActionError("not_found", "Asset or upload not found.");
+
+      if (row.kind === "ICON") {
+        await tx.execute(
+          sql`UPDATE courses SET image_src = ${`/api/media/${parsed.data.mediaAssetId}`} WHERE id = ${row.course_id}`
+        );
+      }
+      revalidatePath(`/studio/${row.course_id}`);
+      return ok({ courseId: row.course_id });
+    });
+  });
+
+/**
  * Reset FAILED assets back to PENDING so the owner can retry them (the
  * synchronous image loop only picks PENDING). Returns how many were reset.
  */

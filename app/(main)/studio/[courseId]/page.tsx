@@ -49,6 +49,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
               ref: asset.ref,
               kind: asset.kind as "ICON" | "ILLUSTRATION" | "REALISTIC",
               status: asset.status,
+              prompt: asset.prompt,
               // Generated art is served through the authed proxy.
               src: asset.status === "GENERATED" && asset.mediaAssetId
                 ? `/api/media/${asset.mediaAssetId}`
