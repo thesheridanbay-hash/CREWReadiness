@@ -14,8 +14,8 @@ import {
   questions,
   units,
 } from "@/db/schema";
-import { improveText } from "@/lib/ai/gateway";
-import type { ImproveFieldKind } from "@/lib/ai/prompts";
+import { improveText } from "@/features/ai/gateway";
+import type { ImproveFieldKind } from "@/features/ai/prompts";
 import { EVENTS, inngest } from "@/inngest/client";
 import type { Session } from "@/lib/auth/session";
 import { getSession } from "@/lib/auth/session";

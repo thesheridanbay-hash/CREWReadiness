@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { decryptSecret, encryptSecret, isProviderKeyConfigError } from "@/lib/ai/crypto";
+import { decryptSecret, encryptSecret, isProviderKeyConfigError } from "@/features/ai/crypto";
 
 /** Provider-key encryption (D5). */
 

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { aiJobs, mediaAssets } from "@/db/schema";
-import { analyzePhoto } from "@/lib/ai/gateway";
+import { analyzePhoto } from "@/features/ai/gateway";
 import { scopedForJob } from "@/shared/db/scoped";
 
 import { EVENTS, inngest, jobIdFrom } from "../client";

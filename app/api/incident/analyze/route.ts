@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { aiJobs, courses, mediaAssets, reviewQueue } from "@/db/schema";
-import { analyzePhoto } from "@/lib/ai/gateway";
+import { analyzePhoto } from "@/features/ai/gateway";
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/shared/db/scoped";
 

@@ -6,8 +6,8 @@ import {
   optionTranslations,
   questionTranslations,
 } from "@/db/schema";
-import { translateLesson } from "@/lib/ai/gateway";
-import type { LessonTranslationResult, TranslationSource } from "@/lib/ai/types";
+import { translateLesson } from "@/features/ai/gateway";
+import type { LessonTranslationResult, TranslationSource } from "@/features/ai/types";
 import { AppActionError } from "@/shared/errors";
 import { languageLabel } from "@/lib/content/languages";
 import type { ScopedTx } from "@/shared/db/scoped";

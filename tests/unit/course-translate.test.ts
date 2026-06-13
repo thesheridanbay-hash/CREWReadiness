@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTranslatePrompt } from "@/lib/ai/prompts";
+import { buildTranslatePrompt } from "@/features/ai/prompts";
 import {
   buildLessonTranslationSchema,
   type LessonTranslationResult,
   type TranslationSource,
-} from "@/lib/ai/types";
+} from "@/features/ai/types";
 import { planTranslationWrites } from "@/lib/content/translate-runner";
 
 /**

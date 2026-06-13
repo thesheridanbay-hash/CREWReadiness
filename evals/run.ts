@@ -3,15 +3,15 @@ import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { DirectAdapter } from "../lib/ai/adapters/direct";
-import { containsAnswer } from "../lib/ai/guard";
+import { DirectAdapter } from "../src/features/ai/adapters/direct";
+import { containsAnswer } from "../src/features/ai/guard";
 import {
   buildLessonPrompt,
   buildPhotoPrompt,
   buildReteachPrompt,
   buildVariantPrompt,
-} from "../lib/ai/prompts";
-import { lessonDraftSchema, photoAnalysisSchema, variantBatchSchema } from "../lib/ai/types";
+} from "../src/features/ai/prompts";
+import { lessonDraftSchema, photoAnalysisSchema, variantBatchSchema } from "../src/features/ai/types";
 
 /**
  * Eval runner (D19): six CI-gated suites — text-gen, photo-gen, reteach,

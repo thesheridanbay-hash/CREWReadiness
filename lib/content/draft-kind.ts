@@ -1,5 +1,5 @@
-import { courseDraftSchema, lessonDraftSchema } from "@/lib/ai/types";
-import type { CourseDraft, LessonDraft } from "@/lib/ai/types";
+import { courseDraftSchema, lessonDraftSchema } from "@/features/ai/types";
+import type { CourseDraft, LessonDraft } from "@/features/ai/types";
 
 /**
  * The review queue holds two draft shapes (AI Course Builder): flat lesson

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { OpenAiImageAdapter } from "@/lib/ai/adapters/image";
+import { OpenAiImageAdapter } from "@/features/ai/adapters/image";
 
 /**
  * OpenAI-compatible image adapter — request shape + response parsing, fetch

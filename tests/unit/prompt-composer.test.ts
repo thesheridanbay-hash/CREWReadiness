@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { composeCourseGuidance } from "@/lib/ai/prompt-composer";
+import { composeCourseGuidance } from "@/features/ai/prompt-composer";
 
 /**
  * Course-builder guidance composition (pure). The layering rules decide what

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { containsAnswer, createLeakGuard, normalize } from "@/lib/ai/guard";
-import { buildLessonPrompt, buildReteachPrompt, sandwich } from "@/lib/ai/prompts";
+import { containsAnswer, createLeakGuard, normalize } from "@/features/ai/guard";
+import { buildLessonPrompt, buildReteachPrompt, sandwich } from "@/features/ai/prompts";
 
 describe("answer-leak guard (T4 — D19)", () => {
   const answers = ["Across the slope, side to side"];

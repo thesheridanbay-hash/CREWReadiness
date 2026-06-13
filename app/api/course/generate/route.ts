@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { aiJobs, reviewQueue } from "@/db/schema";
-import { generateCourse } from "@/lib/ai/gateway";
+import { generateCourse } from "@/features/ai/gateway";
 import { getSession } from "@/lib/auth/session";
 import {
   courseBuilderInputSchema,

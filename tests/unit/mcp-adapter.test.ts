@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { McpAdapter } from "@/lib/ai/adapters/mcp";
+import { McpAdapter } from "@/features/ai/adapters/mcp";
 
 /**
  * MCP adapter (OpenClaw bridge) — JSON-RPC framing + response parsing, with

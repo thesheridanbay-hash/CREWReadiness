@@ -10,7 +10,7 @@ import {
   units,
 } from "@/db/schema";
 import type { ScopedTx } from "@/shared/db/scoped";
-import type { CourseDraft } from "@/lib/ai/types";
+import type { CourseDraft } from "@/features/ai/types";
 import {
   materializeCourseDraft,
   planCourseMaterialization,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { courseDraftSchema } from "@/lib/ai/types";
+import { courseDraftSchema } from "@/features/ai/types";
 
 /**
  * courseDraftSchema is the trust boundary for AI Course Builder output — it's

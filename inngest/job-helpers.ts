@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { aiJobs, notifications, reviewQueue } from "@/db/schema";
 import { scopedForJob } from "@/shared/db/scoped";
 
-import type { CourseDraft, LessonDraft } from "@/lib/ai/types";
+import type { CourseDraft, LessonDraft } from "@/features/ai/types";
 
 /**
  * Shared job-lifecycle helpers (T6 — D6). All run through scopedForJob():

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
-import { getCompanyUsage } from "@/lib/ai/usage-queries";
+import { getCompanyUsage } from "@/features/ai/usage-queries";
 import {
   getEmployeeProgress,
   getWeakConcepts,

@@ -8,7 +8,7 @@ import {
   units,
 } from "@/db/schema";
 import type { ScopedTx } from "@/shared/db/scoped";
-import type { CourseDraft } from "@/lib/ai/types";
+import type { CourseDraft } from "@/features/ai/types";
 
 /**
  * Materialize a rich AI course draft into the content tree (AI Course

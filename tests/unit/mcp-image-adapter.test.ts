@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { McpImageAdapter } from "@/lib/ai/adapters/mcp-image";
+import { McpImageAdapter } from "@/features/ai/adapters/mcp-image";
 
 /**
  * OpenClaw MCP image adapter — request framing + extraction of the MCP image

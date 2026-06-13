@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 
 import { aiJobs } from "@/db/schema";
-import { generateCourse } from "@/lib/ai/gateway";
-import type { CourseBrief } from "@/lib/ai/prompts";
+import { generateCourse } from "@/features/ai/gateway";
+import type { CourseBrief } from "@/features/ai/prompts";
 import { scopedForJob } from "@/shared/db/scoped";
 
 import { EVENTS, inngest, jobIdFrom } from "../client";
