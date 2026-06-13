@@ -176,9 +176,9 @@ const buildOpenClawImageProvider = async (
       apiKey,
       toolName: "generate_image",
       model: settings.imageModel ? String(settings.imageModel) : undefined,
-      // Let the bridge run the model fully; the host's function cap is the real
-      // ceiling (free-tier serverless ~60s; an async bridge tool removes it).
-      timeoutSeconds: 110,
+      // Generation lands ~120s+; give the bridge real headroom (well under the
+      // 300s route cap) so it doesn't abort a valid image early.
+      timeoutSeconds: 270,
     }),
   };
 };
