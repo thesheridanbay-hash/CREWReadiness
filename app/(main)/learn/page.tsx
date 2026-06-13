@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { FeedWrapper } from "@/components/feed-wrapper";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Quests } from "@/components/quests";
 import { StickyWrapper } from "@/components/sticky-wrapper";
 import { UserProgress } from "@/components/user-progress";
+import { getViewerLanguagePreference } from "@/lib/content/translations";
 import {
   getCourseProgress,
   getLessonPercentage,
@@ -20,12 +22,15 @@ const LearnPage = async () => {
   const lessonPercentageData = getLessonPercentage();
   const unitsData = getUnits();
 
-  const [userProgress, units, courseProgress, lessonPercentage] =
+  const languageData = getViewerLanguagePreference();
+
+  const [userProgress, units, courseProgress, lessonPercentage, language] =
     await Promise.all([
       userProgressData,
       unitsData,
       courseProgressData,
       lessonPercentageData,
+      languageData,
     ]);
 
   if (!courseProgress || !userProgress || !userProgress.activeCourse)
@@ -42,7 +47,16 @@ const LearnPage = async () => {
         <Quests points={userProgress.points} />
       </StickyWrapper>
       <FeedWrapper>
-        <Header title={userProgress.activeCourse.title} />
+        <Header
+          title={userProgress.activeCourse.title}
+          right={
+            <LanguageSwitcher
+              compact
+              current={language.language}
+              primary={language.primary}
+            />
+          }
+        />
         {units.map((unit) => (
           <div key={unit.id} className="mb-10">
             <Unit
