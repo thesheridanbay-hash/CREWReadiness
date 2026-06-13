@@ -2,8 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
-import { getReviewQueue } from "@/lib/content/review-queries";
+import {
+  getCourseGenerationAttempts,
+  getReviewQueue,
+} from "@/lib/content/review-queries";
 
+import { GenerationAttempts } from "./generation-attempts";
 import { ReviewList } from "./review-list";
 
 const ReviewPage = async () => {
@@ -11,7 +15,10 @@ const ReviewPage = async () => {
   if (!session) redirect("/sign-in");
   if (session.role === "employee") redirect("/learn");
 
-  const items = await getReviewQueue();
+  const [items, attempts] = await Promise.all([
+    getReviewQueue(),
+    getCourseGenerationAttempts(),
+  ]);
 
   return (
     <div className="px-4">
@@ -25,6 +32,8 @@ const ReviewPage = async () => {
           approve it.
         </p>
       </div>
+
+      <GenerationAttempts attempts={attempts} />
 
       {items.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed p-8 text-center text-sm text-muted-foreground">

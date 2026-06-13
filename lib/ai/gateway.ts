@@ -300,11 +300,14 @@ const validated = async <T>(
   schema: z.ZodType<T>,
   call: () => Promise<{ content: unknown; usage: typeof ZERO_USAGE }>,
   timeoutMs: number,
-  label: string
+  label: string,
+  // Some ops (generateCourse) are too long to retry within the 300s route cap;
+  // pass 1 to make a single attempt instead of the default retry-once.
+  maxAttempts = 2
 ): Promise<{ data: T; usage: typeof ZERO_USAGE }> => {
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     let result;
 
     try {
@@ -450,7 +453,9 @@ export const generateCourse = async (
         }),
       }),
     AI_TIMEOUTS.generateCourse,
-    "generateCourse"
+    "generateCourse",
+    // Single attempt: a full-course retry would exceed the 300s route cap.
+    1
   );
 
   await recordUsage(ctx, "generateCourse", providerName, usage, alertThresholdUsd);
