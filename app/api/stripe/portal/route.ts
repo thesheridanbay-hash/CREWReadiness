@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { subscriptions } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
-import { isStripeConfigured, stripe } from "@/lib/billing/stripe";
+import { isStripeConfigured, stripe } from "@/features/billing/stripe";
 import { scoped } from "@/shared/db/scoped";
 
 /**

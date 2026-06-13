@@ -4,7 +4,7 @@ import { BillingGate } from "@/components/billing-gate";
 import { MobileHeader } from "@/components/mobile-header";
 import { Sidebar } from "@/components/sidebar";
 import { getSession } from "@/lib/auth/session";
-import { getBillingStatus, isOwnerBlocked } from "@/lib/billing/status";
+import { getBillingStatus, isOwnerBlocked } from "@/features/billing/status";
 
 const MainLayout = async ({ children }: PropsWithChildren) => {
   const session = await getSession();

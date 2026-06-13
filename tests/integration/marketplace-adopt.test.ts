@@ -14,9 +14,9 @@ import {
   questions,
   units,
 } from "@/db/schema";
-import { materializeSnapshot } from "@/lib/marketplace/materialize-snapshot";
-import { serializeCourse } from "@/lib/marketplace/serialize-course";
-import { courseSnapshotSchema } from "@/lib/marketplace/snapshot";
+import { materializeSnapshot } from "@/features/marketplace/materialize-snapshot";
+import { serializeCourse } from "@/features/marketplace/serialize-course";
+import { courseSnapshotSchema } from "@/features/marketplace/snapshot";
 
 import { makeDb, testDatabaseUrl, withTenant } from "./fixtures";
 

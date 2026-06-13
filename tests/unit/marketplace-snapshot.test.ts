@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   categoryLabel,
   isMarketplaceCategory,
-} from "@/lib/marketplace/categories";
+} from "@/features/marketplace/categories";
 import {
   courseSnapshotSchema,
   snapshotMediaIds,
   snapshotStats,
   type CourseSnapshot,
-} from "@/lib/marketplace/snapshot";
+} from "@/features/marketplace/snapshot";
 
 /**
  * The snapshot is the marketplace's cross-tenant contract — validated at both

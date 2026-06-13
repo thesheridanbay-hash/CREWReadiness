@@ -6,8 +6,8 @@ import { languageLabel } from "@/lib/content/languages";
 import {
   MARKETPLACE_CATEGORIES,
   categoryLabel,
-} from "@/lib/marketplace/categories";
-import { getMarketplaceListings } from "@/lib/marketplace/queries";
+} from "@/features/marketplace/categories";
+import { getMarketplaceListings } from "@/features/marketplace/queries";
 import { cn } from "@/shared/utils";
 
 type PageProps = {

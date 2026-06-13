@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
-import { getBillingStatus } from "@/lib/billing/status";
+import { getBillingStatus } from "@/features/billing/status";
 
 import { BillingPanel } from "./billing-panel";
 

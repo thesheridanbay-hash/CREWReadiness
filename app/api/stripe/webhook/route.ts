@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
 import db from "@/db/drizzle";
-import { STRIPE_WEBHOOK_SECRET, stripe } from "@/lib/billing/stripe";
+import { STRIPE_WEBHOOK_SECRET, stripe } from "@/features/billing/stripe";
 
 /**
  * Stripe webhook (go-live B). PUBLIC route (no session — Stripe calls it; see

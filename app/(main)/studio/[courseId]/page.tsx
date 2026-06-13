@@ -6,7 +6,7 @@ import {
   getCourseTranslationStatus,
   type CourseTranslationStatus,
 } from "@/actions/course-translate";
-import { getCourseListing, type CourseListingInfo } from "@/actions/marketplace";
+import { getCourseListing, type CourseListingInfo } from "@/features/marketplace/actions";
 import { getSession } from "@/lib/auth/session";
 import {
   getAssignableTargets,

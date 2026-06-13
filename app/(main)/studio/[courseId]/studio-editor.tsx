@@ -22,7 +22,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { CourseTranslationStatus } from "@/actions/course-translate";
-import type { CourseListingInfo } from "@/actions/marketplace";
+import type { CourseListingInfo } from "@/features/marketplace/actions";
 import type {
   AssignTargets,
   CourseAssignmentRow,

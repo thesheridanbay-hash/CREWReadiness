@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
-import type { BillingStatus } from "@/lib/billing/status";
+import type { BillingStatus } from "@/features/billing/status";
 
 /**
  * Billing panel (go-live B): shows trial/subscription state and routes to

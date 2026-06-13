@@ -8,10 +8,10 @@ import { courses, marketplaceAdoptions, marketplaceListings } from "@/db/schema"
 import { getSession } from "@/lib/auth/session";
 import { scoped } from "@/shared/db/scoped";
 import { AppActionError, err, fromZod, guard, ok, type Result } from "@/shared/errors";
-import { isMarketplaceCategory } from "@/lib/marketplace/categories";
-import { materializeSnapshot } from "@/lib/marketplace/materialize-snapshot";
-import { serializeCourse } from "@/lib/marketplace/serialize-course";
-import { courseSnapshotSchema } from "@/lib/marketplace/snapshot";
+import { isMarketplaceCategory } from "@/features/marketplace/categories";
+import { materializeSnapshot } from "@/features/marketplace/materialize-snapshot";
+import { serializeCourse } from "@/features/marketplace/serialize-course";
+import { courseSnapshotSchema } from "@/features/marketplace/snapshot";
 
 /**
  * Marketplace actions (course marketplace). Adopting copies a public listing's

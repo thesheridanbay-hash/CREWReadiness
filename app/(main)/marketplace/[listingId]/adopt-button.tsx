@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { adoptListing } from "@/actions/marketplace";
+import { adoptListing } from "@/features/marketplace/actions";
 import { Button } from "@/shared/ui/button";
 
 /**

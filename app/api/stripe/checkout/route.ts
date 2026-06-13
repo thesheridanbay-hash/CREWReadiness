@@ -7,7 +7,7 @@ import {
   STRIPE_PRICE_ID,
   isStripeConfigured,
   stripe,
-} from "@/lib/billing/stripe";
+} from "@/features/billing/stripe";
 import { scoped } from "@/shared/db/scoped";
 
 /**

@@ -10,9 +10,9 @@ import {
   publishCourseToMarketplace,
   unlistListing,
   type CourseListingInfo,
-} from "@/actions/marketplace";
+} from "@/features/marketplace/actions";
 import { Button } from "@/shared/ui/button";
-import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace/categories";
+import { MARKETPLACE_CATEGORIES } from "@/features/marketplace/categories";
 
 /**
  * Publish-to-marketplace control in the course editor (course marketplace).

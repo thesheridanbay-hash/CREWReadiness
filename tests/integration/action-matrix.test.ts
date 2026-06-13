@@ -65,7 +65,7 @@ import {
   publishCourseAsUniversal,
   publishCourseToMarketplace,
   unlistListing,
-} from "@/actions/marketplace";
+} from "@/features/marketplace/actions";
 import { assignCourse, unassignCourse } from "@/actions/assignments";
 import {
   markAllNotificationsRead,

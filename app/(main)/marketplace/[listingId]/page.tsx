@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth/session";
 import { languageLabel } from "@/lib/content/languages";
-import { categoryLabel } from "@/lib/marketplace/categories";
-import { getListingDetail } from "@/lib/marketplace/queries";
+import { categoryLabel } from "@/features/marketplace/categories";
+import { getListingDetail } from "@/features/marketplace/queries";
 
 import { AdoptButton } from "./adopt-button";
 
