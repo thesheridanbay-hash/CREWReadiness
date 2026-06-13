@@ -44,6 +44,9 @@ export const courses = pgTable("courses", {
     (): AnyPgColumn => contentVersions.id,
     { onDelete: "set null" }
   ),
+  /** Soft-delete: archived courses are hidden from studio/learner lists and
+   * assignments, restorable, and can then be permanently deleted. */
+  archivedAt: timestamp("archived_at"),
 });
 
 export const contentVersions = pgTable(

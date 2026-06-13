@@ -65,10 +65,13 @@ export const getMyAssignments = cache(async (): Promise<MyAssignment[]> => {
                   )) AS done
       FROM assignments a
       JOIN courses c ON c.id = a.course_id
-      WHERE a.user_id = ${session.userId}
-         OR a.crew_id IN (
-              SELECT crew_id FROM crew_members WHERE user_id = ${session.userId}
-            )
+      WHERE c.archived_at IS NULL
+        AND (
+          a.user_id = ${session.userId}
+          OR a.crew_id IN (
+               SELECT crew_id FROM crew_members WHERE user_id = ${session.userId}
+             )
+        )
       ORDER BY a.required DESC, a.due_date ASC NULLS LAST, c.title
     `)
   );

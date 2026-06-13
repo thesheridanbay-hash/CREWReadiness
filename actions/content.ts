@@ -2,6 +2,7 @@
 
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import {
   aiJobs,
@@ -98,6 +99,82 @@ export const updateCourse = async (input: unknown): Promise<Result<null>> =>
         .where(eq(courses.id, parsed.data.courseId));
       revalidatePath(`/studio/${parsed.data.courseId}`);
       revalidatePath("/studio");
+      return ok(null);
+    });
+  });
+
+/* ───────────────── Course lifecycle: archive / restore / delete ───────────────── */
+
+const courseIdSchema = z.object({ courseId: z.number().int().positive() });
+
+/** Soft-delete: hide from studio/learner lists + assignments, restorable. */
+export const archiveCourse = async (input: unknown): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = courseIdSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const [row] = await tx
+        .update(courses)
+        .set({ archivedAt: new Date() })
+        .where(eq(courses.id, parsed.data.courseId))
+        .returning({ id: courses.id });
+      if (!row) return err("not_found", "Course not found.");
+      revalidatePath("/studio", "layout");
+      revalidatePath("/courses");
+      revalidatePath("/learn");
+      return ok(null);
+    });
+  });
+
+/** Bring an archived course back to active. */
+export const restoreCourse = async (input: unknown): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = courseIdSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const [row] = await tx
+        .update(courses)
+        .set({ archivedAt: null })
+        .where(eq(courses.id, parsed.data.courseId))
+        .returning({ id: courses.id });
+      if (!row) return err("not_found", "Course not found.");
+      revalidatePath("/studio", "layout");
+      revalidatePath("/courses");
+      return ok(null);
+    });
+  });
+
+/**
+ * Permanently delete a course (cascades to modules/units/lessons/questions/
+ * options/assets/assignments/versions; nulls user_progress + marketplace refs).
+ * Only allowed once the course is ARCHIVED — archive-first guards against
+ * accidental loss. Marketplace listings keep their frozen snapshot.
+ */
+export const deleteCourse = async (input: unknown): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = courseIdSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const course = await tx.query.courses.findFirst({
+        where: eq(courses.id, parsed.data.courseId),
+      });
+      if (!course) return err("not_found", "Course not found.");
+      if (!course.archivedAt) {
+        return err("conflict", "Archive the course first, then delete it.");
+      }
+      await tx.delete(courses).where(eq(courses.id, parsed.data.courseId));
+      revalidatePath("/studio", "layout");
+      revalidatePath("/courses");
+      revalidatePath("/learn");
       return ok(null);
     });
   });

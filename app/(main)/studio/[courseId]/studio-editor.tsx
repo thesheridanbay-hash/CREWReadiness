@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  archiveCourse,
   createLesson,
   createModule,
   createQuestion,
@@ -133,6 +134,29 @@ export const StudioEditor = ({
             }
           >
             Publish
+          </Button>
+          <Button
+            variant="dangerOutline"
+            disabled={pending}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  "Archive this course? It's hidden from your crew but you can restore it from Studio."
+                )
+              )
+                return;
+              startTransition(async () => {
+                const result = await archiveCourse({ courseId: course.id });
+                if (!result.ok) {
+                  toast.error(result.error.message);
+                  return;
+                }
+                toast.success("Course archived.");
+                router.push("/studio");
+              });
+            }}
+          >
+            Archive
           </Button>
         </div>
       </div>
