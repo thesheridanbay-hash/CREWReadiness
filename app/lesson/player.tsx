@@ -14,6 +14,7 @@ import {
   submitAnswer,
   type LoopActionResult,
 } from "@/actions/learning-loop";
+import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import type { LessonTeaching } from "@/lib/content/queries";
 import type { LoopView } from "@/lib/learning-loop/views";
@@ -221,21 +222,15 @@ export const Player = ({
                 Learn this first
               </p>
               {teaching.imageSrc && (
-                <div className="relative mx-auto aspect-video w-full max-w-[480px] overflow-hidden rounded-2xl border-2">
-                  <Image
-                    src={teaching.imageSrc}
-                    alt=""
-                    fill
-                    sizes="480px"
-                    className="object-cover"
-                  />
-                </div>
+                // Show the WHOLE illustration (no crop), capped for mobile.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={teaching.imageSrc}
+                  alt=""
+                  className="mx-auto block max-h-[55vh] w-full max-w-[480px] rounded-2xl border-2 object-contain"
+                />
               )}
-              {teaching.text && (
-                <p className="whitespace-pre-wrap text-base font-medium leading-relaxed text-neutral-700">
-                  {teaching.text}
-                </p>
-              )}
+              {teaching.text && <Markdown>{teaching.text}</Markdown>}
               {teaching.audioSrc && (
                 <audio controls src={teaching.audioSrc} className="w-full">
                   <track kind="captions" />
