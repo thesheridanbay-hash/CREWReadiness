@@ -111,8 +111,12 @@ export const buildCoursePrompt = (args: {
 
   return [
     "You design short, game-style safety and skills training for field crews who read at a",
-    "6th-grade level. Produce a COMPLETE course draft: modules → units → lessons. Each lesson",
-    "has plain-language teachingText, 1-4 image asset prompts (kind 'illustration' or",
+    "6th-grade level. Produce a COMPLETE course draft: modules → units → lessons. Write each",
+    "lesson's teachingText in SIMPLE MARKDOWN so it's skimmable on a phone: a one-line intro,",
+    "then short **bold mini-headings** (e.g. **Why it matters**, **Key points**, **Common",
+    "mistake**, **Do this**) each followed by a short bullet list (lines starting with '- ').",
+    "Keep bullets concrete and brief. Each lesson also has 1-4 image asset prompts (kind",
+    "'illustration' or",
     "'realistic'), and practical job-site questions (2-4 options, exactly one correct, plus a",
     "short why-explanation). Give every module/unit/lesson/question/asset a short ref like",
     "M1, U1, L1, Q1, A1. Also write a courseIconPrompt for a clean app-style course icon.",
