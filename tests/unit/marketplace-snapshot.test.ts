@@ -7,6 +7,7 @@ import {
 import {
   courseSnapshotSchema,
   snapshotMediaIds,
+  snapshotStats,
   type CourseSnapshot,
 } from "@/lib/marketplace/snapshot";
 
@@ -107,6 +108,31 @@ describe("snapshotMediaIds", () => {
     ) as CourseSnapshot;
     // Only the asset blob remains; the icon is ungenerated.
     expect(snapshotMediaIds(parsed)).toEqual([MEDIA_B]);
+  });
+});
+
+describe("snapshotStats", () => {
+  it("counts structure, shared vs pending assets, and languages", () => {
+    const parsed = courseSnapshotSchema.parse(snapshot()) as CourseSnapshot;
+    const stats = snapshotStats(parsed);
+    expect(stats.modules).toBe(1);
+    expect(stats.units).toBe(1);
+    expect(stats.lessons).toBe(1);
+    expect(stats.questions).toBe(1);
+    // icon (MEDIA_A) + lesson asset (MEDIA_B) are both generated → shared.
+    expect(stats.sharedAssets).toBe(2);
+    expect(stats.pendingAssets).toBe(0);
+    // primary en + an es lesson translation.
+    expect(stats.languages.sort()).toEqual(["en", "es"]);
+  });
+
+  it("counts an ungenerated icon as pending", () => {
+    const parsed = courseSnapshotSchema.parse(
+      snapshot({ icon: { prompt: "x", mediaAssetId: null } })
+    ) as CourseSnapshot;
+    const stats = snapshotStats(parsed);
+    expect(stats.sharedAssets).toBe(1); // lesson asset
+    expect(stats.pendingAssets).toBe(1); // icon
   });
 });
 
