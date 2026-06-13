@@ -21,10 +21,12 @@ import {
 import { Button } from "@/components/ui/button";
 import type { CourseAssetStatus } from "@/actions/course-assets";
 import type { CourseTranslationStatus } from "@/actions/course-translate";
+import type { CourseListingInfo } from "@/actions/marketplace";
 import type { Result } from "@/lib/errors";
 
 import { AssetModal, type EditableAsset } from "./asset-modal";
 import { GenerateImagesButton } from "./generate-images-button";
+import { MarketplacePublishPanel } from "./marketplace-publish-panel";
 import { TranslatePanel } from "./translate-panel";
 
 export type EditorOption = { id: number; text: string; correct: boolean };
@@ -71,10 +73,12 @@ export const StudioEditor = ({
   course,
   assetStatus,
   translationStatus,
+  listing,
 }: {
   course: EditorCourse;
   assetStatus: CourseAssetStatus;
   translationStatus: CourseTranslationStatus;
+  listing: CourseListingInfo;
 }) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -123,6 +127,8 @@ export const StudioEditor = ({
       </div>
 
       <TranslatePanel courseId={course.id} status={translationStatus} />
+
+      <MarketplacePublishPanel courseId={course.id} listing={listing} />
 
       <div className="flex flex-col gap-y-4">
         {course.modules.map((module) => (
