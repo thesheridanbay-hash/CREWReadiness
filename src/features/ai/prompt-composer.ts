@@ -11,10 +11,10 @@
  *
  * Both are set through authed office-role forms, so they are instructions, not
  * data — they go in the prompt's instruction block. The owner's free-text
- * course IDEA is the only untrusted input and is sandwiched separately in
- * buildCoursePrompt (lib/ai/prompts.ts). This module is pure (no I/O) so the
- * layering rules are unit-testable; the gateway fetches the two parts and
- * passes them here.
+ * course IDEA is the only untrusted input and is sandwiched separately in the
+ * course prompt builders (buildCourseSkeletonPrompt / buildLessonContentPrompt
+ * in prompts.ts). This module is pure (no I/O) so the layering rules are
+ * unit-testable; the gateway fetches the two parts and passes them here.
  */
 
 export type CourseGuidanceParts = {
@@ -31,9 +31,9 @@ const clean = (value: string | null | undefined): string =>
 
 /**
  * Compose the trusted guidance block. Returns "" when neither part is set —
- * the generator then falls back to its built-in defaults (the base prompt in
- * buildCoursePrompt already describes the house style), so an unconfigured
- * platform still produces sensible courses.
+ * the generator then falls back to its built-in defaults (the course prompt
+ * builders already describe the house style), so an unconfigured platform
+ * still produces sensible courses.
  */
 export const composeCourseGuidance = (parts: CourseGuidanceParts): string => {
   const site = clean(parts.sitePrompt);

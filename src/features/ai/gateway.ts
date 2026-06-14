@@ -13,7 +13,8 @@ import { createLeakGuard } from "./guard";
 import { recordUsage } from "./meter";
 import { composeCourseGuidance } from "./prompt-composer";
 import {
-  buildCoursePrompt,
+  buildCourseSkeletonPrompt,
+  buildLessonContentPrompt,
   buildImagePrompt,
   buildLessonPrompt,
   buildPhotoPrompt,
@@ -25,9 +26,16 @@ import {
   type ImproveFieldKind,
 } from "./prompts";
 import {
+  assembleCourseDraft,
+  lessonSlotsFor,
+  mapWithConcurrency,
+  sumUsage,
+} from "./course-generation";
+import {
   AI_TIMEOUTS,
   buildLessonTranslationSchema,
-  courseDraftSchema,
+  courseSkeletonSchema,
+  lessonContentSchema,
   improvedTextSchema,
   lessonDraftSchema,
   photoAnalysisSchema,
@@ -40,6 +48,7 @@ import {
   type LessonTranslationResult,
   type PhotoAnalysis,
   type TranslationSource,
+  type Usage,
   type VariantDraft,
 } from "./types";
 
@@ -261,10 +270,25 @@ export const generateVariants = async (
 };
 
 /**
- * Full-course generation (AI Course Builder). Uses the TEXT provider to emit
- * the rich courseDraftSchema (modules → units → lessons + teachingText +
- * per-lesson image asset prompts + questions). The owner's brief idea is
- * sandwiched as DATA; the composed site+company guidance is trusted
+ * Per-phase budget for chunked course generation. Each phase is a single small
+ * generation, so generous-but-bounded timeouts keep the whole build inside the
+ * 300s route cap; LESSON_CONTENT_CONCURRENCY bounds how many lesson calls hit
+ * the provider at once (fast enough to finish a multi-lesson course in time,
+ * gentle enough not to overrun a single bridge).
+ */
+const COURSE_SKELETON_TIMEOUT_MS = 120_000;
+const LESSON_CONTENT_TIMEOUT_MS = 120_000;
+const LESSON_CONTENT_CONCURRENCY = 5;
+
+/**
+ * Full-course generation (AI Course Builder). Built in two phases so no single
+ * provider response is large enough to truncate (the bug that broke single-call
+ * generation on output-capped providers like the OpenClaw bridge):
+ *   1. SKELETON — titles only (modules → units → lesson titles).
+ *   2. CONTENT — one call per lesson (teachingText + image asset prompts +
+ *      questions), run with bounded concurrency.
+ * The pieces reassemble into the rich courseDraftSchema. The owner's brief idea
+ * is sandwiched as DATA; the composed site+company guidance is trusted
  * instruction. The draft lands in the review queue — never auto-published
  * (D6) — and image assets are generated SEQUENTIALLY afterward (PR21).
  */
@@ -277,25 +301,62 @@ export const generateCourse = async (
 
   const guidance = await composeGuidanceFor(ctx);
 
-  const { data, usage } = await validated(
-    courseDraftSchema,
+  // Phase 1 — titles-only skeleton (small response, never truncates).
+  const skeletonResult = await validated(
+    courseSkeletonSchema,
     () =>
       adapter.generateJson({
-        prompt: buildCoursePrompt({
+        prompt: buildCourseSkeletonPrompt({
           guidance,
           brief: args.brief,
           userBrief: args.userBrief,
         }),
       }),
-    AI_TIMEOUTS.generateCourse,
-    "generateCourse",
-    // Single attempt: a full-course retry would exceed the 300s route cap.
-    1
+    COURSE_SKELETON_TIMEOUT_MS,
+    "generateCourseSkeleton"
   );
 
-  await recordUsage(ctx, "generateCourse", providerName, usage, alertThresholdUsd);
+  const skeleton = skeletonResult.data;
 
-  return data;
+  // Phase 2 — one body per lesson, bounded concurrency. Each response is one
+  // lesson's worth of JSON, comfortably under any provider's output ceiling.
+  const bodies = await mapWithConcurrency(
+    lessonSlotsFor(skeleton),
+    LESSON_CONTENT_CONCURRENCY,
+    async (slot) => {
+      const { data, usage } = await validated(
+        lessonContentSchema,
+        () =>
+          adapter.generateJson({
+            prompt: buildLessonContentPrompt({
+              guidance,
+              brief: args.brief,
+              courseTitle: skeleton.courseTitle,
+              moduleTitle: slot.moduleTitle,
+              unitTitle: slot.unitTitle,
+              lessonTitle: slot.lessonTitle,
+            }),
+          }),
+        LESSON_CONTENT_TIMEOUT_MS,
+        `generateLessonContent[M${slot.moduleIndex + 1}U${slot.unitIndex + 1}L${slot.lessonIndex + 1}]`
+      );
+      return { slot, content: data, usage };
+    }
+  );
+
+  // Phase 3 — reassemble into the rich draft; meter the whole as one op.
+  const draft = assembleCourseDraft(skeleton, bodies);
+  const usages: Usage[] = [skeletonResult.usage, ...bodies.map((b) => b.usage)];
+
+  await recordUsage(
+    ctx,
+    "generateCourse",
+    providerName,
+    sumUsage(usages),
+    alertThresholdUsd
+  );
+
+  return draft;
 };
 
 /**

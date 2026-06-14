@@ -111,6 +111,60 @@ export const courseDraftSchema = z.object({
 
 export type CourseDraft = z.infer<typeof courseDraftSchema>;
 
+/* ─────────── Chunked course generation (truncation fix) ───────────
+ * A full course is too large to emit in one provider response on
+ * output-capped providers (e.g. the OpenClaw bridge): the JSON truncates
+ * mid-array and fails to parse. So generateCourse builds it in two phases —
+ * (1) a small SKELETON of titles only, then (2) one CONTENT call per lesson —
+ * and reassembles the pieces into courseDraftSchema. Each response stays well
+ * under any provider's output ceiling. */
+
+/** Phase 1: structure only — course/module/unit/lesson titles + refs, no
+ * teaching text, questions, or assets. Small enough to never truncate. */
+export const courseSkeletonSchema = z.object({
+  courseTitle: z.string().min(1).max(200),
+  courseIconPrompt: z.string().min(1).max(400),
+  modules: z
+    .array(
+      z.object({
+        ref: refString,
+        title: z.string().min(1).max(200),
+        units: z
+          .array(
+            z.object({
+              ref: refString,
+              title: z.string().min(1).max(200),
+              lessons: z
+                .array(
+                  z.object({
+                    ref: refString,
+                    title: z.string().min(1).max(200),
+                  })
+                )
+                .min(1)
+                .max(20),
+            })
+          )
+          .min(1)
+          .max(20),
+      })
+    )
+    .min(1)
+    .max(12),
+});
+
+export type CourseSkeleton = z.infer<typeof courseSkeletonSchema>;
+
+/** Phase 2: one lesson's body. Same per-lesson shape/bounds as a lesson inside
+ * courseDraftSchema, minus the ref/title (those come from the skeleton). */
+export const lessonContentSchema = z.object({
+  teachingText: z.string().min(1).max(4000),
+  assets: z.array(assetDraftSchema).max(4).default([]),
+  questions: z.array(questionDraftSchema).min(1).max(12),
+});
+
+export type LessonContent = z.infer<typeof lessonContentSchema>;
+
 export const photoAnalysisSchema = z.object({
   /** What the model saw (wrong-way/right-way pairs, hazards, context). */
   observations: z.string().min(1).max(2000),
