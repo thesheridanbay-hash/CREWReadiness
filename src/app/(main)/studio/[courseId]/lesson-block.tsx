@@ -3,8 +3,11 @@
 import { useState } from "react";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { deleteLesson, deleteQuestion } from "@/features/courses/actions/content";
+import { requeueAsset } from "@/features/courses/actions/course-assets";
 import { Button } from "@/shared/ui/button";
 
 import { AiFieldButton } from "./ai-field-button";
@@ -26,9 +29,52 @@ export const LessonBlock = ({
   disabled: boolean;
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
 }) => {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingImage, setEditingImage] = useState<EditableAsset | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<EditorQuestion | null>(null);
+  const [regenningAudio, setRegenningAudio] = useState(false);
+
+  // Re-run the voiceover (TTS) for this lesson if it came out wrong (e.g. the
+  // robotic fallback voice). Reuses the per-asset path: requeue → generate. The
+  // reinforced premium-TTS prompt/params apply here too, since regeneration
+  // goes through the same generateSpeech call as the initial run.
+  const regenerateVoiceover = async () => {
+    if (!lesson.audio || regenningAudio || disabled) return;
+    const audioId = lesson.audio.id;
+    setRegenningAudio(true);
+    try {
+      const queued = await requeueAsset({ assetId: audioId });
+      if (!queued.ok) {
+        toast.error(queued.error.message);
+        return;
+      }
+      const res = await fetch("/api/course/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, assetId: audioId }),
+        signal: AbortSignal.timeout(290_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        failed?: unknown;
+        message?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.message ?? "Voiceover regeneration failed.");
+        return;
+      }
+      if (data.failed) {
+        toast.error("That voiceover didn't generate — try again.");
+        return;
+      }
+      toast.success("Voiceover regenerated.");
+      router.refresh();
+    } catch {
+      toast.error("Regeneration took too long — try again.");
+    } finally {
+      setRegenningAudio(false);
+    }
+  };
 
   return (
     <div className="rounded-xl bg-slate-50 p-3">
@@ -104,10 +150,23 @@ export const LessonBlock = ({
 
       {lesson.audio && (
         <div className="ml-2 mt-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
-            Voiceover
-          </p>
-          {lesson.audio.src ? (
+          <div className="flex items-center gap-x-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
+              Voiceover
+            </p>
+            <button
+              type="button"
+              onClick={regenerateVoiceover}
+              disabled={disabled || regenningAudio}
+              title="Regenerate this voiceover with AI (re-runs premium TTS)"
+              className="inline-flex items-center gap-x-1 rounded px-1.5 py-0.5 text-xs font-bold uppercase text-sky-600 hover:bg-sky-50 disabled:opacity-50"
+            >
+              ✨ {regenningAudio ? "Regenerating…" : "AI regen"}
+            </button>
+          </div>
+          {regenningAudio ? (
+            <p className="mt-0.5 text-xs text-sky-600">Regenerating voiceover…</p>
+          ) : lesson.audio.src ? (
             <audio controls src={lesson.audio.src} className="mt-1 h-8 w-full max-w-xs">
               <track kind="captions" />
             </audio>

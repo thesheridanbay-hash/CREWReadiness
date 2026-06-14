@@ -83,6 +83,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
           // Voiceover (TTS) status for this lesson, if any.
           audio: audioAsset
             ? {
+                id: audioAsset.id,
                 status: audioAsset.status,
                 src:
                   audioAsset.status === "GENERATED" && audioAsset.mediaAssetId

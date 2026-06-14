@@ -15,6 +15,8 @@ export type EditorLessonImage = {
   prompt: string;
 };
 export type EditorLessonAudio = {
+  /** courseAssets.id of the AUDIO asset — needed to regenerate this voiceover. */
+  id: string;
   status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
   src: string | null;
 };
