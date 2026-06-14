@@ -43,7 +43,9 @@ import {
   ZERO_USAGE,
   type AiContext,
   type CourseDraft,
+  type CourseSkeleton,
   type ImageResult,
+  type LessonContent,
   type LessonDraft,
   type LessonTranslationResult,
   type PhotoAnalysis,
@@ -271,38 +273,37 @@ export const generateVariants = async (
 
 /**
  * Per-phase budget for chunked course generation. Each phase is a single small
- * generation, so generous-but-bounded timeouts keep the whole build inside the
- * 300s route cap; LESSON_CONTENT_CONCURRENCY bounds how many lesson calls hit
- * the provider at once (fast enough to finish a multi-lesson course in time,
- * gentle enough not to overrun a single bridge).
+ * generation. CONCURRENCY is 1 for the synchronous path: the OpenClaw bridge is
+ * slow (~40s/call) and serializes badly, so parallel lesson calls contend and
+ * blow the per-call timeout. The synchronous route therefore only fits small
+ * courses under the 300s cap; large courses run via the Inngest job, which
+ * chunks per-step (no total-time ceiling). See generate-course.ts.
  */
 const COURSE_SKELETON_TIMEOUT_MS = 120_000;
 const LESSON_CONTENT_TIMEOUT_MS = 120_000;
-const LESSON_CONTENT_CONCURRENCY = 5;
+const LESSON_CONTENT_CONCURRENCY = 1;
 
 /**
- * Full-course generation (AI Course Builder). Built in two phases so no single
- * provider response is large enough to truncate (the bug that broke single-call
- * generation on output-capped providers like the OpenClaw bridge):
- *   1. SKELETON — titles only (modules → units → lesson titles).
- *   2. CONTENT — one call per lesson (teachingText + image asset prompts +
- *      questions), run with bounded concurrency.
- * The pieces reassemble into the rich courseDraftSchema. The owner's brief idea
- * is sandwiched as DATA; the composed site+company guidance is trusted
- * instruction. The draft lands in the review queue — never auto-published
- * (D6) — and image assets are generated SEQUENTIALLY afterward (PR21).
+ * Phase 1 — generate the course SKELETON (titles only: modules → units → lesson
+ * titles). Small response, never truncates. Returns usage + the resolved
+ * provider id/threshold so the caller can meter the whole generation as one op.
+ * Self-contained (resolves provider + guidance) so the Inngest job can call it
+ * as its own durable step.
  */
-export const generateCourse = async (
+export const generateCourseSkeleton = async (
   ctx: AiContext,
   args: { brief: CourseBrief; userBrief: string }
-): Promise<CourseDraft> => {
+): Promise<{
+  skeleton: CourseSkeleton;
+  usage: Usage;
+  providerName: string;
+  alertThresholdUsd: number | null;
+}> => {
   const { adapter, providerName, alertThresholdUsd } =
     await resolveProvider(ctx);
-
   const guidance = await composeGuidanceFor(ctx);
 
-  // Phase 1 — titles-only skeleton (small response, never truncates).
-  const skeletonResult = await validated(
+  const { data, usage } = await validated(
     courseSkeletonSchema,
     () =>
       adapter.generateJson({
@@ -316,37 +317,85 @@ export const generateCourse = async (
     "generateCourseSkeleton"
   );
 
-  const skeleton = skeletonResult.data;
+  return { skeleton: data, usage, providerName, alertThresholdUsd };
+};
 
-  // Phase 2 — one body per lesson, bounded concurrency. Each response is one
-  // lesson's worth of JSON, comfortably under any provider's output ceiling.
+/**
+ * Phase 2 — generate ONE lesson's body (teachingText + image asset prompts +
+ * questions). One small response per call. Self-contained so each lesson can be
+ * its own Inngest step. Returns usage for the caller to aggregate + meter.
+ */
+export const generateLessonContent = async (
+  ctx: AiContext,
+  args: {
+    brief: CourseBrief;
+    courseTitle: string;
+    moduleTitle: string;
+    unitTitle: string;
+    lessonTitle: string;
+    label?: string;
+  }
+): Promise<{ content: LessonContent; usage: Usage }> => {
+  const { adapter } = await resolveProvider(ctx);
+  const guidance = await composeGuidanceFor(ctx);
+
+  const { data, usage } = await validated(
+    lessonContentSchema,
+    () =>
+      adapter.generateJson({
+        prompt: buildLessonContentPrompt({
+          guidance,
+          brief: args.brief,
+          courseTitle: args.courseTitle,
+          moduleTitle: args.moduleTitle,
+          unitTitle: args.unitTitle,
+          lessonTitle: args.lessonTitle,
+        }),
+      }),
+    LESSON_CONTENT_TIMEOUT_MS,
+    args.label ?? "generateLessonContent"
+  );
+
+  return { content: data, usage };
+};
+
+/**
+ * Full-course generation (AI Course Builder), SYNCHRONOUS path. Built in two
+ * phases so no single provider response is large enough to truncate (the bug
+ * that broke single-call generation on output-capped providers like the
+ * OpenClaw bridge): a titles-only skeleton, then one call per lesson, then
+ * reassemble into the rich courseDraftSchema. Concurrency is 1 (slow bridge),
+ * so this fits only SMALL courses under the 300s route cap — large courses go
+ * through the Inngest job (generate-course.ts), which runs the same two
+ * functions as durable per-step calls with no total-time ceiling. The draft
+ * lands in the review queue — never auto-published (D6); image assets generate
+ * SEQUENTIALLY afterward (PR21).
+ */
+export const generateCourse = async (
+  ctx: AiContext,
+  args: { brief: CourseBrief; userBrief: string }
+): Promise<CourseDraft> => {
+  const { skeleton, usage, providerName, alertThresholdUsd } =
+    await generateCourseSkeleton(ctx, args);
+
   const bodies = await mapWithConcurrency(
     lessonSlotsFor(skeleton),
     LESSON_CONTENT_CONCURRENCY,
     async (slot) => {
-      const { data, usage } = await validated(
-        lessonContentSchema,
-        () =>
-          adapter.generateJson({
-            prompt: buildLessonContentPrompt({
-              guidance,
-              brief: args.brief,
-              courseTitle: skeleton.courseTitle,
-              moduleTitle: slot.moduleTitle,
-              unitTitle: slot.unitTitle,
-              lessonTitle: slot.lessonTitle,
-            }),
-          }),
-        LESSON_CONTENT_TIMEOUT_MS,
-        `generateLessonContent[M${slot.moduleIndex + 1}U${slot.unitIndex + 1}L${slot.lessonIndex + 1}]`
-      );
-      return { slot, content: data, usage };
+      const { content, usage: lessonUsage } = await generateLessonContent(ctx, {
+        brief: args.brief,
+        courseTitle: skeleton.courseTitle,
+        moduleTitle: slot.moduleTitle,
+        unitTitle: slot.unitTitle,
+        lessonTitle: slot.lessonTitle,
+        label: `generateLessonContent[M${slot.moduleIndex + 1}U${slot.unitIndex + 1}L${slot.lessonIndex + 1}]`,
+      });
+      return { slot, content, usage: lessonUsage };
     }
   );
 
-  // Phase 3 — reassemble into the rich draft; meter the whole as one op.
   const draft = assembleCourseDraft(skeleton, bodies);
-  const usages: Usage[] = [skeletonResult.usage, ...bodies.map((b) => b.usage)];
+  const usages: Usage[] = [usage, ...bodies.map((b) => b.usage)];
 
   await recordUsage(
     ctx,

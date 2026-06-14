@@ -69,7 +69,10 @@ export type GenerationAttempt = {
   error: string | null;
   title: string;
   createdAt: Date;
-  /** A RUNNING attempt older than 5 min is almost certainly dead — retryable. */
+  /** A RUNNING attempt older than the stale window is almost certainly dead —
+   * retryable. The window covers a long background job (chunked per-lesson on a
+   * slow provider can run many minutes); real background failures dead-letter
+   * via Inngest, so this only catches a job stuck with no resolution. */
   stale: boolean;
 };
 
@@ -112,7 +115,7 @@ export const getCourseGenerationAttempts = cache(
           createdAt: row.createdAt,
           stale:
             row.status === "RUNNING" &&
-            now - row.createdAt.getTime() > 5 * 60 * 1000,
+            now - row.createdAt.getTime() > 20 * 60 * 1000,
         };
       });
     });

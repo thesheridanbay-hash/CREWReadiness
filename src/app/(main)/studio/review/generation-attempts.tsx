@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -20,6 +20,18 @@ export const GenerationAttempts = ({
 }) => {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // While a background job is still running, poll the server component so the
+  // queue updates itself: the "Generating…" row turns into a draft (or a
+  // failure) without the owner refreshing the page.
+  const hasRunning = attempts.some(
+    (attempt) => attempt.status === "RUNNING" && !attempt.stale
+  );
+  useEffect(() => {
+    if (!hasRunning) return;
+    const id = setInterval(() => router.refresh(), 6000);
+    return () => clearInterval(id);
+  }, [hasRunning, router]);
 
   if (attempts.length === 0) return null;
 

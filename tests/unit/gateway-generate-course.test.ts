@@ -83,7 +83,7 @@ const fakeAdapter = {
   },
 };
 
-const recordUsage = vi.fn(async () => {});
+const recordUsage = vi.fn(async (..._args: unknown[]) => {});
 
 vi.mock("@/features/ai/provider-resolvers", () => ({
   resolveProvider: vi.fn(async () => ({

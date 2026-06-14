@@ -22,7 +22,9 @@ const inputClass =
 export const AiCourseWizard = () => {
   const router = useRouter();
   const [pending, setPending] = useState(false);
-  const [done, setDone] = useState<{ title: string } | null>(null);
+  const [done, setDone] = useState<{ title: string; queued: boolean } | null>(
+    null
+  );
 
   const [idea, setIdea] = useState("");
   const [title, setTitle] = useState("");
@@ -50,8 +52,9 @@ export const AiCourseWizard = () => {
     if (!canSubmit || pending) return;
     setPending(true);
     try {
-      // Generation is synchronous (the model takes ~1-2 min); the server route
-      // runs under Fluid Compute's 300s budget. Keep the request open for it.
+      // The route either enqueues a background job and returns fast (queued), or
+      // generates inline (sync fallback, up to ~5 min). Keep the request open
+      // long enough for the fallback.
       const res = await fetch("/api/course/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,6 +70,7 @@ export const AiCourseWizard = () => {
         signal: AbortSignal.timeout(290_000),
       });
       const data = (await res.json().catch(() => ({}))) as {
+        queued?: boolean;
         title?: string;
         message?: string;
       };
@@ -74,8 +78,12 @@ export const AiCourseWizard = () => {
         toast.error(data.message ?? "Generation failed. Please try again.");
         return;
       }
-      setDone({ title: data.title ?? "Your course" });
-      toast.success("Course ready in the review queue.");
+      setDone({ title: data.title ?? "Your course", queued: Boolean(data.queued) });
+      toast.success(
+        data.queued
+          ? "Generating — it'll appear in the review queue."
+          : "Course ready in the review queue."
+      );
       router.refresh();
     } catch {
       toast.error(
@@ -103,15 +111,35 @@ export const AiCourseWizard = () => {
     return (
       <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-green-200 bg-green-50 p-6">
         <h3 className="text-lg font-bold text-neutral-700">
-          “{done.title}” is ready ✓
+          {done.queued
+            ? `“${done.title}” is generating…`
+            : `“${done.title}” is ready ✓`}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Your draft is in the{" "}
-          <Link href="/studio/review" className="font-bold text-sky-600 underline">
-            review queue
-          </Link>
-          . Review and approve it to turn it into a real course, then generate
-          images.
+          {done.queued ? (
+            <>
+              It&apos;s building in the background and will appear in the{" "}
+              <Link
+                href="/studio/review"
+                className="font-bold text-sky-600 underline"
+              >
+                review queue
+              </Link>{" "}
+              in a few minutes — the queue updates on its own as it finishes.
+            </>
+          ) : (
+            <>
+              Your draft is in the{" "}
+              <Link
+                href="/studio/review"
+                className="font-bold text-sky-600 underline"
+              >
+                review queue
+              </Link>
+              . Review and approve it to turn it into a real course, then
+              generate images.
+            </>
+          )}
         </p>
         <div>
           <Button type="button" variant="secondaryOutline" onClick={reset}>

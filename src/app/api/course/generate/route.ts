@@ -9,13 +9,20 @@ import {
   type CourseBuilderInput,
 } from "@/features/courses/course-builder-schema";
 import { scoped } from "@/shared/db/scoped";
+import { EVENTS, inngest } from "@/inngest/client";
 
 /**
- * Synchronous AI course generation (AI Course Builder).
+ * AI course generation (AI Course Builder).
  *
- * The provider (OpenClaw) takes ~2 minutes; we run it here under Vercel Fluid
- * Compute's 300s cap so generation works with no background worker. The draft
- * lands in the review queue for owner approval (D6).
+ * Two modes, same endpoint:
+ *  - BACKGROUND (preferred): if INNGEST_EVENT_KEY is set, this enqueues the
+ *    durable generate-course job and returns immediately. The job chunks the
+ *    course per-lesson across steps, so it has no 300s ceiling — the only path
+ *    that fits a slow provider (the OpenClaw bridge) for non-trivial courses.
+ *  - SYNCHRONOUS fallback (no background worker): generates inline under Vercel
+ *    Fluid Compute's 300s cap. Chunked but concurrency 1, so it only fits small
+ *    courses; large ones need the background path.
+ * Either way the draft lands in the review queue for owner approval (D6).
  *
  * Resilience (bugfix): every attempt is recorded as a GENERATE_COURSE ai_job,
  * committed BEFORE generation in its own transaction — so a timeout/validation
@@ -100,6 +107,20 @@ export async function POST(request: NextRequest) {
   }
 
   const { userBrief, ...brief } = parsedInput;
+
+  // Background path: if Inngest is wired, hand off to the durable generate-course
+  // job (it chunks per-lesson with no 300s ceiling — required for the slow
+  // OpenClaw bridge) and return immediately. The job row is already RUNNING; the
+  // review queue polls it to completion. Falls through to synchronous generation
+  // if the event send fails, so a flaky enqueue never blocks the owner.
+  if (process.env.INNGEST_EVENT_KEY) {
+    try {
+      await inngest.send({ name: EVENTS.courseRequested, data: { jobId } });
+      return NextResponse.json({ ok: true, queued: true, jobId });
+    } catch {
+      // fall through to synchronous generation
+    }
+  }
 
   try {
     const result = await scoped(auth, async (tx) => {
