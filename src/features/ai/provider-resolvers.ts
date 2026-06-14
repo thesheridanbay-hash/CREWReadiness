@@ -6,7 +6,7 @@ import { DirectAdapter } from "./adapters/direct";
 import { OpenAiImageAdapter } from "./adapters/image";
 import { McpAdapter } from "./adapters/mcp";
 import { McpImageAdapter } from "./adapters/mcp-image";
-import { McpTtsAdapter } from "./adapters/mcp-tts";
+import { DEFAULT_TTS_INSTRUCTIONS, McpTtsAdapter } from "./adapters/mcp-tts";
 import type {
   ImageProviderAdapter,
   ProviderAdapter,
@@ -245,6 +245,18 @@ export const resolveTtsProvider = async (ctx: AiContext): Promise<ResolvedTtsPro
     }
   }
 
+  // Voice-quality directive (premium voice, no robotic/system fallback). Sent
+  // on every voiceover call — new and regenerated. Override the wording with a
+  // `ttsInstructions` string in provider settings, or set it to `false` to
+  // disable (e.g. if the bridge rejects an unknown `instructions` arg).
+  const ttsInstructions =
+    settings.ttsInstructions === false
+      ? undefined
+      : typeof settings.ttsInstructions === "string" &&
+          settings.ttsInstructions.trim()
+        ? String(settings.ttsInstructions)
+        : DEFAULT_TTS_INSTRUCTIONS;
+
   return {
     providerName: "openclaw-tts",
     alertThresholdUsd: row.alert_threshold_usd ? Number(row.alert_threshold_usd) : null,
@@ -253,6 +265,9 @@ export const resolveTtsProvider = async (ctx: AiContext): Promise<ResolvedTtsPro
       apiKey,
       toolName: "generate_tts_audio",
       voice: settings.ttsVoice ? String(settings.ttsVoice) : undefined,
+      // Premium model id, if the platform owner has pinned one in settings.
+      model: settings.ttsModel ? String(settings.ttsModel) : undefined,
+      instructions: ttsInstructions,
       timeoutSeconds: 270,
     }),
   };

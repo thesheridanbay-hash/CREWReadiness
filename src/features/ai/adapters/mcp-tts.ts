@@ -16,8 +16,25 @@ type McpTtsConfig = {
   toolName?: string;
   voice?: string;
   model?: string;
+  /** Best-effort voice-quality directive sent to the bridge's TTS tool: force
+   * the premium/API voice and forbid the local/system robotic fallback. Only
+   * takes effect if the bridge honors an `instructions` field (lenient bridges
+   * ignore unknown args; we never rely on it for correctness). */
+  instructions?: string;
   timeoutSeconds?: number;
 };
+
+/**
+ * Default TTS voice-quality directive (the "enforce premium, no machine
+ * fallback" prompt). Sent as `instructions` on every voiceover call unless
+ * overridden/disabled in provider settings. "No audio is better than fake
+ * machine audio": we explicitly ask the bridge to fail rather than synthesize
+ * a low-quality local voice.
+ */
+export const DEFAULT_TTS_INSTRUCTIONS =
+  "Use a natural, premium, human-sounding voice from the API-based text-to-speech engine. " +
+  "Do NOT use a local or system 'machine' voice, and never fall back to a robotic or synthesized voice. " +
+  "If a premium voice is unavailable, return an error and produce NO audio — low-quality machine audio is not acceptable.";
 
 type JsonRpcAudioResponse = {
   result?: {
@@ -51,6 +68,9 @@ export class McpTtsAdapter implements TtsProviderAdapter {
     const voice = args.voice ?? this.config.voice;
     if (voice) toolArgs.voice = voice;
     if (this.config.model) toolArgs.model = this.config.model;
+    // Voice-quality directive: enforce premium, forbid the robotic/system
+    // fallback. Best-effort — a bridge that ignores unknown args just drops it.
+    if (this.config.instructions) toolArgs.instructions = this.config.instructions;
     if (this.config.timeoutSeconds) toolArgs.timeoutSeconds = this.config.timeoutSeconds;
 
     const response = await fetch(this.config.endpoint, {
