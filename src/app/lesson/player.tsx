@@ -287,7 +287,7 @@ export const Player = ({
         />
         <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
           <Image src="/finish.svg" alt="Finish" height={100} width={100} />
-          <h1 className="text-lg font-bold text-ink lg:text-3xl">
+          <h1 className="font-display text-lg font-bold text-ink lg:text-3xl">
             Great job! <br /> You&apos;ve completed the lesson.
           </h1>
           {view.banner === "PARKED" && (

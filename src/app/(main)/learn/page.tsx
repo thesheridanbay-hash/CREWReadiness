@@ -35,7 +35,7 @@ const LearnPage = async () => {
   // De-gamified (B2B): no points counter / leaderboard sticky column, so the
   // lesson column centers and the header spans the full width.
   return (
-    <div className="mx-auto max-w-3xl px-6 pb-10">
+    <>
       <Header
         title={userProgress.activeCourse.title}
         right={
@@ -46,20 +46,22 @@ const LearnPage = async () => {
           />
         }
       />
-      {units.map((unit) => (
-        <div key={unit.id} className="mb-10">
-          <Unit
-            id={unit.id}
-            order={unit.order}
-            description={unit.description}
-            title={unit.title}
-            lessons={unit.lessons}
-            activeLesson={courseProgress.activeLesson}
-            activeLessonPercentage={lessonPercentage}
-          />
-        </div>
-      ))}
-    </div>
+      <div className="mx-auto max-w-3xl px-6 pb-10">
+        {units.map((unit) => (
+          <div key={unit.id} className="mb-10">
+            <Unit
+              id={unit.id}
+              order={unit.order}
+              description={unit.description}
+              title={unit.title}
+              lessons={unit.lessons}
+              activeLesson={courseProgress.activeLesson}
+              activeLessonPercentage={lessonPercentage}
+            />
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
 

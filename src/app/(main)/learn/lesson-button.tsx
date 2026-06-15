@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { Check, Crown, Star } from "lucide-react";
 import Link from "next/link";
 import { CircularProgressbarWithChildren } from "react-circular-progressbar";
@@ -46,6 +48,15 @@ export const LessonButton = ({
 
   const href = isCompleted ? `/lesson/${id}` : "/lesson";
 
+  // Auto-scroll the path to the current lesson on load, so the learner lands on
+  // "where they are" / what's next instead of the top of the course.
+  const nodeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (current) {
+      nodeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [current]);
+
   return (
     <Link
       href={href}
@@ -53,7 +64,8 @@ export const LessonButton = ({
       style={{ pointerEvents: locked ? "none" : "auto" }}
     >
       <div
-        className="relative"
+        ref={nodeRef}
+        className="relative scroll-mt-28"
         style={{
           right: `${rightPosition}px`,
           marginTop: isFirst && !isCompleted ? 60 : 24,

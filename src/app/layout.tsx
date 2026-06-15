@@ -1,24 +1,38 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import { Fraunces, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 
 import { ExitModal } from "@/shared/components/modals/exit-modal";
 import { PracticeModal } from "@/shared/components/modals/practice-modal";
 import { Toaster } from "@/shared/ui/sonner";
+import { cn } from "@/shared/utils";
 import { siteConfig } from "@/shared/config";
 
 import "./globals.css";
 
 /**
- * Self-hosted Nunito variable font (latin + latin-ext for EN/ES content):
- * deterministic builds with no Google Fonts fetch at build time.
+ * Cross-brand type system (CrewYield family): Hanken Grotesk for UI/body,
+ * Fraunces for editorial display titles, IBM Plex Mono for figures. Self-hosted
+ * by next/font at build time (no runtime Google fetch). Exposed as CSS vars and
+ * wired to Tailwind's font-sans / font-display / font-mono.
  */
-const font = localFont({
-  src: [
-    { path: "./fonts/nunito-latin.woff2" },
-    { path: "./fonts/nunito-latin-ext.woff2" },
-  ],
-  weight: "200 1000",
-  style: "normal",
+const sans = Hanken_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const display = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -35,7 +49,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={font.className}>
+      <body
+        className={cn(sans.variable, display.variable, mono.variable, "font-sans")}
+      >
         <Toaster theme="light" richColors closeButton />
         <ExitModal />
         <PracticeModal />
