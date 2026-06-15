@@ -18,7 +18,16 @@ export const maxDuration = 300;
 
 const bodySchema = z.object({
   itemId: z.number().int().positive(),
-  slot: z.enum(["wrong", "right", "audio"]),
+  slot: z.enum(["wrong", "right", "audio", "pair"]),
+  /** Latest text the owner typed — persisted before generating so no separate
+   * (revalidating) save round-trip is needed. Bounds mirror the payload schema. */
+  prompts: z
+    .object({
+      wrongPrompt: z.string().max(500).optional(),
+      rightPrompt: z.string().max(500).optional(),
+      transcript: z.string().max(4000).optional(),
+    })
+    .optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -48,10 +57,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { mediaAssetId } = await scoped(auth, (tx) =>
-      generateLessonItemMedia(tx, auth.companyId, parsed.data.itemId, parsed.data.slot)
+    const { mediaAssetIds } = await scoped(auth, (tx) =>
+      generateLessonItemMedia(
+        tx,
+        auth.companyId,
+        parsed.data.itemId,
+        parsed.data.slot,
+        parsed.data.prompts
+      )
     );
-    return NextResponse.json({ ok: true, mediaAssetId });
+    return NextResponse.json({ ok: true, mediaAssetIds });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Media generation failed.";

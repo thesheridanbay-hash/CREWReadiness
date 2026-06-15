@@ -296,21 +296,18 @@ const VoiceNoteEditor = ({
 
   const onGenerate = async () => {
     if (busy) return;
+    if (!transcript.trim()) {
+      toast.error("Add a transcript first.");
+      return;
+    }
     setBusy("tts");
     try {
-      // Persist the latest transcript first — the runner reads it from the DB.
-      const saved = await updateLessonItem({
-        itemId: item.id,
-        payload: { ...item.payload, transcript },
-      });
-      if (!saved.ok) {
-        toast.error(saved.error.message);
-        return;
-      }
+      // Transcript rides in the body so the runner persists it — no separate
+      // revalidating save (which caused the jarring mid-click re-render).
       const res = await fetch("/api/lesson-item/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, slot: "audio" }),
+        body: JSON.stringify({ itemId: item.id, slot: "audio", prompts: { transcript } }),
         signal: AbortSignal.timeout(290_000),
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
@@ -391,66 +388,66 @@ const ImagePairEditor = ({
   disabled: boolean;
   run: (action: () => Promise<Result<unknown>>, success?: string) => void;
 }) => {
+  const router = useRouter();
   const [caption, setCaption] = useState(String(item.payload.caption ?? ""));
-  const dirty = caption !== String(item.payload.caption ?? "");
+  const [wrongPrompt, setWrongPrompt] = useState(String(item.payload.wrongPrompt ?? ""));
+  const [rightPrompt, setRightPrompt] = useState(String(item.payload.rightPrompt ?? ""));
+  const [busy, setBusy] = useState<null | "pair" | "upload-wrong" | "upload-right">(null);
+
+  const dirty =
+    caption !== String(item.payload.caption ?? "") ||
+    wrongPrompt !== String(item.payload.wrongPrompt ?? "") ||
+    rightPrompt !== String(item.payload.rightPrompt ?? "");
 
   const save = () =>
     run(
-      () => updateLessonItem({ itemId: item.id, payload: { ...item.payload, caption } }),
-      "Caption saved."
+      () =>
+        updateLessonItem({
+          itemId: item.id,
+          payload: { ...item.payload, caption, wrongPrompt, rightPrompt },
+        }),
+      "Saved."
     );
 
-  return (
-    <div>
-      <div className="grid grid-cols-2 gap-2">
-        <ImageSlot item={item} slot="wrong" label="Don't" disabled={disabled} run={run} />
-        <ImageSlot item={item} slot="right" label="Do" disabled={disabled} run={run} />
-      </div>
-      <div className="mt-2">
-        <span className="text-xs font-bold text-ink-3">Caption</span>
-        <input
-          value={caption}
-          disabled={disabled}
-          onChange={(e) => setCaption(e.target.value)}
-          className={fieldClass}
-        />
-        {dirty && (
-          <div className="mt-1">
-            <Button variant="secondary" size="sm" disabled={disabled} onClick={save}>
-              Save
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const ImageSlot = ({
-  item,
-  slot,
-  label,
-  disabled,
-  run,
-}: {
-  item: EditorLessonItem;
-  slot: "wrong" | "right";
-  label: string;
-  disabled: boolean;
-  run: (action: () => Promise<Result<unknown>>, success?: string) => void;
-}) => {
-  const router = useRouter();
-  const promptKey = slot === "wrong" ? "wrongPrompt" : "rightPrompt";
-  const mediaKey = slot === "wrong" ? "wrongMediaId" : "rightMediaId";
-  const [prompt, setPrompt] = useState(String(item.payload[promptKey] ?? ""));
-  const [busy, setBusy] = useState<null | "upload" | "gen">(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const src = mediaUrl(item.payload[mediaKey]);
-  const dirty = prompt !== String(item.payload[promptKey] ?? "");
-
-  const onUpload = async (file: File) => {
+  // ONE coherent generation: the DO first, then the DON'T anchored to the same
+  // scene (server-side) so the pair actually matches. Prompts ride in the body
+  // → no separate revalidating save (that caused the mid-click re-render). The
+  // editor refreshes once, after both images land.
+  const generatePair = async () => {
     if (busy) return;
-    setBusy("upload");
+    if (!wrongPrompt.trim() || !rightPrompt.trim()) {
+      toast.error("Add both a DO and a DON'T prompt first.");
+      return;
+    }
+    setBusy("pair");
+    try {
+      const res = await fetch("/api/lesson-item/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: item.id,
+          slot: "pair",
+          prompts: { wrongPrompt, rightPrompt },
+        }),
+        signal: AbortSignal.timeout(290_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+      if (!res.ok || !data.ok) {
+        toast.error(data.message ?? "Pair generation failed.");
+        return;
+      }
+      toast.success("Image pair generated.");
+      router.refresh();
+    } catch {
+      toast.error("Generation took too long — try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const upload = async (slot: "wrong" | "right", file: File) => {
+    if (busy) return;
+    setBusy(`upload-${slot}`);
     try {
       const up = await fetch("/api/media/upload?kind=PHOTO", {
         method: "POST",
@@ -476,43 +473,89 @@ const ImageSlot = ({
     }
   };
 
-  const onGenerate = async () => {
-    if (busy) return;
-    setBusy("gen");
-    try {
-      const saved = await updateLessonItem({
-        itemId: item.id,
-        payload: { ...item.payload, [promptKey]: prompt },
-      });
-      if (!saved.ok) {
-        toast.error(saved.error.message);
-        return;
-      }
-      const res = await fetch("/api/lesson-item/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, slot }),
-        signal: AbortSignal.timeout(290_000),
-      });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
-      if (!res.ok || !data.ok) {
-        toast.error(data.message ?? "Image generation failed.");
-        return;
-      }
-      toast.success("Image generated.");
-      router.refresh();
-    } catch {
-      toast.error("Generation took too long — try again.");
-    } finally {
-      setBusy(null);
-    }
-  };
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2">
+        <PairColumn
+          tone="wrong"
+          label="Don't"
+          src={mediaUrl(item.payload.wrongMediaId)}
+          prompt={wrongPrompt}
+          onPromptChange={setWrongPrompt}
+          onUpload={(f) => void upload("wrong", f)}
+          uploading={busy === "upload-wrong"}
+          disabled={disabled || busy !== null}
+        />
+        <PairColumn
+          tone="right"
+          label="Do"
+          src={mediaUrl(item.payload.rightMediaId)}
+          prompt={rightPrompt}
+          onPromptChange={setRightPrompt}
+          onUpload={(f) => void upload("right", f)}
+          uploading={busy === "upload-right"}
+          disabled={disabled || busy !== null}
+        />
+      </div>
 
+      <button
+        type="button"
+        disabled={disabled || busy !== null}
+        onClick={generatePair}
+        className="mt-2 inline-flex items-center gap-x-1 rounded-lg bg-gold-50 px-3 py-1.5 text-xs font-bold uppercase text-gold-700 hover:bg-gold-50/70 disabled:opacity-50"
+      >
+        ✨ {busy === "pair" ? "Generating pair…" : "Generate pair (DO + DON'T)"}
+      </button>
+
+      <div className="mt-2">
+        <span className="text-xs font-bold text-ink-3">Caption</span>
+        <input
+          value={caption}
+          disabled={disabled || busy !== null}
+          onChange={(e) => setCaption(e.target.value)}
+          className={fieldClass}
+        />
+      </div>
+
+      {dirty && (
+        <div className="mt-1.5">
+          <Button variant="secondary" size="sm" disabled={disabled} onClick={save}>
+            Save
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** One side of an image pair: preview + scene/behavior prompt + manual upload.
+ * Generation lives at the pair level (the "Generate pair" button) so the two
+ * sides come out as one coherent scene. */
+const PairColumn = ({
+  tone,
+  label,
+  src,
+  prompt,
+  onPromptChange,
+  onUpload,
+  uploading,
+  disabled,
+}: {
+  tone: "wrong" | "right";
+  label: string;
+  src: string | null;
+  prompt: string;
+  onPromptChange: (v: string) => void;
+  onUpload: (file: File) => void;
+  uploading: boolean;
+  disabled: boolean;
+}) => {
+  const fileRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-y-1">
       <span
         className={
-          slot === "right"
+          tone === "right"
             ? "self-start rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold uppercase text-success-700"
             : "self-start rounded-full bg-danger-50 px-2 py-0.5 text-xs font-bold uppercase text-danger-600"
         }
@@ -529,59 +572,31 @@ const ImageSlot = ({
       )}
       <input
         value={prompt}
-        disabled={disabled || busy !== null}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder={`${label} prompt (for AI)`}
+        disabled={disabled}
+        onChange={(e) => onPromptChange(e.target.value)}
+        placeholder={`${label} scene/behavior (for AI)`}
         className={`${fieldClass} text-[11px]`}
       />
-      <div className="flex flex-wrap items-center gap-1">
-        {dirty && (
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={disabled}
-            onClick={() =>
-              run(
-                () =>
-                  updateLessonItem({
-                    itemId: item.id,
-                    payload: { ...item.payload, [promptKey]: prompt },
-                  }),
-                "Prompt saved."
-              )
-            }
-          >
-            Save
-          </Button>
-        )}
-        <Button
-          variant="primaryOutline"
-          size="sm"
-          disabled={disabled || busy !== null}
-          onClick={() => fileRef.current?.click()}
-        >
-          {busy === "upload" ? "…" : "Upload"}
-        </Button>
-        <button
-          type="button"
-          disabled={disabled || busy !== null}
-          onClick={onGenerate}
-          className="rounded px-1.5 py-1 text-xs font-bold uppercase text-gold-700 hover:bg-gold-50 disabled:opacity-50"
-        >
-          ✨ {busy === "gen" ? "…" : "AI"}
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void onUpload(file);
-            e.target.value = "";
-          }}
-        />
-      </div>
+      <Button
+        type="button"
+        variant="primaryOutline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => fileRef.current?.click()}
+      >
+        {uploading ? "…" : "Upload"}
+      </Button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUpload(file);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 };
