@@ -37,6 +37,7 @@ export type {
   EditorQuestion,
   EditorLessonImage,
   EditorLessonAudio,
+  EditorLessonItem,
   EditorLesson,
   EditorUnit,
   EditorModule,

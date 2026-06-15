@@ -16,6 +16,7 @@ import {
 } from "@/features/learning/actions/learning-loop";
 import { Markdown } from "@/shared/components/markdown";
 import { Button } from "@/shared/ui/button";
+import type { LessonItemView } from "@/features/courses/lesson-item-schema";
 import type { LessonTeaching } from "@/features/courses/queries";
 import type { LoopView } from "@/features/learning/views";
 import type { Result } from "@/shared/errors";
@@ -24,6 +25,7 @@ import { Challenge } from "./challenge";
 import { Footer } from "./footer";
 import { Header } from "./header";
 import { ResultCard } from "./result-card";
+import { TeachItemDispatcher } from "./teach-item-dispatcher";
 
 /**
  * Lesson player (T8): renders server-driven LoopViews. The full teach-back
@@ -38,6 +40,12 @@ type PlayerProps = {
   initialView: LoopView;
   /** Teaching content shown before the questions (AI Course Builder). */
   teaching?: LessonTeaching | null;
+  /**
+   * Phase 2 lesson-anatomy: ordered teach items. When present, the player
+   * steps through these instead of the legacy single teachingText brief
+   * (dual-render). Empty/absent → fall back to `teaching`.
+   */
+  items?: LessonItemView[] | null;
 };
 
 const newKey = () =>
@@ -50,15 +58,22 @@ export const Player = ({
   lessonId,
   initialView,
   teaching,
+  items,
 }: PlayerProps) => {
   const router = useRouter();
   const { width, height } = useWindowSize();
   const [pending, startTransition] = useTransition();
 
-  // "Learn" step: show the teaching content before the questions. Skipped when
-  // there's nothing to teach or the lesson is already complete (resumed).
+  const hasItems = (items?.length ?? 0) > 0;
+
+  // "Learn" step: show the teaching content before the questions, but ONLY at
+  // the start of a fresh attempt. A resumed session (mid-quiz, or already
+  // complete) jumps straight to the quiz so the learner isn't forced back
+  // through every teach item — important now that anatomy can be many screens.
+  const isFreshStart =
+    initialView.type === "QUESTION" && initialView.progress.completed === 0;
   const [phase, setPhase] = useState<"teach" | "quiz">(
-    teaching && initialView.type !== "COMPLETE" ? "teach" : "quiz"
+    (hasItems || teaching) && isFreshStart ? "teach" : "quiz"
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -211,6 +226,19 @@ export const Player = ({
       : 0;
 
   /* ── LEARN (teaching step, before the questions) ── */
+  // Dual-render: new lessons step through ordered anatomy items; legacy
+  // lessons fall back to the single teachingText brief (sunset criterion:
+  // the legacy path retires once every active course carries lesson_items).
+  if (phase === "teach" && hasItems && items) {
+    return (
+      <TeachItemDispatcher
+        items={items}
+        percentage={percentage}
+        onComplete={() => setPhase("quiz")}
+      />
+    );
+  }
+
   if (phase === "teach" && teaching) {
     return (
       <>

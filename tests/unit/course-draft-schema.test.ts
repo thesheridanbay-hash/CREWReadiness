@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { courseDraftSchema } from "@/features/ai/types";
+import { courseDraftSchema, lessonItemDraftSchema } from "@/features/ai/types";
 
 /**
  * courseDraftSchema is the trust boundary for AI Course Builder output — it's
@@ -131,5 +131,106 @@ describe("courseDraftSchema", () => {
 
   it("rejects an empty course (no modules)", () => {
     expect(courseDraftSchema.safeParse(draft({ modules: [] })).success).toBe(false);
+  });
+
+  it("defaults anatomy to an empty array when omitted (back-compat)", () => {
+    const parsed = courseDraftSchema.safeParse(draft());
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.modules[0].units[0].lessons[0].anatomy).toEqual([]);
+    }
+  });
+
+  it("accepts a lesson with ordered anatomy items", () => {
+    const withAnatomy = courseDraftSchema.safeParse(
+      draft({
+        modules: [
+          {
+            ref: "M1",
+            title: "Hand tools",
+            units: [
+              {
+                ref: "U1",
+                title: "Trimmers",
+                lessons: [
+                  lesson({
+                    anatomy: [
+                      { kind: "teaching", markdown: "Read this." },
+                      {
+                        kind: "image_pair",
+                        caption: "Compare",
+                        wrongPrompt: "wrong grip",
+                        rightPrompt: "right grip",
+                      },
+                    ],
+                  }),
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    );
+    expect(withAnatomy.success).toBe(true);
+  });
+
+  it("rejects more than 8 anatomy items on a lesson", () => {
+    const tooMany = lesson({
+      anatomy: Array.from({ length: 9 }, () => ({
+        kind: "teaching" as const,
+        markdown: "x",
+      })),
+    });
+    const parsed = courseDraftSchema.safeParse(
+      draft({
+        modules: [
+          {
+            ref: "M1",
+            title: "Hand tools",
+            units: [{ ref: "U1", title: "Trimmers", lessons: [tooMany] }],
+          },
+        ],
+      })
+    );
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("lessonItemDraftSchema", () => {
+  it("accepts each kind", () => {
+    expect(lessonItemDraftSchema.safeParse({ kind: "teaching", markdown: "x" }).success).toBe(true);
+    expect(
+      lessonItemDraftSchema.safeParse({ kind: "narrative", text: "x", hook: "y" }).success
+    ).toBe(true);
+    expect(
+      lessonItemDraftSchema.safeParse({ kind: "voice_note", transcript: "x" }).success
+    ).toBe(true);
+    expect(
+      lessonItemDraftSchema.safeParse({
+        kind: "image_pair",
+        caption: "c",
+        wrongPrompt: "w",
+        rightPrompt: "r",
+      }).success
+    ).toBe(true);
+  });
+
+  it("requires both prompts on an image_pair", () => {
+    expect(
+      lessonItemDraftSchema.safeParse({ kind: "image_pair", caption: "c", wrongPrompt: "w" })
+        .success
+    ).toBe(false);
+  });
+
+  it("rejects an unknown kind", () => {
+    expect(lessonItemDraftSchema.safeParse({ kind: "video", url: "x" }).success).toBe(false);
+  });
+
+  it("defaults a narrative hook to empty", () => {
+    const parsed = lessonItemDraftSchema.safeParse({ kind: "narrative", text: "x" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success && parsed.data.kind === "narrative") {
+      expect(parsed.data.hook).toBe("");
+    }
   });
 });

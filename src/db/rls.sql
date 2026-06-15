@@ -65,6 +65,8 @@ DECLARE
     'modules',
     'units',
     'lessons',
+    'lesson_items',
+    'lesson_item_translations',
     'lesson_translations',
     'questions',
     'question_options',

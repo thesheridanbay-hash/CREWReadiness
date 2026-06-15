@@ -25,7 +25,7 @@ export const imageKindFor = (
 export const mediaProxyPath = (mediaAssetId: string): string =>
   `/api/media/${mediaAssetId}`;
 
-const toBytes = async (
+export const toBytes = async (
   result: ImageResult
 ): Promise<{ bytes: Buffer; contentType: string }> => {
   if (result.b64) {

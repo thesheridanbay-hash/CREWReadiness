@@ -2,11 +2,16 @@ import { cache } from "react";
 
 import { asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
-import { courses, lessons, modules } from "@/db/schema";
+import { courses, lessonItems, lessons, modules } from "@/db/schema";
 import { getSession } from "@/features/auth/session";
 import { scoped } from "@/shared/db/scoped";
 
-import { getReadingLanguage, lessonTeachingOverlay } from "./translations";
+import { toLessonItemView, type LessonItemView } from "./lesson-item-schema";
+import {
+  getReadingLanguage,
+  lessonItemsOverlay,
+  lessonTeachingOverlay,
+} from "./translations";
 
 /** Studio read queries (T10): scoped, office-role pages call these. */
 
@@ -102,6 +107,10 @@ export const getCourseTree = cache(async (courseId: number) => {
                     assets: {
                       orderBy: (a, { asc: ascFn }) => [ascFn(a.order)],
                     },
+                    // Lesson-anatomy teach items (Phase 2), in render order.
+                    items: {
+                      orderBy: (i, { asc: a }) => [a(i.order)],
+                    },
                   },
                 },
               },
@@ -165,6 +174,60 @@ export const getLessonTeaching = cache(
         imageSrc: image?.mediaAssetId ? `/api/media/${image.mediaAssetId}` : null,
         audioSrc: audio?.mediaAssetId ? `/api/media/${audio.mediaAssetId}` : null,
       };
+    });
+  }
+);
+
+const mediaUrl = (id: string | null | undefined): string | null =>
+  id ? `/api/media/${id}` : null;
+
+/**
+ * Ordered lesson-anatomy teach items for the LEARNER (Phase 2). Each row's
+ * payload is zod-validated; a bad/unknown row is SKIPPED (and logged) rather
+ * than crashing the lesson. Translatable text is overlaid in the learner's
+ * reading language (falls back to the base); media FKs resolve to authed
+ * proxy URLs. Returns [] when the lesson has no items (the player then
+ * dual-renders the legacy teachingText).
+ */
+export const getLessonItems = cache(
+  async (lessonId: number): Promise<LessonItemView[]> => {
+    const session = await getSession();
+    if (!session) return [];
+
+    return scoped(session, async (tx) => {
+      const rows = await tx.query.lessonItems.findMany({
+        where: eq(lessonItems.lessonId, lessonId),
+        orderBy: (i, { asc: ascFn }) => [ascFn(i.order)],
+      });
+      if (rows.length === 0) return [];
+
+      const reading = await getReadingLanguage(tx, session.userId);
+      const overlay = reading.needsOverlay
+        ? await lessonItemsOverlay(
+            tx,
+            rows.map((r) => r.id),
+            reading.lang
+          )
+        : null;
+
+      const views: LessonItemView[] = [];
+      for (const row of rows) {
+        const result = toLessonItemView(
+          { id: row.id, kind: row.kind, payload: row.payload },
+          mediaUrl,
+          overlay?.get(row.id)
+        );
+        if (!result.ok) {
+          // Skip-and-log: a single malformed item never breaks the lesson.
+          console.warn(
+            `[lesson-items] skipping item ${row.id} (lesson ${lessonId}): ${result.reason}`
+          );
+          continue;
+        }
+        views.push(result.view);
+      }
+
+      return views;
     });
   }
 );

@@ -20,12 +20,22 @@ export type EditorLessonAudio = {
   status: "PENDING" | "GENERATING" | "GENERATED" | "FAILED";
   src: string | null;
 };
+/** A lesson-anatomy teach item (Phase 2) as the studio editor sees it: the raw
+ * payload (for editing) plus its kind/order. Media previews are built from the
+ * payload's media ids client-side. */
+export type EditorLessonItem = {
+  id: number;
+  kind: "teaching" | "image_pair" | "voice_note" | "narrative";
+  order: number;
+  payload: Record<string, unknown>;
+};
 export type EditorLesson = {
   id: number;
   title: string;
   teachingText: string | null;
   images: EditorLessonImage[];
   audio: EditorLessonAudio | null;
+  items: EditorLessonItem[];
   questions: EditorQuestion[];
 };
 export type EditorUnit = { id: number; title: string; lessons: EditorLesson[] };

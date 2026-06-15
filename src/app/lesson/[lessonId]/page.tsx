@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { startOrResumeSession } from "@/features/learning/actions/learning-loop";
-import { getLessonTeaching } from "@/features/courses/queries";
+import { getLessonItems, getLessonTeaching } from "@/features/courses/queries";
 
 import { Player } from "../player";
 
@@ -15,9 +15,10 @@ const LessonIdPage = async ({ params }: LessonIdPageProps) => {
 
   if (!Number.isInteger(id) || id <= 0) return redirect("/learn");
 
-  const [result, teaching] = await Promise.all([
+  const [result, teaching, items] = await Promise.all([
     startOrResumeSession(id),
     getLessonTeaching(id),
+    getLessonItems(id),
   ]);
 
   if (!result.ok) return redirect("/learn");
@@ -28,6 +29,7 @@ const LessonIdPage = async ({ params }: LessonIdPageProps) => {
       lessonId={id}
       initialView={result.data.view}
       teaching={teaching}
+      items={items}
     />
   );
 };

@@ -1,6 +1,7 @@
 import {
   courseAssets,
   courses,
+  lessonItems,
   lessons,
   modules,
   questionOptions,
@@ -8,7 +9,7 @@ import {
   units,
 } from "@/db/schema";
 import type { ScopedTx } from "@/shared/db/scoped";
-import type { CourseDraft } from "@/features/ai/types";
+import type { CourseDraft, LessonItemDraft } from "@/features/ai/types";
 
 /**
  * Materialize a rich AI course draft into the content tree (AI Course
@@ -47,6 +48,12 @@ export type PlannedQuestion = {
   options: Array<{ text: string; correct: boolean }>;
 };
 
+export type PlannedLessonItem = {
+  kind: LessonItemDraft["kind"];
+  order: number;
+  payload: Record<string, unknown>;
+};
+
 export type PlannedLesson = {
   title: string;
   teachingText: string;
@@ -56,6 +63,29 @@ export type PlannedLesson = {
   assets: PlannedAsset[];
   /** Voiceover (TTS of the teaching text), if there's text to speak. */
   audio: PlannedAsset | null;
+  /** Ordered lesson-anatomy teach items (Phase 2); media filled post-ingest. */
+  items: PlannedLessonItem[];
+};
+
+/** Map a generation-draft anatomy item to its stored payload (media null —
+ * filled later by owner upload or on-demand AI generation). */
+const draftToPayload = (draft: LessonItemDraft): Record<string, unknown> => {
+  switch (draft.kind) {
+    case "teaching":
+      return { markdown: draft.markdown };
+    case "narrative":
+      return { text: draft.text, hook: draft.hook };
+    case "voice_note":
+      return { mediaId: null, source: "tts", transcript: draft.transcript };
+    case "image_pair":
+      return {
+        wrongMediaId: null,
+        rightMediaId: null,
+        caption: draft.caption,
+        wrongPrompt: draft.wrongPrompt,
+        rightPrompt: draft.rightPrompt,
+      };
+  }
 };
 
 export type PlannedUnit = {
@@ -124,6 +154,12 @@ export const planCourseMaterialization = (
           };
         }
 
+        const items: PlannedLessonItem[] = lesson.anatomy.map((draft, iIdx) => ({
+          kind: draft.kind,
+          order: iIdx + 1,
+          payload: draftToPayload(draft),
+        }));
+
         return {
           title: lesson.title,
           teachingText: lesson.teachingText,
@@ -139,6 +175,7 @@ export const planCourseMaterialization = (
           })),
           assets,
           audio,
+          items,
         };
       }),
     })),
@@ -252,6 +289,18 @@ export const materializeCourseDraft = async (
               questionId: question.id,
               text: option.text,
               correct: option.correct,
+            }))
+          );
+        }
+
+        if (plannedLesson.items.length > 0) {
+          await tx.insert(lessonItems).values(
+            plannedLesson.items.map((item) => ({
+              companyId,
+              lessonId: lesson.id,
+              order: item.order,
+              kind: item.kind,
+              payload: item.payload,
             }))
           );
         }

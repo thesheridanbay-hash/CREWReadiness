@@ -149,6 +149,53 @@ export const questionVariants = pgTable("question_variants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+/* ───────────── Lesson anatomy (Phase 2 — ordered teach items) ───────────── */
+
+/**
+ * A lesson's teaching half is an ORDERED sequence of typed items shown before
+ * the quiz (Phase 2 lesson-anatomy). Each kind carries a different shape of
+ * content in `payload` (validated by a per-kind zod schema at the boundary —
+ * src/features/courses/lesson-item-schema.ts):
+ *   teaching    → { markdown }
+ *   image_pair  → { wrongMediaId, rightMediaId, caption }  (media_assets ids —
+ *                  jsonb refs, NOT DB FKs; a deleted asset renders as missing)
+ *   voice_note  → { mediaId|null, source: 'owner'|'tts', transcript }
+ *   narrative   → { text, hook, incidentId? }
+ *
+ * Legacy lessons keep their single `lessons.teachingText`; the player
+ * dual-renders (items when present, else teachingText). Sunset: the legacy
+ * path retires once every active course carries lesson_items.
+ *
+ * i18n mirrors the rest of content: this base row holds the PRIMARY-language
+ * text + media FKs only; other languages live in lesson_item_translations
+ * keyed by `lang` (no per-language DDL). Media is shared across languages.
+ */
+export const lessonItemKindEnum = pgEnum("lesson_item_kind", [
+  "teaching",
+  "image_pair",
+  "voice_note",
+  "narrative",
+]);
+
+export const lessonItems = pgTable(
+  "lesson_items",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    lessonId: integer("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
+      .notNull(),
+    /** Render order within the lesson's teaching half. */
+    order: integer("order").notNull(),
+    kind: lessonItemKindEnum("kind").notNull(),
+    /** Per-kind payload; primary-language text only. Zod-validated on read. */
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("lesson_items_lesson_order_uq").on(t.lessonId, t.order)]
+);
+
 /* ─────────────── Content translations (multi-language) ─────────────── */
 
 /**
@@ -226,6 +273,36 @@ export const optionTranslations = pgTable(
   },
   (t) => [
     uniqueIndex("option_translations_option_lang_uq").on(t.optionId, t.lang),
+  ]
+);
+
+/**
+ * Per-language text for a lesson_item (mirrors lesson_translations). The base
+ * lesson_items row holds the primary language; `fields` is a partial of the
+ * payload's TRANSLATABLE text keys (e.g. { markdown } / { caption } /
+ * { transcript } / { text, hook }) in `lang`. Media FKs never appear here —
+ * images/audio are shared across languages. Learner reads overlay these onto
+ * the base payload and fall back to the base when a row is missing.
+ */
+export const lessonItemTranslations = pgTable(
+  "lesson_item_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    lessonItemId: integer("lesson_item_id")
+      .references(() => lessonItems.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    /** Translated payload text keys only (no media, no correctness). */
+    fields: jsonb("fields").$type<Record<string, string>>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("lesson_item_translations_item_lang_uq").on(
+      t.lessonItemId,
+      t.lang
+    ),
   ]
 );
 
@@ -830,10 +907,32 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
     references: [units.id],
   }),
   questions: many(questions),
+  items: many(lessonItems),
   lessonTags: many(lessonTags),
   assets: many(courseAssets),
   translations: many(lessonTranslations),
 }));
+
+export const lessonItemsRelations = relations(
+  lessonItems,
+  ({ one, many }) => ({
+    lesson: one(lessons, {
+      fields: [lessonItems.lessonId],
+      references: [lessons.id],
+    }),
+    translations: many(lessonItemTranslations),
+  })
+);
+
+export const lessonItemTranslationsRelations = relations(
+  lessonItemTranslations,
+  ({ one }) => ({
+    item: one(lessonItems, {
+      fields: [lessonItemTranslations.lessonItemId],
+      references: [lessonItems.id],
+    }),
+  })
+);
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
   lesson: one(lessons, {

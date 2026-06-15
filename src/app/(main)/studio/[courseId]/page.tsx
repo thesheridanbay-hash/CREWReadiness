@@ -91,6 +91,12 @@ const CourseStudioPage = async ({ params }: PageProps) => {
                     : null,
               }
             : null,
+          items: lesson.items.map((item) => ({
+            id: item.id,
+            kind: item.kind,
+            order: item.order,
+            payload: item.payload as Record<string, unknown>,
+          })),
           questions: lesson.questions.map((question) => ({
             id: question.id,
             question: question.question,

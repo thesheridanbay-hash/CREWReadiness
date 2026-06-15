@@ -12,6 +12,7 @@ import { Button } from "@/shared/ui/button";
 
 import { AiFieldButton } from "./ai-field-button";
 import { AssetModal, type EditableAsset } from "./asset-modal";
+import { LessonAnatomyEditor } from "./lesson-anatomy-editor";
 import { LessonTeachingEditor } from "./lesson-teaching-editor";
 import { QuestionForm } from "./question-form";
 import { Row } from "./row";
@@ -87,6 +88,13 @@ export const LessonBlock = ({
       <LessonTeachingEditor
         lessonId={lesson.id}
         initial={lesson.teachingText ?? ""}
+      />
+
+      <LessonAnatomyEditor
+        lessonId={lesson.id}
+        items={lesson.items}
+        disabled={disabled}
+        run={run}
       />
 
       {lesson.images.length > 0 && (

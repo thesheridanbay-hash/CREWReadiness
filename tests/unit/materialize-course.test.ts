@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   courseAssets,
   courses,
+  lessonItems,
   lessons,
   modules,
   questionOptions,
@@ -31,6 +32,7 @@ const lessonA = {
     { ref: "x1", kind: "illustration" as const, prompt: "two hands on a trimmer" },
     { ref: "x2", kind: "realistic" as const, prompt: "photo of correct grip" },
   ],
+  anatomy: [],
   questions: [
     {
       question: "Where do your hands go?",
@@ -48,6 +50,7 @@ const lessonB = {
   title: "Storage",
   teachingText: "Hang trimmers off the ground.",
   assets: [],
+  anatomy: [],
   questions: [
     {
       question: "Where do trimmers go after use?",
@@ -206,5 +209,113 @@ describe("materializeCourseDraft", () => {
       "V3",
       "V4",
     ]);
+  });
+});
+
+/* ─────────────── Phase 2: anatomy items in the draft ─────────────── */
+
+const anatomyDraft: CourseDraft = {
+  courseTitle: "Anatomy course",
+  courseIconPrompt: "icon",
+  modules: [
+    {
+      ref: "m",
+      title: "M",
+      units: [
+        {
+          ref: "u",
+          title: "U",
+          lessons: [
+            {
+              ref: "l",
+              title: "L",
+              teachingText: "Base teaching text.",
+              assets: [],
+              anatomy: [
+                { kind: "teaching", markdown: "Read this." },
+                { kind: "narrative", text: "A story.", hook: "What now?" },
+                { kind: "voice_note", transcript: "Spoken bit." },
+                {
+                  kind: "image_pair",
+                  caption: "Compare",
+                  wrongPrompt: "the wrong way",
+                  rightPrompt: "the right way",
+                },
+              ],
+              questions: [
+                {
+                  question: "q?",
+                  explanation: "e",
+                  options: [
+                    { text: "a", correct: true },
+                    { text: "b", correct: false },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+describe("planCourseMaterialization — anatomy", () => {
+  it("maps each anatomy draft to an ordered planned item with the stored payload", () => {
+    const plan = planCourseMaterialization(anatomyDraft);
+    const items = plan.modules[0].units[0].lessons[0].items;
+
+    expect(items.map((i) => i.kind)).toEqual([
+      "teaching",
+      "narrative",
+      "voice_note",
+      "image_pair",
+    ]);
+    expect(items.map((i) => i.order)).toEqual([1, 2, 3, 4]);
+
+    // Media-bearing kinds get null media + the generation prompts/transcript.
+    expect(items[2].payload).toEqual({
+      mediaId: null,
+      source: "tts",
+      transcript: "Spoken bit.",
+    });
+    expect(items[3].payload).toMatchObject({
+      wrongMediaId: null,
+      rightMediaId: null,
+      caption: "Compare",
+      wrongPrompt: "the wrong way",
+      rightPrompt: "the right way",
+    });
+  });
+
+  it("produces no items when a lesson has no anatomy", () => {
+    const plan = planCourseMaterialization(draft);
+    expect(plan.modules[0].units[0].lessons[0].items).toEqual([]);
+  });
+});
+
+describe("materializeCourseDraft — anatomy", () => {
+  it("inserts one lesson_items row per anatomy item, with companyId + lessonId", async () => {
+    const { tx, calls } = makeFakeTx();
+    await materializeCourseDraft(tx, "co_test", anatomyDraft);
+
+    const itemRows = rowsFor(calls, lessonItems);
+    expect(itemRows).toHaveLength(4);
+    expect(itemRows.map((r) => r.kind)).toEqual([
+      "teaching",
+      "narrative",
+      "voice_note",
+      "image_pair",
+    ]);
+    for (const row of itemRows) {
+      expect(row.companyId).toBe("co_test");
+      expect(row.lessonId).not.toBeNull();
+    }
+  });
+
+  it("inserts no lesson_items when there is no anatomy", async () => {
+    const { tx, calls } = makeFakeTx();
+    await materializeCourseDraft(tx, "co_test", draft);
+    expect(rowsFor(calls, lessonItems)).toHaveLength(0);
   });
 });

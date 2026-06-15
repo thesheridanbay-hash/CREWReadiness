@@ -3,6 +3,7 @@ import { cache } from "react";
 import { and, eq, inArray } from "drizzle-orm";
 
 import {
+  lessonItemTranslations,
   lessonTranslations,
   optionTranslations,
   questionTranslations,
@@ -107,6 +108,23 @@ export const questionTextOverlay = async (
     columns: { question: true, explanation: true },
   });
   return row ?? null;
+};
+
+/** Map of lessonItemId → translated payload fields in `lang` (rows that exist). */
+export const lessonItemsOverlay = async (
+  tx: ScopedTx,
+  itemIds: number[],
+  lang: string
+): Promise<Map<number, Record<string, string>>> => {
+  if (itemIds.length === 0) return new Map();
+  const rows = await tx.query.lessonItemTranslations.findMany({
+    where: and(
+      inArray(lessonItemTranslations.lessonItemId, itemIds),
+      eq(lessonItemTranslations.lang, lang)
+    ),
+    columns: { lessonItemId: true, fields: true },
+  });
+  return new Map(rows.map((row) => [row.lessonItemId, row.fields]));
 };
 
 /** Map of optionId → translated text in `lang` (only the rows that exist). */

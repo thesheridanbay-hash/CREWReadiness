@@ -73,6 +73,36 @@ export const assetDraftSchema = z.object({
 
 export type AssetDraft = z.infer<typeof assetDraftSchema>;
 
+/* ─────────── Lesson-anatomy draft items (Phase 2 generation) ───────────
+ * The AI may emit an ordered `anatomy` sequence per lesson — typed teach items
+ * shown before the quiz. This is the GENERATION contract (text + image prompts
+ * the model produces); media is filled later (owner upload or on-demand AI), so
+ * draft image_pair/voice_note carry prompts/transcript, NOT media ids. The
+ * stored payload shape lives in features/courses/lesson-item-schema.ts. */
+export const lessonItemDraftSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("teaching"),
+    markdown: z.string().min(1).max(4000),
+  }),
+  z.object({
+    kind: z.literal("narrative"),
+    text: z.string().min(1).max(4000),
+    hook: z.string().max(500).default(""),
+  }),
+  z.object({
+    kind: z.literal("voice_note"),
+    transcript: z.string().min(1).max(4000),
+  }),
+  z.object({
+    kind: z.literal("image_pair"),
+    caption: z.string().max(500).default(""),
+    wrongPrompt: z.string().min(1).max(500),
+    rightPrompt: z.string().min(1).max(500),
+  }),
+]);
+
+export type LessonItemDraft = z.infer<typeof lessonItemDraftSchema>;
+
 export const courseDraftSchema = z.object({
   courseTitle: z.string().min(1).max(200),
   /** Prompt for the dynamic course-card icon (req 1). */
@@ -94,6 +124,9 @@ export const courseDraftSchema = z.object({
                     title: z.string().min(1).max(200),
                     teachingText: z.string().min(1).max(4000),
                     assets: z.array(assetDraftSchema).max(4).default([]),
+                    /** Optional ordered teach items (Phase 2). Absent → the
+                     * lesson falls back to teachingText (dual-render). */
+                    anatomy: z.array(lessonItemDraftSchema).max(8).default([]),
                     questions: z.array(questionDraftSchema).min(1).max(12),
                   })
                 )
