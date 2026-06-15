@@ -24,6 +24,7 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
 
   const chip = (href: string, label: string, active: boolean) => (
     <Link
+      key={href}
       href={href}
       className={cn(
         "rounded-full border-2 px-3 py-1 text-sm font-bold transition",
@@ -67,7 +68,7 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
         />
         <button
           type="submit"
-          className="rounded-xl border-2 border-b-4 border-gold-700 bg-gold-500 px-4 py-2 text-sm font-bold text-brand-800 hover:bg-gold-500/90 active:border-b-2"
+          className="rounded-lg border-2 border-b-2 border-gold-700 bg-gold-500 px-4 py-2 text-sm font-semibold text-brand-800 hover:bg-gold-500/90 active:border-b-0"
         >
           Search
         </button>
@@ -100,7 +101,9 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
                   </span>
                 ) : null}
               </div>
-              <span className="font-bold text-ink">{listing.title}</span>
+              <span className="font-display text-lg font-semibold text-ink">
+                {listing.title}
+              </span>
               {listing.description && (
                 <span className="line-clamp-2 text-sm text-muted-foreground">
                   {listing.description}

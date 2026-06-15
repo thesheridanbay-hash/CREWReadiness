@@ -52,4 +52,13 @@ body,
   body {
     @apply bg-background text-foreground;
   }
+  /* Editorial display titles use Fraunces (CrewYield family); UI/body/labels
+     stay Hanken. Headings get the warm serif app-wide, not just hand-tagged
+     ones — fixes the "titles still look generic" gap. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
 }

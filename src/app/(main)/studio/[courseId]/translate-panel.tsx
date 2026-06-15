@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ChevronDown, Languages } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -10,6 +11,7 @@ import type {
   CourseTranslationStatus,
 } from "@/features/courses/actions/course-translate";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/utils";
 import { languageLabel } from "@/features/courses/languages";
 
 /**
@@ -29,6 +31,7 @@ export const TranslatePanel = ({
   status: CourseTranslationStatus;
 }) => {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [activeLang, setActiveLang] = useState<string | null>(null);
   // Live translated-count per language while a run is in flight.
   const [live, setLive] = useState<Record<string, number>>({});
@@ -87,26 +90,47 @@ export const TranslatePanel = ({
   };
 
   return (
-    <section className="mb-6 rounded-2xl border-2 p-4">
-      <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-        Languages
-      </h2>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Base content is in {languageLabel(status.primaryLanguage)}. Generate a
-        translation so crew members set to that language see it.
-      </p>
-      <div className="flex flex-col gap-y-2">
-        {status.languages.map((language) => (
-          <LanguageRow
-            key={language.code}
-            language={language}
-            busy={activeLang !== null}
-            running={activeLang === language.code}
-            doneCount={live[language.code] ?? language.translated}
-            onTranslate={(startFrom) => translate(language.code, startFrom)}
-          />
-        ))}
-      </div>
+    <section className="mb-4 rounded-2xl border-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title="Generate translations so crew members read in their own language"
+        className="flex w-full items-center justify-between gap-x-3 px-4 py-3 text-left"
+      >
+        <span className="flex items-center gap-x-2">
+          <Languages className="h-[18px] w-[18px] text-ink-3" strokeWidth={1.8} />
+          <span className="text-sm font-bold text-ink">Languages</span>
+          <span className="text-xs text-muted-foreground">
+            {status.languages.length} available
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-ink-3 transition-transform",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+      {open && (
+        <div className="border-t-2 px-4 pb-4 pt-3">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Base content is in {languageLabel(status.primaryLanguage)}. Generate
+            a translation so crew members set to that language see it.
+          </p>
+          <div className="flex flex-col gap-y-2">
+            {status.languages.map((language) => (
+              <LanguageRow
+                key={language.code}
+                language={language}
+                busy={activeLang !== null}
+                running={activeLang === language.code}
+                doneCount={live[language.code] ?? language.translated}
+                onTranslate={(startFrom) => translate(language.code, startFrom)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
