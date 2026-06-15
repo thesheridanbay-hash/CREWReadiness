@@ -6,9 +6,13 @@
 import { readFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
 
-const url = process.env.DATABASE_URL_OWNER;
+// Prefer an explicit owner URL; fall back to DATABASE_URL when the owner var is
+// unset or a placeholder (some envs ship `…<owner>:<password>@<host>…`). DDL
+// requires a privileged role (e.g. neondb_owner), NOT the app_runtime role.
+let url = process.env.DATABASE_URL_OWNER;
+if (!url || url.includes("<")) url = process.env.DATABASE_URL;
 if (!url) {
-  console.error("DATABASE_URL_OWNER not set");
+  console.error("No DATABASE_URL_OWNER / DATABASE_URL set");
   process.exit(1);
 }
 
