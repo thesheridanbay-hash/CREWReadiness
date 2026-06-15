@@ -245,7 +245,6 @@ export const submitAnswer = async (
 
       if (effects.completed) {
         revalidatePath("/learn");
-        revalidatePath("/leaderboard");
       }
 
       return ok({ sessionId, view, pointsEarned: effects.pointsAwarded });

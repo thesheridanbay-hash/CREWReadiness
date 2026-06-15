@@ -24,7 +24,6 @@ import type { Result } from "@/shared/errors";
 import { Challenge } from "./challenge";
 import { Footer } from "./footer";
 import { Header } from "./header";
-import { ResultCard } from "./result-card";
 import { TeachItemDispatcher } from "./teach-item-dispatcher";
 
 /**
@@ -297,9 +296,6 @@ export const Player = ({
               follow up.
             </p>
           )}
-          <div className="flex w-full items-center justify-center gap-x-4">
-            <ResultCard variant="points" value={view.pointsEarned} />
-          </div>
         </div>
         <Footer
           lessonId={lessonId}

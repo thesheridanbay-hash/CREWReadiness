@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { FeedWrapper } from "@/shared/components/feed-wrapper";
 import { LanguageSwitcher } from "@/app-shell/language-switcher";
-import { StickyWrapper } from "@/shared/components/sticky-wrapper";
-import { UserProgress } from "@/features/learning/ui/user-progress";
 import { getViewerLanguagePreference } from "@/features/courses/translations";
 import {
   getCourseProgress,
@@ -35,39 +32,33 @@ const LearnPage = async () => {
   if (!courseProgress || !userProgress || !userProgress.activeCourse)
     redirect("/courses");
 
+  // De-gamified (B2B): no points counter / leaderboard sticky column, so the
+  // lesson column centers and the header spans the full width.
   return (
-    <div className="flex flex-row-reverse gap-[48px] px-6">
-      <StickyWrapper>
-        <UserProgress
-          activeCourse={userProgress.activeCourse}
-          points={userProgress.points}
-        />
-      </StickyWrapper>
-      <FeedWrapper>
-        <Header
-          title={userProgress.activeCourse.title}
-          right={
-            <LanguageSwitcher
-              compact
-              current={language.language}
-              primary={language.primary}
-            />
-          }
-        />
-        {units.map((unit) => (
-          <div key={unit.id} className="mb-10">
-            <Unit
-              id={unit.id}
-              order={unit.order}
-              description={unit.description}
-              title={unit.title}
-              lessons={unit.lessons}
-              activeLesson={courseProgress.activeLesson}
-              activeLessonPercentage={lessonPercentage}
-            />
-          </div>
-        ))}
-      </FeedWrapper>
+    <div className="mx-auto max-w-3xl px-6 pb-10">
+      <Header
+        title={userProgress.activeCourse.title}
+        right={
+          <LanguageSwitcher
+            compact
+            current={language.language}
+            primary={language.primary}
+          />
+        }
+      />
+      {units.map((unit) => (
+        <div key={unit.id} className="mb-10">
+          <Unit
+            id={unit.id}
+            order={unit.order}
+            description={unit.description}
+            title={unit.title}
+            lessons={unit.lessons}
+            activeLesson={courseProgress.activeLesson}
+            activeLessonPercentage={lessonPercentage}
+          />
+        </div>
+      ))}
     </div>
   );
 };

@@ -12,8 +12,8 @@
  * universal fallback when a translation is missing.
  */
 export const SUPPORTED_LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Spanish" },
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "es", label: "Spanish", flag: "🇪🇸" },
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
@@ -30,6 +30,10 @@ export const isSupportedLanguage = (code: string): code is LanguageCode =>
 /** Human label for a code; falls back to the raw code if unknown. */
 export const languageLabel = (code: string): string =>
   SUPPORTED_LANGUAGES.find((l) => l.code === code)?.label ?? code;
+
+/** Flag emoji for a code; a globe for unknown codes. */
+export const languageFlag = (code: string): string =>
+  SUPPORTED_LANGUAGES.find((l) => l.code === code)?.flag ?? "🌐";
 
 /**
  * Resolve the language a learner should READ in, given their stored
