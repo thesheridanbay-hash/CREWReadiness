@@ -8,7 +8,7 @@ import { acceptEmployeeInviteAction } from "@/features/auth/actions";
 import { Button } from "@/shared/ui/button";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-brand";
 
 type InvitePageProps = {
   params: Promise<{ token: string }>;
@@ -43,7 +43,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
         onSubmit();
       }}
     >
-      <h2 className="text-center text-xl font-bold text-neutral-700">
+      <h2 className="text-center text-xl font-bold text-ink">
         Set your PIN
       </h2>
       <p className="text-center text-sm text-muted-foreground">

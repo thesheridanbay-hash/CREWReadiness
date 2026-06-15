@@ -16,14 +16,14 @@ const PlatformUsagePage = async () => {
     <div className="px-4">
       <Link
         href="/platform/settings"
-        className="text-sm font-bold text-sky-600 hover:underline"
+        className="text-sm font-bold text-info hover:underline"
       >
         ← AI settings
       </Link>
-      <h1 className="my-4 text-2xl font-bold text-neutral-700">
+      <h1 className="my-4 text-2xl font-bold text-ink">
         Cross-company AI usage
       </h1>
-      <p className="mb-6 text-3xl font-bold text-neutral-700">
+      <p className="mb-6 text-3xl font-bold text-ink">
         ${total.toFixed(2)}{" "}
         <span className="text-sm font-medium text-muted-foreground">
           this month, all companies
@@ -35,7 +35,7 @@ const PlatformUsagePage = async () => {
       ) : (
         <div className="overflow-hidden rounded-2xl border-2">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-muted-foreground">
+            <thead className="bg-canvas-2 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="p-3">Company</th>
                 <th className="p-3 text-right">Calls</th>

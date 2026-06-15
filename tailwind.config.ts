@@ -53,6 +53,55 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* Cross-brand (CrewYield family) semantic brand colors. The migrated
+           brand spots use these instead of raw green-/sky-/teal- utilities; a
+           future re-skin edits this block + the :root neutrals. See DESIGN.md.
+           Discipline: `gold` is the single accent (primary action / AI / streaks),
+           one per view; `brand` (pine) is structural chrome; `success` (green) is
+           correct/progress; `danger` is wrong/destructive. */
+        brand: {
+          DEFAULT: "#1f4131",
+          50: "#e7efe7",
+          500: "#2c5a43",
+          600: "#1f4131",
+          700: "#16321e",
+          800: "#0f2419",
+          900: "#0c1d14",
+        },
+        gold: {
+          DEFAULT: "#c8881f",
+          50: "#f6ebd3",
+          500: "#c8881f",
+          700: "#9a6710",
+        },
+        success: {
+          DEFAULT: "#2f7d4f",
+          50: "#e3f0e6",
+          500: "#2f7d4f",
+          600: "#2f7d4f",
+          700: "#256340",
+        },
+        danger: {
+          DEFAULT: "#b23a2d",
+          50: "#f6e1dc",
+          500: "#b23a2d",
+          600: "#9a3226",
+        },
+        canvas: {
+          DEFAULT: "#f6f4ec",
+          2: "#efece1",
+        },
+        surface: "#fffdf7",
+        ink: {
+          DEFAULT: "#16201a",
+          2: "#3f4a42",
+          3: "#6b756c",
+        },
+        line: {
+          DEFAULT: "#ddd7c7",
+          2: "#cbc4b0",
+        },
+        info: "#3a5a8c",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -63,11 +63,11 @@ export const NotificationBell = ({
         type="button"
         aria-label="Notifications"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-xl p-2 text-neutral-500 hover:bg-slate-100"
+        className="relative rounded-xl p-2 text-ink-3 hover:bg-canvas-2"
       >
         <Bell className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-primary-foreground">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -82,9 +82,9 @@ export const NotificationBell = ({
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border-2 bg-white p-2 shadow-lg">
+          <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border-2 bg-surface p-2 shadow-lg">
             <div className="flex items-center justify-between px-2 py-1">
-              <span className="text-sm font-bold text-neutral-700">
+              <span className="text-sm font-bold text-ink">
                 Notifications
               </span>
               {unread > 0 && (
@@ -92,7 +92,7 @@ export const NotificationBell = ({
                   type="button"
                   disabled={pending}
                   onClick={markAll}
-                  className="text-xs font-bold uppercase text-sky-600 hover:underline disabled:opacity-50"
+                  className="text-xs font-bold uppercase text-info hover:underline disabled:opacity-50"
                 >
                   Mark all read
                 </button>
@@ -111,13 +111,13 @@ export const NotificationBell = ({
                     type="button"
                     disabled={pending}
                     onClick={() => openItem(item)}
-                    className={`block w-full rounded-xl px-2 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50 ${
-                      item.read ? "text-muted-foreground" : "text-neutral-700"
+                    className={`block w-full rounded-xl px-2 py-2 text-left text-sm hover:bg-canvas-2 disabled:opacity-50 ${
+                      item.read ? "text-muted-foreground" : "text-ink"
                     }`}
                   >
                     <div className="flex items-start gap-x-2">
                       {!item.read && (
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-500" />
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-info" />
                       )}
                       <div className={item.read ? "ml-4" : ""}>
                         <div className="font-medium">{item.message}</div>

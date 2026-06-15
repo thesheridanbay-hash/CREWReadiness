@@ -94,7 +94,7 @@ export const GenerateImagesButton = ({
 
   if (status.pending === 0 && status.failed === 0) {
     return (
-      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+      <span className="rounded-full bg-success-50 px-3 py-1 text-xs font-bold text-success-700">
         ✓ Images ready
       </span>
     );

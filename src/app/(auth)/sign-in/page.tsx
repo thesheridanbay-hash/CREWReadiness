@@ -12,7 +12,7 @@ import { authClient } from "@/features/auth/client";
 type Tab = "crew" | "office";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-brand";
 
 const SignInPage = () => {
   const router = useRouter();
@@ -54,7 +54,7 @@ const SignInPage = () => {
 
   return (
     <div className="flex flex-col gap-y-6">
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-neutral-100 p-1">
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-canvas-2 p-1">
         {(
           [
             ["crew", "Crew member"],
@@ -67,8 +67,8 @@ const SignInPage = () => {
             onClick={() => setTab(value)}
             className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
               tab === value
-                ? "bg-white text-green-600 shadow"
-                : "text-neutral-500"
+                ? "bg-surface text-success-700 shadow"
+                : "text-ink-3"
             }`}
           >
             {label}
@@ -156,7 +156,7 @@ const SignInPage = () => {
           </Button>
           <a
             href="/sign-up"
-            className="text-center text-sm font-bold text-green-600 hover:underline"
+            className="text-center text-sm font-bold text-success-700 hover:underline"
           >
             New company? Create an account
           </a>

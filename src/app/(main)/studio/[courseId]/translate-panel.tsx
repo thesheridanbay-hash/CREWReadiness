@@ -137,9 +137,9 @@ const LanguageRow = ({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-3">
       <div className="flex items-center gap-x-2">
-        <span className="font-bold text-neutral-700">{language.label}</span>
+        <span className="font-bold text-ink">{language.label}</span>
         {complete ? (
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+          <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-700">
             ✓ Up to date
           </span>
         ) : (

@@ -15,7 +15,7 @@ import type { CrewMember, PendingInvite } from "@/features/courses/crew-queries"
 import { SUPPORTED_LANGUAGES, languageLabel } from "@/features/courses/languages";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand";
 
 export const CrewManager = ({
   members,
@@ -89,7 +89,7 @@ export const CrewManager = ({
         }}
       >
         <div className="flex-1">
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Display name
           </label>
           <input
@@ -100,7 +100,7 @@ export const CrewManager = ({
           />
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Username
           </label>
           <input
@@ -122,12 +122,12 @@ export const CrewManager = ({
       </form>
 
       {lastLink && (
-        <div className="flex items-center justify-between gap-x-3 rounded-xl border-2 border-green-300 bg-green-50 p-3 text-sm">
-          <span className="break-all font-medium text-green-800">{lastLink}</span>
+        <div className="flex items-center justify-between gap-x-3 rounded-xl border-2 border-success bg-success-50 p-3 text-sm">
+          <span className="break-all font-medium text-success-700">{lastLink}</span>
           <button
             type="button"
             onClick={() => copy(lastLink)}
-            className="shrink-0 font-bold uppercase text-green-700 hover:underline"
+            className="shrink-0 font-bold uppercase text-success-700 hover:underline"
           >
             Copy
           </button>
@@ -145,14 +145,14 @@ export const CrewManager = ({
                 key={inviteItem.id}
                 className="flex items-center justify-between gap-x-3 rounded-xl border-2 p-3"
               >
-                <span className="font-medium text-neutral-700">
+                <span className="font-medium text-ink">
                   {inviteItem.displayName}{" "}
                   <span className="text-muted-foreground">@{inviteItem.username}</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => copy(inviteItem.url)}
-                  className="text-xs font-bold uppercase text-sky-600 hover:underline"
+                  className="text-xs font-bold uppercase text-info hover:underline"
                 >
                   Copy link
                 </button>
@@ -183,11 +183,11 @@ export const CrewManager = ({
                   key={member.userId}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-3"
                 >
-                  <span className="font-medium text-neutral-700">
+                  <span className="font-medium text-ink">
                     {member.displayName}{" "}
                     <span className="text-muted-foreground">@{member.username}</span>
                     {member.locked && (
-                      <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                      <span className="ml-2 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-bold text-danger">
                         Locked
                       </span>
                     )}
@@ -200,7 +200,7 @@ export const CrewManager = ({
                       onChange={(event) =>
                         setLanguage(member.userId, event.target.value)
                       }
-                      className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-neutral-700 outline-none focus:border-green-500 disabled:opacity-50"
+                      className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-ink outline-none focus:border-brand disabled:opacity-50"
                     >
                       <option value="">
                         Default · {languageLabel(primaryLanguage)}
@@ -224,7 +224,7 @@ export const CrewManager = ({
                           resetPin(member.userId, pin);
                         else if (pin) toast.error("PIN must be 4-6 digits.");
                       }}
-                      className="text-xs font-bold uppercase text-amber-600 hover:underline disabled:opacity-50"
+                      className="text-xs font-bold uppercase text-gold-700 hover:underline disabled:opacity-50"
                     >
                       Reset PIN
                     </button>

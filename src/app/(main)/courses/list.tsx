@@ -49,7 +49,7 @@ export const List = ({ courses, activeCourseId, assignments }: ListProps) => {
                 type="button"
                 disabled={pending}
                 onClick={() => onClick(assignment.courseId)}
-                className="flex items-center justify-between gap-x-3 rounded-2xl border-2 p-4 text-left transition hover:bg-slate-50 disabled:opacity-60"
+                className="flex items-center justify-between gap-x-3 rounded-2xl border-2 p-4 text-left transition hover:bg-canvas-2 disabled:opacity-60"
               >
                 <div className="flex items-center gap-x-3">
                   <Image
@@ -60,7 +60,7 @@ export const List = ({ courses, activeCourseId, assignments }: ListProps) => {
                     className="rounded-md border"
                   />
                   <div>
-                    <div className="font-bold text-neutral-700">
+                    <div className="font-bold text-ink">
                       {assignment.title}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -70,20 +70,20 @@ export const List = ({ courses, activeCourseId, assignments }: ListProps) => {
                 </div>
                 <div className="flex shrink-0 items-center gap-x-2">
                   {assignment.required && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                    <span className="rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700">
                       Required
                     </span>
                   )}
                   {assignment.completed ? (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                    <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-700">
                       ✓ Done
                     </span>
                   ) : assignment.overdue ? (
-                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                    <span className="rounded-full bg-danger-50 px-2 py-0.5 text-xs font-bold text-danger">
                       Overdue
                     </span>
                   ) : assignment.dueDate ? (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
+                    <span className="rounded-full bg-canvas-2 px-2 py-0.5 text-xs font-bold text-ink-3">
                       Due {assignment.dueDate.toLocaleDateString()}
                     </span>
                   ) : null}

@@ -17,8 +17,8 @@ const tabClass = (active: boolean) =>
   [
     "rounded-xl px-4 py-2 text-sm font-bold transition",
     active
-      ? "bg-green-500 text-white"
-      : "border-2 text-neutral-600 hover:bg-slate-50",
+      ? "bg-brand text-primary-foreground"
+      : "border-2 text-ink-3 hover:bg-canvas-2",
   ].join(" ");
 
 export const CourseCreator = () => {

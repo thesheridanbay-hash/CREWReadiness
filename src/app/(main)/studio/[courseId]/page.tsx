@@ -112,7 +112,7 @@ const CourseStudioPage = async ({ params }: PageProps) => {
     <div className="px-4 pb-16">
       <Link
         href="/studio"
-        className="text-sm font-bold text-sky-600 hover:underline"
+        className="text-sm font-bold text-info hover:underline"
       >
         ← All courses
       </Link>

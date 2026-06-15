@@ -75,7 +75,7 @@ export const QuestionForm = ({
   };
 
   return (
-    <div className="mt-2 flex flex-col gap-y-2 rounded-lg border-2 border-sky-200 p-3">
+    <div className="mt-2 flex flex-col gap-y-2 rounded-lg border-2 border-brand p-3">
       <input
         className={inputClass}
         placeholder="Question"
@@ -115,7 +115,7 @@ export const QuestionForm = ({
             onClick={() =>
               setOptions((prev) => [...prev, { id: prev.length, text: "", correct: false }])
             }
-            className="text-xs font-bold uppercase text-sky-600 hover:underline"
+            className="text-xs font-bold uppercase text-info hover:underline"
           >
             + Option
           </button>

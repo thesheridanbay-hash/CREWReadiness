@@ -9,7 +9,7 @@ import { upsertProviderSettings, type ProviderSettingsView } from "@/features/pl
 import { Button } from "@/shared/ui/button";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand";
 
 export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => {
   const router = useRouter();
@@ -55,7 +55,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       }}
     >
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">Provider</label>
+        <label className="mb-1 block text-sm font-bold text-ink">Provider</label>
         <select
           className={inputClass}
           value={provider}
@@ -67,7 +67,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           {provider === "openclaw" ? "MCP endpoint URL" : "Base URL"}
         </label>
         <input
@@ -79,7 +79,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           Model{" "}
           {provider === "openclaw" && (
             <span className="font-normal text-muted-foreground">(optional)</span>
@@ -95,7 +95,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
 
       {provider === "openclaw" && (
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             MCP generation tool
           </label>
           <input
@@ -112,7 +112,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           API key{" "}
           {current.hasKey && (
             <span className="font-normal text-muted-foreground">
@@ -131,7 +131,7 @@ export const ProviderForm = ({ current }: { current: ProviderSettingsView }) => 
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           Monthly cost alert (USD, optional)
         </label>
         <input

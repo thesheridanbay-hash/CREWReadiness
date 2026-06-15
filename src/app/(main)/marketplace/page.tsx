@@ -28,8 +28,8 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
       className={cn(
         "rounded-full border-2 px-3 py-1 text-sm font-bold transition",
         active
-          ? "border-green-500 bg-green-50 text-green-700"
-          : "text-neutral-600 hover:bg-slate-50"
+          ? "border-brand bg-brand-50 text-brand"
+          : "text-ink-3 hover:bg-canvas-2"
       )}
     >
       {label}
@@ -39,7 +39,7 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
   return (
     <div className="px-4">
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-neutral-700">Course Library</h1>
+        <h1 className="text-2xl font-bold text-ink">Course Library</h1>
         <p className="text-sm text-muted-foreground">
           Browse ready-made courses, then adopt one into your company to edit,
           translate, and assign to your crew.
@@ -63,11 +63,11 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
           name="q"
           defaultValue={q ?? ""}
           placeholder="Search courses…"
-          className="w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-green-500"
+          className="w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-brand"
         />
         <button
           type="submit"
-          className="rounded-xl border-2 border-b-4 border-green-600 bg-green-500 px-4 py-2 text-sm font-bold text-white active:border-b-2"
+          className="rounded-xl border-2 border-b-4 border-gold-700 bg-gold-500 px-4 py-2 text-sm font-bold text-brand-800 hover:bg-gold-500/90 active:border-b-2"
         >
           Search
         </button>
@@ -84,23 +84,23 @@ const MarketplacePage = async ({ searchParams }: PageProps) => {
             <Link
               key={listing.id}
               href={`/marketplace/${listing.id}`}
-              className="flex flex-col gap-y-2 rounded-2xl border-2 p-5 transition hover:bg-slate-50"
+              className="flex flex-col gap-y-2 rounded-2xl border-2 p-5 transition hover:bg-canvas-2"
             >
               <div className="flex items-center justify-between gap-x-2">
-                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">
+                <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand">
                   {categoryLabel(listing.category)}
                 </span>
                 {listing.kind === "UNIVERSAL" ? (
-                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                  <span className="rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700">
                     Universal
                   </span>
                 ) : listing.mine ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                  <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-700">
                     Yours
                   </span>
                 ) : null}
               </div>
-              <span className="font-bold text-neutral-700">{listing.title}</span>
+              <span className="font-bold text-ink">{listing.title}</span>
               {listing.description && (
                 <span className="line-clamp-2 text-sm text-muted-foreground">
                   {listing.description}

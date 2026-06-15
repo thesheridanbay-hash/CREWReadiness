@@ -36,11 +36,11 @@ export const CreateCourseForm = () => {
       }}
     >
       <div className="flex-1">
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           New course
         </label>
         <input
-          className="w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500"
+          className="w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand"
           placeholder="e.g. Equipment Safety"
           value={title}
           maxLength={120}

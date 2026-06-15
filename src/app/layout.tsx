@@ -23,7 +23,7 @@ const font = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#22C55E",
+  themeColor: "#1f4131",
 };
 
 export const metadata: Metadata = siteConfig;

@@ -62,7 +62,7 @@ export const BillingPanel = ({ status }: { status: BillingStatus }) => {
     <div className="rounded-2xl border-2 p-6">
       {status.state === "active" && (
         <>
-          <p className="text-lg font-bold text-green-700">Subscription active</p>
+          <p className="text-lg font-bold text-success-700">Subscription active</p>
           <p className="mt-1 text-sm text-muted-foreground">
             $99/mo
             {status.currentPeriodEnd
@@ -76,7 +76,7 @@ export const BillingPanel = ({ status }: { status: BillingStatus }) => {
 
       {status.state === "trialing" && (
         <>
-          <p className="text-lg font-bold text-neutral-700">
+          <p className="text-lg font-bold text-ink">
             Free trial — {status.daysLeft} day{status.daysLeft === 1 ? "" : "s"} left
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -89,7 +89,7 @@ export const BillingPanel = ({ status }: { status: BillingStatus }) => {
 
       {status.state === "past_due" && (
         <>
-          <p className="text-lg font-bold text-amber-700">Payment past due</p>
+          <p className="text-lg font-bold text-gold-700">Payment past due</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Update your payment method to keep your subscription active.
           </p>
@@ -99,7 +99,7 @@ export const BillingPanel = ({ status }: { status: BillingStatus }) => {
 
       {status.state === "expired" && (
         <>
-          <p className="text-lg font-bold text-rose-700">Trial ended</p>
+          <p className="text-lg font-bold text-danger">Trial ended</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Subscribe to keep building courses and training your crew.
           </p>

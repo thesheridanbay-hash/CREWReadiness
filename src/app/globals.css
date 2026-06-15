@@ -10,33 +10,36 @@ body,
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Cross-brand (CrewYield family): warm cream canvas, deep pine, gold focus.
+       These shadcn neutral tokens reskin all chrome that uses bg-background /
+       text-foreground / border-border / bg-primary / etc. See DESIGN.md. */
+    --background: 48 36% 95%; /* cream canvas #f6f4ec */
+    --foreground: 144 19% 11%; /* ink #16201a */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 45 100% 98%; /* surface #fffdf7 */
+    --card-foreground: 144 19% 11%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 45 100% 98%;
+    --popover-foreground: 144 19% 11%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 152 35% 19%; /* pine #1f4131 */
+    --primary-foreground: 48 36% 95%; /* cream on pine */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 47 30% 91%; /* canvas-2 #efece1 */
+    --secondary-foreground: 152 35% 19%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 47 30% 91%;
+    --muted-foreground: 126 4% 44%; /* ink-3 #6b756c */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 120 20% 92%; /* pine-soft #e7efe7 (shadcn hover surface) */
+    --accent-foreground: 152 35% 19%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 6 60% 44%; /* bad red #b23a2d */
+    --destructive-foreground: 48 36% 95%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 44 24% 82%; /* line #ddd7c7 */
+    --input: 44 24% 82%;
+    --ring: 37 73% 45%; /* gold focus #c8881f */
 
     --radius: 0.5rem;
   }

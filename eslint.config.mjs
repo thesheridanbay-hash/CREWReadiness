@@ -53,6 +53,31 @@ const eslintConfig = [
       ],
     },
   },
+  // ── Brand-color token guard (cross-brand re-skin) ───────────────────────────
+  // No raw Tailwind palette colors in app code — use the semantic brand tokens
+  // (brand/gold/success/danger/info + canvas/surface/ink/line) so a future
+  // re-skin stays a one-place token edit instead of a 49-file sweep. See
+  // DESIGN.md. The tokens (brand-/gold-/success-/etc.) don't match the pattern.
+  {
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Literal[value=/(?:bg|text|border|ring|fill|stroke|from|via|to|divide|outline|decoration|placeholder|caret|shadow)-(?:green|sky|teal|indigo|rose|amber|emerald|lime|cyan|blue|violet|purple|fuchsia|pink|orange|yellow)-[0-9]/]",
+          message:
+            "Use semantic brand tokens (brand/gold/success/danger/info/canvas/surface/ink/line) instead of raw Tailwind palette colors. See DESIGN.md.",
+        },
+        {
+          selector:
+            "TemplateElement[value.raw=/(?:bg|text|border|ring|fill|stroke|from|via|to|divide|outline|decoration|placeholder|caret|shadow)-(?:green|sky|teal|indigo|rose|amber|emerald|lime|cyan|blue|violet|purple|fuchsia|pink|orange|yellow)-[0-9]/]",
+          message:
+            "Use semantic brand tokens instead of raw Tailwind palette colors. See DESIGN.md.",
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

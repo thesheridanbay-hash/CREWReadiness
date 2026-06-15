@@ -20,7 +20,7 @@ const ReportsPage = async () => {
 
   return (
     <div className="px-4 pb-16">
-      <h1 className="mb-6 text-2xl font-bold text-neutral-700">Reports</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Reports</h1>
 
       <section className="mb-8">
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
@@ -34,7 +34,7 @@ const ReportsPage = async () => {
         ) : (
           <div className="overflow-hidden rounded-2xl border-2">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-muted-foreground">
+              <thead className="bg-canvas-2 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="p-3">Question</th>
                   <th className="p-3">Lesson</th>
@@ -45,9 +45,9 @@ const ReportsPage = async () => {
               <tbody>
                 {weak.map((row) => (
                   <tr key={row.questionId} className="border-t">
-                    <td className="p-3 font-medium text-neutral-700">{row.question}</td>
+                    <td className="p-3 font-medium text-ink">{row.question}</td>
                     <td className="p-3 text-muted-foreground">{row.lesson}</td>
-                    <td className="p-3 text-right font-bold text-rose-600">
+                    <td className="p-3 text-right font-bold text-danger">
                       {row.missRate}%
                     </td>
                     <td className="p-3 text-right text-muted-foreground">
@@ -70,7 +70,7 @@ const ReportsPage = async () => {
         ) : (
           <div className="overflow-hidden rounded-2xl border-2">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-muted-foreground">
+              <thead className="bg-canvas-2 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="p-3">Crew member</th>
                   <th className="p-3 text-right">Questions mastered</th>
@@ -81,14 +81,14 @@ const ReportsPage = async () => {
               <tbody>
                 {progress.map((row) => (
                   <tr key={row.userId} className="border-t">
-                    <td className="p-3 font-medium text-neutral-700">{row.name}</td>
+                    <td className="p-3 font-medium text-ink">{row.name}</td>
                     <td className="p-3 text-right">{row.questionsMastered}</td>
                     <td className="p-3 text-right text-muted-foreground">
                       {row.totalAttempts}
                     </td>
                     <td className="p-3 text-right">
                       {row.parked > 0 ? (
-                        <span className="font-bold text-amber-600">{row.parked}</span>
+                        <span className="font-bold text-gold-700">{row.parked}</span>
                       ) : (
                         <span className="text-muted-foreground">0</span>
                       )}
@@ -106,7 +106,7 @@ const ReportsPage = async () => {
           AI usage this month
         </h2>
         <div className="rounded-2xl border-2 p-5">
-          <p className="text-3xl font-bold text-neutral-700">
+          <p className="text-3xl font-bold text-ink">
             ${usage.monthSpendUsd.toFixed(2)}
           </p>
           <p className="text-sm text-muted-foreground">

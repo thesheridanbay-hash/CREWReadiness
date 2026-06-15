@@ -10,36 +10,40 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Cross-brand (CrewYield family). `secondary` is the de-facto PRIMARY
+        // CTA — now GOLD with a PINE label (white-on-gold fails AA; pine passes).
+        // `primary` is the secondary/structural action (pine). See DESIGN.md.
         default:
-          "bg-white text-black border-slate-200 border-2 border-b-4 active:border-b-2 hover:bg-slate-100 text-slate-500",
+          "bg-surface text-ink-3 border-line border-2 border-b-4 active:border-b-2 hover:bg-canvas-2",
 
         // custom
         locked:
-          "bg-neutral-200 text-primary-foreground hover:bg-neutral-200/90 border-neutral-400 border-b-4 active:border-b-0",
+          "bg-canvas-2 text-ink-3 hover:bg-canvas-2/90 border-line-2 border-b-4 active:border-b-0",
 
         primary:
-          "bg-sky-400 text-primary-foreground hover:bg-sky-400/90 border-sky-500 border-b-4 active:border-b-0",
-        primaryOutline: "bg-white text-sky-500 hover:bg-slate-100",
+          "bg-brand text-primary-foreground hover:bg-brand-600/90 border-brand-800 border-b-4 active:border-b-0",
+        primaryOutline: "bg-surface text-brand hover:bg-canvas-2",
 
         secondary:
-          "bg-green-500 text-primary-foreground hover:bg-green-500/90 border-green-600 border-b-4 active:border-b-0",
-        secondaryOutline: "bg-white text-green-500 hover:bg-slate-100",
+          "bg-gold-500 text-brand-800 hover:bg-gold-500/90 border-gold-700 border-b-4 active:border-b-0",
+        secondaryOutline: "bg-surface text-gold-700 hover:bg-canvas-2",
 
         danger:
-          "bg-rose-500 text-primary-foreground hover:bg-rose-500/90 border-rose-600 border-b-4 active:border-b-0",
-        dangerOutline: "bg-white text-rose-500 hover:bg-slate-100",
+          "bg-danger text-primary-foreground hover:bg-danger/90 border-danger-600 border-b-4 active:border-b-0",
+        dangerOutline: "bg-surface text-danger hover:bg-canvas-2",
 
+        // AI-magic actions = the single gold accent (DESIGN.md folds indigo into gold).
         super:
-          "bg-indigo-500 text-primary-foreground hover:bg-indigo-500/90 border-indigo-600 border-b-4 active:border-b-0",
-        superOutline: "bg-white text-indigo-500 hover:bg-slate-100",
+          "bg-gold-500 text-brand-800 hover:bg-gold-500/90 border-gold-700 border-b-4 active:border-b-0",
+        superOutline: "bg-surface text-gold-700 hover:bg-canvas-2",
 
         ghost:
-          "bg-transparent text-slate-500 border-transparent border-0 hover:bg-slate-100",
+          "bg-transparent text-ink-3 border-transparent border-0 hover:bg-canvas-2",
 
         sidebar:
-          "bg-transparent text-slate-500 border-2 border-transparent hover:bg-slate-100 transition-none",
+          "bg-transparent text-ink-3 border-2 border-transparent hover:bg-canvas-2 transition-none",
         sidebarOutline:
-          "bg-sky-500/15 text-sky-500 border-sky-300 border-2 hover:bg-sky-500/20 transition-none",
+          "bg-gold-50 text-gold-700 border-gold-500 border-2 hover:bg-gold-50 transition-none",
       },
       size: {
         default: "h-11 px-4 py-2",

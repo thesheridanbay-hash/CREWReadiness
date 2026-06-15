@@ -78,12 +78,12 @@ export const StudioEditor = ({
     <div className="mt-3">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-x-3">
-          <h1 className="text-2xl font-bold text-neutral-700">{course.title}</h1>
+          <h1 className="text-2xl font-bold text-ink">{course.title}</h1>
           <span
             className={
               course.published
-                ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"
-                : "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700"
+                ? "rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-700"
+                : "rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700"
             }
           >
             {course.published ? "Published" : "Draft"}

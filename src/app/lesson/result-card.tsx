@@ -12,13 +12,13 @@ export const ResultCard = ({ value, variant }: ResultCardProps) => {
     <div
       className={cn(
         "w-full max-w-xs rounded-2xl border-2",
-        variant === "points" && "border-orange-400 bg-orange-400"
+        variant === "points" && "border-gold-500 bg-gold-500"
       )}
     >
       <div
         className={cn(
-          "rounded-t-xl p-1.5 text-center text-xs font-bold uppercase text-white",
-          variant === "points" && "bg-orange-400"
+          "rounded-t-xl p-1.5 text-center text-xs font-bold uppercase text-brand-800",
+          variant === "points" && "bg-gold-500"
         )}
       >
         Total XP
@@ -26,8 +26,8 @@ export const ResultCard = ({ value, variant }: ResultCardProps) => {
 
       <div
         className={cn(
-          "flex items-center justify-center rounded-2xl bg-white p-6 text-lg font-bold",
-          variant === "points" && "text-orange-400"
+          "flex items-center justify-center rounded-2xl bg-surface p-6 text-lg font-bold",
+          variant === "points" && "text-gold-700"
         )}
       >
         <Image

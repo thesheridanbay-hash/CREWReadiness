@@ -38,4 +38,4 @@ export type EditorCourse = {
 };
 
 export const inputClass =
-  "w-full rounded-lg border-2 px-3 py-1.5 text-sm outline-none focus:border-green-500";
+  "w-full rounded-lg border-2 px-3 py-1.5 text-sm outline-none focus:border-brand";

@@ -23,7 +23,7 @@ const StudioPage = async () => {
     <div className="px-4">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-700">Content Studio</h1>
+          <h1 className="text-2xl font-bold text-ink">Content Studio</h1>
           <p className="text-sm text-muted-foreground">
             Build the training your crew completes in the field.
           </p>
@@ -45,7 +45,7 @@ const StudioPage = async () => {
           <Link
             key={course.id}
             href={`/studio/${course.id}`}
-            className="flex flex-col gap-y-3 rounded-2xl border-2 p-5 transition hover:bg-slate-50"
+            className="flex flex-col gap-y-3 rounded-2xl border-2 p-5 transition hover:bg-canvas-2"
           >
             <div className="flex items-center gap-x-3">
               <Image
@@ -55,7 +55,7 @@ const StudioPage = async () => {
                 height={40}
                 className="rounded-md border"
               />
-              <span className="font-bold text-neutral-700">{course.title}</span>
+              <span className="font-bold text-ink">{course.title}</span>
             </div>
             <div className="flex items-center justify-between text-xs font-medium">
               <span className="text-muted-foreground">
@@ -64,8 +64,8 @@ const StudioPage = async () => {
               <span
                 className={
                   course.published
-                    ? "rounded-full bg-green-100 px-2 py-0.5 text-green-700"
-                    : "rounded-full bg-amber-100 px-2 py-0.5 text-amber-700"
+                    ? "rounded-full bg-success-50 px-2 py-0.5 text-success-700"
+                    : "rounded-full bg-gold-50 px-2 py-0.5 text-gold-700"
                 }
               >
                 {course.published ? "Published" : "Draft"}

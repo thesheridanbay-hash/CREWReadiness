@@ -10,12 +10,12 @@ export const Row = ({
   disabled: boolean;
 }) => (
   <div className="flex items-center justify-between">
-    <span className="font-bold text-neutral-700">{label}</span>
+    <span className="font-bold text-ink">{label}</span>
     <button
       type="button"
       onClick={onDelete}
       disabled={disabled}
-      className="text-xs font-bold uppercase text-rose-500 hover:underline disabled:opacity-50"
+      className="text-xs font-bold uppercase text-danger hover:underline disabled:opacity-50"
     >
       Delete
     </button>

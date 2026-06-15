@@ -22,11 +22,11 @@ const ReviewPage = async () => {
 
   return (
     <div className="px-4">
-      <Link href="/studio" className="text-sm font-bold text-sky-600 hover:underline">
+      <Link href="/studio" className="text-sm font-bold text-info hover:underline">
         ← Studio
       </Link>
       <div className="my-4">
-        <h1 className="text-2xl font-bold text-neutral-700">Review queue</h1>
+        <h1 className="text-2xl font-bold text-ink">Review queue</h1>
         <p className="text-sm text-muted-foreground">
           AI-drafted training waits here. Nothing reaches your crew until you
           approve it.

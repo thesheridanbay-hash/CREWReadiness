@@ -77,7 +77,7 @@ export const LessonBlock = ({
   };
 
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
+    <div className="rounded-xl bg-canvas-2 p-3">
       <Row
         label={`Lesson: ${lesson.title} (${lesson.questions.length} q)`}
         onDelete={() => run(() => deleteLesson({ id: lesson.id }), "Lesson removed.")}
@@ -110,7 +110,7 @@ export const LessonBlock = ({
                   })
                 }
                 title="Click to regenerate or replace this image"
-                className="group flex flex-col items-center gap-0.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                className="group flex flex-col items-center gap-0.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 {img.src ? (
                   <div className="relative">
@@ -128,8 +128,8 @@ export const LessonBlock = ({
                 ) : (
                   <div
                     className={
-                      "flex h-[72px] w-[72px] items-center justify-center rounded-md border border-dashed text-xs transition hover:bg-slate-50 " +
-                      (img.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
+                      "flex h-[72px] w-[72px] items-center justify-center rounded-md border border-dashed text-xs transition hover:bg-canvas-2 " +
+                      (img.status === "FAILED" ? "text-danger" : "text-neutral-400")
                     }
                   >
                     {img.status === "FAILED"
@@ -159,13 +159,13 @@ export const LessonBlock = ({
               onClick={regenerateVoiceover}
               disabled={disabled || regenningAudio}
               title="Regenerate this voiceover with AI (re-runs premium TTS)"
-              className="inline-flex items-center gap-x-1 rounded px-1.5 py-0.5 text-xs font-bold uppercase text-sky-600 hover:bg-sky-50 disabled:opacity-50"
+              className="inline-flex items-center gap-x-1 rounded px-1.5 py-0.5 text-xs font-bold uppercase text-gold-700 hover:bg-gold-50 disabled:opacity-50"
             >
               ✨ {regenningAudio ? "Regenerating…" : "AI regen"}
             </button>
           </div>
           {regenningAudio ? (
-            <p className="mt-0.5 text-xs text-sky-600">Regenerating voiceover…</p>
+            <p className="mt-0.5 text-xs text-gold-700">Regenerating voiceover…</p>
           ) : lesson.audio.src ? (
             <audio controls src={lesson.audio.src} className="mt-1 h-8 w-full max-w-xs">
               <track kind="captions" />
@@ -174,7 +174,7 @@ export const LessonBlock = ({
             <p
               className={
                 "mt-0.5 text-xs " +
-                (lesson.audio.status === "FAILED" ? "text-rose-500" : "text-neutral-400")
+                (lesson.audio.status === "FAILED" ? "text-danger" : "text-neutral-400")
               }
             >
               {lesson.audio.status === "FAILED" ? "failed" : "pending"}
@@ -183,7 +183,7 @@ export const LessonBlock = ({
         </div>
       )}
 
-      <ul className="ml-2 mt-2 flex flex-col gap-y-1 pl-1 text-sm text-neutral-600">
+      <ul className="ml-2 mt-2 flex flex-col gap-y-1 pl-1 text-sm text-ink-3">
         {lesson.questions.map((question) => (
           <li key={question.id} className="flex items-start justify-between gap-x-2">
             <span className="flex-1">{question.question}</span>
@@ -205,7 +205,7 @@ export const LessonBlock = ({
                   setShowForm(false);
                 }}
                 disabled={disabled}
-                className="rounded px-2 py-1 text-xs font-bold uppercase text-sky-600 hover:bg-sky-50 disabled:opacity-50"
+                className="rounded px-2 py-1 text-xs font-bold uppercase text-info hover:bg-brand-50 disabled:opacity-50"
               >
                 Edit
               </button>
@@ -214,7 +214,7 @@ export const LessonBlock = ({
                 aria-label="Delete question"
                 onClick={() => run(() => deleteQuestion({ id: question.id }))}
                 disabled={disabled}
-                className="rounded p-1.5 text-sm font-bold leading-none text-rose-400 hover:bg-rose-50 disabled:opacity-50"
+                className="rounded p-1.5 text-sm font-bold leading-none text-danger hover:bg-danger-50 disabled:opacity-50"
               >
                 ×
               </button>

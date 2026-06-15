@@ -53,7 +53,7 @@ export const LanguageSwitcher = ({
       disabled={pending}
       value={selected}
       onChange={(event) => change(event.target.value)}
-      className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-neutral-600 outline-none focus:border-green-500 disabled:opacity-50"
+      className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-ink-3 outline-none focus:border-brand disabled:opacity-50"
     >
       <option value="">Default · {languageLabel(primary)}</option>
       {others.map((language) => (

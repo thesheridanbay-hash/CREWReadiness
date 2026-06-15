@@ -9,7 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { authClient } from "@/features/auth/client";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-3 text-base font-medium outline-none focus:border-brand";
 
 const slugify = (value: string) =>
   value
@@ -65,7 +65,7 @@ const SignUpPage = () => {
         onSubmit();
       }}
     >
-      <h2 className="text-center text-xl font-bold text-neutral-700">
+      <h2 className="text-center text-xl font-bold text-ink">
         Create your company
       </h2>
       <input
@@ -110,7 +110,7 @@ const SignUpPage = () => {
       </Button>
       <a
         href="/sign-in"
-        className="text-center text-sm font-bold text-green-600 hover:underline"
+        className="text-center text-sm font-bold text-success-700 hover:underline"
       >
         Already have an account? Sign in
       </a>

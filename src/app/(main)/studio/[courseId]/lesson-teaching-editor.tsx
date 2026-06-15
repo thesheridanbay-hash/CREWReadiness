@@ -63,7 +63,7 @@ export const LessonTeachingEditor = ({
         disabled={pending}
         onChange={(event) => setText(event.target.value)}
         placeholder="Plain-language teaching text. Use **bold** and - bullets, or tap AI to format it."
-        className="mt-1 min-h-24 w-full rounded-lg border-2 px-3 py-2 text-xs leading-relaxed text-neutral-600 outline-none focus:border-green-500"
+        className="mt-1 min-h-24 w-full rounded-lg border-2 px-3 py-2 text-xs leading-relaxed text-ink-3 outline-none focus:border-brand"
       />
       {dirty && (
         <div className="mt-1">

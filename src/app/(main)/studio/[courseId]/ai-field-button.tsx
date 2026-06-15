@@ -64,7 +64,7 @@ export const AiFieldButton = ({
         type="button"
         title={`Improve ${label} with AI`}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-bold text-sky-600 hover:bg-sky-50"
+        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-bold text-gold-700 hover:bg-gold-50"
       >
         <Sparkles className="h-3.5 w-3.5" />
         AI
@@ -76,10 +76,10 @@ export const AiFieldButton = ({
           onClick={() => !pending && setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border-2 bg-white p-5"
+            className="w-full max-w-md rounded-2xl border-2 bg-surface p-5"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3 className="text-base font-bold text-neutral-700">
+            <h3 className="text-base font-bold text-ink">
               Improve {label} with AI
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -91,7 +91,7 @@ export const AiFieldButton = ({
               disabled={pending}
               onChange={(event) => setInstruction(event.target.value)}
               placeholder="e.g. make it bullet points · simpler words · shorter · add a common mistake"
-              className="mt-3 min-h-20 w-full rounded-xl border-2 px-3 py-2 text-sm outline-none focus:border-green-500"
+              className="mt-3 min-h-20 w-full rounded-xl border-2 px-3 py-2 text-sm outline-none focus:border-brand"
             />
             {suggestions && suggestions.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -101,7 +101,7 @@ export const AiFieldButton = ({
                     type="button"
                     disabled={pending}
                     onClick={() => setInstruction(suggestion)}
-                    className="rounded-full border-2 px-2 py-0.5 text-xs font-medium text-neutral-600 hover:bg-slate-50 disabled:opacity-50"
+                    className="rounded-full border-2 px-2 py-0.5 text-xs font-medium text-ink-3 hover:bg-canvas-2 disabled:opacity-50"
                   >
                     {suggestion}
                   </button>

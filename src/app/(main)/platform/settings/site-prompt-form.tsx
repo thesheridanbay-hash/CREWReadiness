@@ -40,12 +40,12 @@ export const SitePromptForm = ({ current }: { current: { sitePrompt: string } })
       }}
     >
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           Site course-builder guidance{" "}
           <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <textarea
-          className="min-h-32 w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500"
+          className="min-h-32 w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand"
           placeholder="House style for every generated course: plain 6th-grade language, real job-site scenarios, one concept per lesson…"
           value={sitePrompt}
           onChange={(event) => setSitePrompt(event.target.value)}

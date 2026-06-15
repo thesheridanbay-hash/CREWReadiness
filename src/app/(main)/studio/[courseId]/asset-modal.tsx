@@ -117,11 +117,11 @@ export const AssetModal = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border-2 bg-white p-6"
+        className="w-full max-w-md rounded-2xl border-2 bg-surface p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between gap-x-3">
-          <h3 className="text-lg font-bold text-neutral-700">
+          <h3 className="text-lg font-bold text-ink">
             Edit image{" "}
             <span className="text-sm font-normal text-muted-foreground">
               {asset.ref} · {asset.kind.toLowerCase()}
@@ -131,7 +131,7 @@ export const AssetModal = ({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="-mr-1 rounded p-1.5 text-neutral-400 hover:bg-slate-100"
+            className="-mr-1 rounded p-1.5 text-neutral-400 hover:bg-canvas-2"
           >
             ✕
           </button>
@@ -143,11 +143,11 @@ export const AssetModal = ({
           </div>
         )}
 
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           What should change?
         </label>
         <textarea
-          className="min-h-24 w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-green-500"
+          className="min-h-24 w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-brand"
           placeholder="e.g. wider shot, add safety goggles, brighter daytime lighting…"
           value={prompt}
           maxLength={4000}

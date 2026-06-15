@@ -33,14 +33,14 @@ export const CoachingList = ({ items }: { items: ParkedItem[] }) => {
         >
           <div>
             <div className="flex items-center gap-x-2">
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+              <span className="rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700">
                 {item.employeeName}
               </span>
               <span className="text-xs text-muted-foreground">
                 {item.lessonTitle}
               </span>
             </div>
-            <p className="mt-2 font-medium text-neutral-700">
+            <p className="mt-2 font-medium text-ink">
               {item.questionText}
             </p>
           </div>

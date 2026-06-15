@@ -8,19 +8,19 @@ import { Wordmark } from "@/shared/components/wordmark";
  */
 const MarketingPage = () => {
   return (
-    <div className="min-h-screen bg-white text-neutral-700">
+    <div className="min-h-screen bg-surface text-ink">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <Wordmark iconSize={36} textClass="text-xl" />
         <div className="flex items-center gap-x-3">
           <Link
             href="/sign-in"
-            className="text-sm font-bold text-neutral-600 hover:underline"
+            className="text-sm font-bold text-ink-3 hover:underline"
           >
             Sign in
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-xl border-2 border-b-4 border-green-600 bg-green-500 px-4 py-2 text-sm font-bold text-white active:border-b-2"
+            className="rounded-xl border-2 border-b-4 border-gold-700 bg-gold-500 px-4 py-2 text-sm font-bold text-brand-800 hover:bg-gold-500/90 active:border-b-2"
           >
             Start free trial
           </Link>
@@ -29,7 +29,7 @@ const MarketingPage = () => {
 
       <main className="mx-auto max-w-5xl px-6">
         <section className="py-16 text-center sm:py-24">
-          <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight text-neutral-800 sm:text-5xl">
+          <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Train your crew in the field — in their language, in minutes.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
@@ -40,13 +40,13 @@ const MarketingPage = () => {
           <div className="mt-8 flex items-center justify-center gap-x-3">
             <Link
               href="/sign-up"
-              className="rounded-xl border-2 border-b-4 border-green-600 bg-green-500 px-6 py-3 text-base font-bold text-white active:border-b-2"
+              className="rounded-xl border-2 border-b-4 border-gold-700 bg-gold-500 px-6 py-3 text-base font-bold text-brand-800 hover:bg-gold-500/90 active:border-b-2"
             >
               Start your 14-day free trial
             </Link>
             <Link
               href="/sign-in"
-              className="rounded-xl border-2 px-6 py-3 text-base font-bold text-neutral-600 hover:bg-slate-50"
+              className="rounded-xl border-2 px-6 py-3 text-base font-bold text-ink-3 hover:bg-canvas-2"
             >
               Sign in
             </Link>
@@ -72,7 +72,7 @@ const MarketingPage = () => {
             },
           ].map((feature) => (
             <div key={feature.title} className="rounded-2xl border-2 p-6">
-              <h3 className="font-bold text-neutral-800">{feature.title}</h3>
+              <h3 className="font-bold text-ink">{feature.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{feature.body}</p>
             </div>
           ))}
@@ -83,7 +83,7 @@ const MarketingPage = () => {
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               Simple pricing
             </h2>
-            <div className="mt-3 text-5xl font-extrabold text-neutral-800">
+            <div className="mt-3 text-5xl font-extrabold text-ink">
               $99
               <span className="text-lg font-bold text-muted-foreground">
                 /month
@@ -94,7 +94,7 @@ const MarketingPage = () => {
             </p>
             <Link
               href="/sign-up"
-              className="mt-6 inline-block rounded-xl border-2 border-b-4 border-green-600 bg-green-500 px-6 py-3 text-base font-bold text-white active:border-b-2"
+              className="mt-6 inline-block rounded-xl border-2 border-b-4 border-gold-700 bg-gold-500 px-6 py-3 text-base font-bold text-brand-800 hover:bg-gold-500/90 active:border-b-2"
             >
               Start free trial
             </Link>

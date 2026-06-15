@@ -67,15 +67,15 @@ export const GenerationAttempts = ({
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-x-2">
-                  <span className="truncate font-medium text-neutral-700">
+                  <span className="truncate font-medium text-ink">
                     {attempt.title}
                   </span>
                   {running ? (
-                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">
+                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand">
                       Generating…
                     </span>
                   ) : (
-                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                    <span className="rounded-full bg-danger-50 px-2 py-0.5 text-xs font-bold text-danger">
                       {attempt.status === "RUNNING" ? "Stalled" : "Failed"}
                     </span>
                   )}

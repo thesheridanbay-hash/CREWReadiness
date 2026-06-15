@@ -218,7 +218,7 @@ export const Player = ({
         <div className="flex-1">
           <div className="flex h-full items-center justify-center px-6 py-8">
             <div className="flex w-full max-w-[600px] flex-col gap-y-6">
-              <p className="text-sm font-bold uppercase tracking-wide text-sky-600">
+              <p className="text-sm font-bold uppercase tracking-wide text-info">
                 Learn this first
               </p>
               {teaching.imageSrc && (
@@ -260,11 +260,11 @@ export const Player = ({
         />
         <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
           <Image src="/finish.svg" alt="Finish" height={100} width={100} />
-          <h1 className="text-lg font-bold text-neutral-700 lg:text-3xl">
+          <h1 className="text-lg font-bold text-ink lg:text-3xl">
             Great job! <br /> You&apos;ve completed the lesson.
           </h1>
           {view.banner === "PARKED" && (
-            <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+            <p className="rounded-xl border-2 border-gold bg-gold-50 p-3 text-sm font-medium text-gold-700">
               One concept was parked for in-person coaching — your manager will
               follow up.
             </p>
@@ -292,13 +292,13 @@ export const Player = ({
         <div className="flex-1">
           <div className="flex h-full items-center justify-center px-6">
             <div className="flex w-full max-w-[600px] flex-col gap-y-6">
-              <div className="flex items-start gap-x-4 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6">
+              <div className="flex items-start gap-x-4 rounded-2xl border-2 border-gold bg-gold-50 p-6">
                 <Image src="/mascot_bad.svg" alt="" height={48} width={48} />
                 <div>
-                  <h2 className="mb-2 text-lg font-bold text-amber-900">
+                  <h2 className="mb-2 text-lg font-bold text-gold-700">
                     Not quite — here&apos;s why it matters
                   </h2>
-                  <p className="text-base font-medium text-amber-900">
+                  <p className="text-base font-medium text-gold-700">
                     {view.explanation}
                   </p>
                 </div>
@@ -326,13 +326,13 @@ export const Player = ({
         <div className="flex-1">
           <div className="flex h-full items-center justify-center px-6">
             <div className="flex w-full max-w-[600px] flex-col gap-y-6">
-              <div className="flex items-start gap-x-4 rounded-2xl border-2 border-sky-300 bg-sky-50 p-6">
+              <div className="flex items-start gap-x-4 rounded-2xl border-2 border-gold bg-gold-50 p-6">
                 <Image src="/mascot.svg" alt="" height={48} width={48} />
                 <div>
-                  <h2 className="mb-2 text-lg font-bold text-sky-900">
+                  <h2 className="mb-2 text-lg font-bold text-gold-700">
                     Let&apos;s look at it another way
                   </h2>
-                  <p className="min-h-[48px] whitespace-pre-wrap text-base font-medium text-sky-900">
+                  <p className="min-h-[48px] whitespace-pre-wrap text-base font-medium text-gold-700">
                     {reteachText || "Thinking…"}
                   </p>
                 </div>
@@ -369,11 +369,11 @@ export const Player = ({
           <div className="flex w-full flex-col gap-y-12 px-6 lg:min-h-[350px] lg:w-[600px] lg:px-0">
             <div>
               {surface.kind === "VARIANT" && (
-                <p className="mb-2 text-sm font-bold uppercase tracking-wide text-sky-600">
+                <p className="mb-2 text-sm font-bold uppercase tracking-wide text-info">
                   Fresh question, same idea
                 </p>
               )}
-              <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
+              <h1 className="text-center text-lg font-bold text-ink lg:text-start lg:text-3xl">
                 {title}
               </h1>
             </div>

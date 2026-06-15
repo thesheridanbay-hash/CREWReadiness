@@ -17,7 +17,7 @@ import { Button } from "@/shared/ui/button";
  */
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand";
 
 export const AiCourseWizard = () => {
   const router = useRouter();
@@ -88,8 +88,8 @@ export const AiCourseWizard = () => {
 
   if (pending) {
     return (
-      <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-6">
-        <h3 className="text-lg font-bold text-neutral-700">Generating your course…</h3>
+      <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-brand-200 bg-brand-50 p-6">
+        <h3 className="text-lg font-bold text-ink">Generating your course…</h3>
         <p className="text-sm text-muted-foreground">
           AI is drafting the modules, lessons, and questions. This usually takes
           1–2 minutes — keep this tab open. It&apos;ll drop into the review queue
@@ -101,13 +101,13 @@ export const AiCourseWizard = () => {
 
   if (done) {
     return (
-      <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-green-200 bg-green-50 p-6">
-        <h3 className="text-lg font-bold text-neutral-700">
+      <div className="flex flex-col gap-y-3 rounded-2xl border-2 border-success-200 bg-success-50 p-6">
+        <h3 className="text-lg font-bold text-ink">
           “{done.title}” is ready ✓
         </h3>
         <p className="text-sm text-muted-foreground">
           Your draft is in the{" "}
-          <Link href="/studio/review" className="font-bold text-sky-600 underline">
+          <Link href="/studio/review" className="font-bold text-info underline">
             review queue
           </Link>
           . Review and approve it to turn it into a real course, then generate
@@ -131,11 +131,11 @@ export const AiCourseWizard = () => {
       }}
     >
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           What should this course teach?
         </label>
         <textarea
-          className="min-h-28 w-full rounded-xl border-2 px-4 py-3 text-base outline-none focus:border-green-500"
+          className="min-h-28 w-full rounded-xl border-2 px-4 py-3 text-base outline-none focus:border-brand"
           placeholder="e.g. Onboarding for new lawn crews — safe mowing on slopes, trimmer handling, loading the trailer, talking to customers. Keep it simple for first-week hires."
           value={idea}
           maxLength={5000}
@@ -151,7 +151,7 @@ export const AiCourseWizard = () => {
         <button
           type="button"
           onClick={() => setShowDetails((v) => !v)}
-          className="text-sm font-bold text-sky-600 hover:underline"
+          className="text-sm font-bold text-info hover:underline"
         >
           {showDetails ? "− Hide details" : "+ Add details (optional)"}
         </button>
@@ -161,7 +161,7 @@ export const AiCourseWizard = () => {
         <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Course title <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
           <input
@@ -173,7 +173,7 @@ export const AiCourseWizard = () => {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Number of units <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
           <input
@@ -185,7 +185,7 @@ export const AiCourseWizard = () => {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Employee level <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
           <input
@@ -197,7 +197,7 @@ export const AiCourseWizard = () => {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Preferred style <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
           <input
@@ -211,7 +211,7 @@ export const AiCourseWizard = () => {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           Topics to cover <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <input
@@ -224,7 +224,7 @@ export const AiCourseWizard = () => {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           Goals <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <input

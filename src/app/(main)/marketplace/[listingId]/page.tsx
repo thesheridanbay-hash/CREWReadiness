@@ -14,7 +14,7 @@ type PageProps = {
 
 const Stat = ({ label, value }: { label: string; value: number }) => (
   <div className="rounded-xl border-2 px-4 py-2 text-center">
-    <div className="text-lg font-bold text-neutral-700">{value}</div>
+    <div className="text-lg font-bold text-ink">{value}</div>
     <div className="text-xs font-medium text-muted-foreground">{label}</div>
   </div>
 );
@@ -36,7 +36,7 @@ const ListingDetailPage = async ({ params }: PageProps) => {
     <div className="px-4 pb-16">
       <Link
         href="/marketplace"
-        className="text-sm font-bold text-sky-600 hover:underline"
+        className="text-sm font-bold text-info hover:underline"
       >
         ← Library
       </Link>
@@ -44,21 +44,21 @@ const ListingDetailPage = async ({ params }: PageProps) => {
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-x-2">
-            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand">
               {categoryLabel(listing.category)}
             </span>
             {listing.kind === "UNIVERSAL" && (
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
+              <span className="rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700">
                 Universal
               </span>
             )}
             {listing.mine && (
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+              <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-700">
                 Yours
               </span>
             )}
           </div>
-          <h1 className="mt-2 text-2xl font-bold text-neutral-700">
+          <h1 className="mt-2 text-2xl font-bold text-ink">
             {listing.title}
           </h1>
           {listing.description && (
@@ -107,7 +107,7 @@ const ListingDetailPage = async ({ params }: PageProps) => {
           <div className="flex flex-col gap-y-3">
             {listing.outline.map((mod, mIdx) => (
               <div key={mIdx} className="rounded-2xl border-2 p-4">
-                <p className="font-bold text-neutral-700">{mod.module}</p>
+                <p className="font-bold text-ink">{mod.module}</p>
                 <ul className="ml-5 mt-2 list-disc text-sm text-muted-foreground">
                   {mod.units.map((unit, uIdx) => (
                     <li key={uIdx}>

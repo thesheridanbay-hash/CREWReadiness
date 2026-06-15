@@ -77,7 +77,7 @@ export const IncidentComposer = ({ courses }: { courses: CourseOption[] }) => {
     <div className="rounded-2xl border-2 p-5">
       <div className="flex flex-col gap-4">
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             Job-site photo
           </label>
           <div className="flex items-center gap-x-3">
@@ -107,11 +107,11 @@ export const IncidentComposer = ({ courses }: { courses: CourseOption[] }) => {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-bold text-neutral-700">
+          <label className="mb-1 block text-sm font-bold text-ink">
             What happened? (optional)
           </label>
           <textarea
-            className="min-h-20 w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-green-500"
+            className="min-h-20 w-full rounded-xl border-2 px-4 py-2 text-sm outline-none focus:border-brand"
             placeholder="e.g. trimmer used without eye protection near the curb"
             value={note}
             maxLength={2000}
@@ -121,14 +121,14 @@ export const IncidentComposer = ({ courses }: { courses: CourseOption[] }) => {
 
         {courses.length > 0 && (
           <div>
-            <label className="mb-1 block text-sm font-bold text-neutral-700">
+            <label className="mb-1 block text-sm font-bold text-ink">
               Add to course (optional)
             </label>
             <select
               value={courseId}
               disabled={busy}
               onChange={(event) => setCourseId(event.target.value)}
-              className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-neutral-700 outline-none focus:border-green-500 disabled:opacity-50"
+              className="rounded-xl border-2 px-3 py-1.5 text-sm font-medium text-ink outline-none focus:border-brand disabled:opacity-50"
             >
               <option value="">New standalone lesson</option>
               {courses.map((course) => (

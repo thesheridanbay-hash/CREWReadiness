@@ -9,7 +9,7 @@ import { upsertImageProviderSettings, type ImageProviderView } from "@/features/
 import { Button } from "@/shared/ui/button";
 
 const inputClass =
-  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-green-500";
+  "w-full rounded-xl border-2 px-4 py-2 outline-none focus:border-brand";
 
 /**
  * Image model config (AI Course Builder). A SEPARATE provider from the text
@@ -50,7 +50,7 @@ export const ImageProviderForm = ({ current }: { current: ImageProviderView }) =
       }}
     >
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">Base URL</label>
+        <label className="mb-1 block text-sm font-bold text-ink">Base URL</label>
         <input
           className={inputClass}
           placeholder="https://api.openai.com/v1"
@@ -63,7 +63,7 @@ export const ImageProviderForm = ({ current }: { current: ImageProviderView }) =
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">Model</label>
+        <label className="mb-1 block text-sm font-bold text-ink">Model</label>
         <input
           className={inputClass}
           placeholder="e.g. gpt-image-1"
@@ -73,7 +73,7 @@ export const ImageProviderForm = ({ current }: { current: ImageProviderView }) =
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-bold text-neutral-700">
+        <label className="mb-1 block text-sm font-bold text-ink">
           API key{" "}
           {current.hasKey && (
             <span className="font-normal text-muted-foreground">
