@@ -166,6 +166,7 @@ export type AiOperation =
   | "generateImage"
   | "generateSpeech"
   | "translateLesson"
+  | "translateCourseStructure"
   | "improveText";
 
 /** One improved field (AI-magic per-field editing). Bound generously — markdown
@@ -259,6 +260,50 @@ export const buildLessonTranslationSchema = (
       });
     }) as unknown as z.ZodType<LessonTranslationResult>;
 
+/* ─────────── Course-structure translation (course + unit titles) ─────────── */
+
+/**
+ * A course's structure strings (course title + each unit's title/description),
+ * units in display order so the translated array maps back to base unit ids by
+ * index. Lesson content is handled separately by the per-lesson translator.
+ */
+export type CourseStructureSource = {
+  courseTitle: string;
+  units: Array<{ title: string; description: string | null }>;
+};
+
+export type CourseStructureTranslationResult = CourseStructureSource;
+
+/** Validator: counts pinned to the source (same number of units, in order) so
+ * the index mapping is always aligned; lengths bounded above the base bounds. */
+export const buildStructureTranslationSchema = (
+  source: CourseStructureSource
+): z.ZodType<CourseStructureTranslationResult> =>
+  z
+    .object({
+      courseTitle: z.string().min(1).max(300),
+      units: z.array(
+        z.object({
+          title: z.string().min(1).max(300),
+          description: z
+            .string()
+            .max(1000)
+            .nullable()
+            .optional()
+            .transform((value) => value ?? null),
+        })
+      ),
+    })
+    .superRefine((value, ctx) => {
+      if (value.units.length !== source.units.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Expected ${source.units.length} units, got ${value.units.length}.`,
+          path: ["units"],
+        });
+      }
+    }) as unknown as z.ZodType<CourseStructureTranslationResult>;
+
 /** Result of an image generation: bytes (b64) or a URL, plus content type. */
 export type ImageResult = {
   b64?: string;
@@ -312,6 +357,8 @@ export const AI_TIMEOUTS: Record<AiOperation, number> = {
   generateSpeech: 280_000,
   // One lesson's text translation — comparable to a single lesson generation.
   translateLesson: 120_000,
+  // Course title + all unit titles in one call — short strings, modest budget.
+  translateCourseStructure: 120_000,
   // Single-field rewrite/format — small + interactive, keep it snappy.
   improveText: 90_000,
 };

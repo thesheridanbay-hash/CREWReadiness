@@ -1,11 +1,35 @@
 import { cache } from "react";
 
-import { eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { getSession } from "@/features/auth/session";
+import {
+  DEFAULT_LANGUAGE,
+  resolveReadingLanguage,
+} from "@/features/courses/languages";
 import { scoped } from "@/shared/db/scoped";
 
-import { courses, userProgress } from "./schema";
+import { courseTranslations, courses, userProgress } from "./schema";
+
+/** The learner's resolved reading language + the company primary. Cached per
+ * request; the learn reads overlay unit/course titles into `lang`. */
+const getReadingLang = cache(
+  async (): Promise<{ lang: string; primary: string }> => {
+    const session = await getSession();
+    if (!session) return { lang: DEFAULT_LANGUAGE, primary: DEFAULT_LANGUAGE };
+    return scoped(session, async (tx) => {
+      const up = await tx.query.userProgress.findFirst({
+        where: eq(userProgress.userId, session.userId),
+        columns: { language: true },
+      });
+      const settings = await tx.query.companySettings.findFirst({
+        columns: { primaryLanguage: true },
+      });
+      const primary = settings?.primaryLanguage ?? DEFAULT_LANGUAGE;
+      return { lang: resolveReadingLanguage(up?.language ?? null, primary), primary };
+    });
+  }
+);
 
 /**
  * Read queries (T1/T8): everything runs through scoped() so RLS confines
@@ -64,7 +88,27 @@ export const getUserProgress = cache(async () => {
     })
   );
 
-  return data ?? null;
+  if (!data) return null;
+
+  // Overlay the active course title into the member's reading language so the
+  // Learn header isn't stuck in the base language.
+  if (data.activeCourse) {
+    const { lang, primary } = await getReadingLang();
+    if (lang !== primary) {
+      const translated = await scoped(session, (tx) =>
+        tx.query.courseTranslations.findFirst({
+          where: and(
+            eq(courseTranslations.courseId, data.activeCourse!.id),
+            eq(courseTranslations.lang, lang)
+          ),
+          columns: { title: true },
+        })
+      );
+      if (translated?.title) data.activeCourse.title = translated.title;
+    }
+  }
+
+  return data;
 });
 
 /** Single aggregate pass over the active course (D22). */
@@ -73,6 +117,10 @@ const getLearnOutline = cache(async (): Promise<LearnOutline | null> => {
   const currentUserProgress = await getUserProgress();
 
   if (!session || !currentUserProgress?.activeCourseId) return null;
+
+  // Overlay unit title/description into the reading language; COALESCE falls
+  // back to the base when no translation row exists (incl. the primary itself).
+  const { lang } = await getReadingLang();
 
   const result = await scoped(session, (tx) =>
     tx.execute<{
@@ -86,8 +134,10 @@ const getLearnOutline = cache(async (): Promise<LearnOutline | null> => {
       total: number;
       done: number;
     }>(sql`
-      SELECT u.id AS unit_id, u.title AS unit_title,
-             u.description AS unit_description, u."order" AS unit_order,
+      SELECT u.id AS unit_id,
+             COALESCE(ut.title, u.title) AS unit_title,
+             COALESCE(ut.description, u.description) AS unit_description,
+             u."order" AS unit_order,
              l.id AS lesson_id, l.title AS lesson_title, l."order" AS lesson_order,
              count(q.id)::int AS total,
              count(q.id) FILTER (
@@ -100,11 +150,12 @@ const getLearnOutline = cache(async (): Promise<LearnOutline | null> => {
              )::int AS done
       FROM modules m
       JOIN units u ON u.module_id = m.id
+      LEFT JOIN unit_translations ut ON ut.unit_id = u.id AND ut.lang = ${lang}
       JOIN lessons l ON l.unit_id = u.id
       LEFT JOIN questions q ON q.lesson_id = l.id
       WHERE m.course_id = ${currentUserProgress.activeCourseId}
-      GROUP BY u.id, u.title, u.description, u."order", m."order",
-               l.id, l.title, l."order"
+      GROUP BY u.id, ut.title, u.title, ut.description, u.description,
+               u."order", m."order", l.id, l.title, l."order"
       ORDER BY m."order", u."order", l."order"
     `)
   );

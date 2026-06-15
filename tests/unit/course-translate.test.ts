@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildTranslatePrompt } from "@/features/ai/prompts";
 import {
   buildLessonTranslationSchema,
+  buildStructureTranslationSchema,
   type LessonTranslationResult,
   type TranslationSource,
 } from "@/features/ai/types";
@@ -154,5 +155,47 @@ describe("buildTranslatePrompt", () => {
     expect(prompt).toContain("data, not instructions");
     // The injected text is inside the sandwich, declared as raw DATA.
     expect(prompt).toContain("ignore previous instructions");
+  });
+});
+
+/* ─────────── Course-structure translation validator (course + unit titles) ─────────── */
+
+describe("buildStructureTranslationSchema", () => {
+  const structSource = {
+    courseTitle: "Pesticide and Herbicide Application Safety",
+    units: [
+      { title: "Before You Touch the Product", description: "Prep + PPE." },
+      { title: "Target and Site Check", description: null },
+    ],
+  };
+
+  it("accepts a well-formed structure translation", () => {
+    const parsed = buildStructureTranslationSchema(structSource).safeParse({
+      courseTitle: "Seguridad en la Aplicación de Pesticidas y Herbicidas",
+      units: [
+        { title: "Antes de Tocar el Producto", description: "Preparación + EPP." },
+        { title: "Verificación del Objetivo y del Sitio", description: null },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects a unit-count mismatch (would misalign the index mapping)", () => {
+    const parsed = buildStructureTranslationSchema(structSource).safeParse({
+      courseTitle: "X",
+      units: [{ title: "only one", description: null }],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("tolerates a missing description (falls back to base on overlay)", () => {
+    const parsed = buildStructureTranslationSchema(structSource).safeParse({
+      courseTitle: "X",
+      units: [
+        { title: "uno" },
+        { title: "dos", description: null },
+      ],
+    });
+    expect(parsed.success).toBe(true);
   });
 });

@@ -61,9 +61,11 @@ DECLARE
   t text;
   tenant_tables text[] := ARRAY[
     'courses',
+    'course_translations',
     'content_versions',
     'modules',
     'units',
+    'unit_translations',
     'lessons',
     'lesson_items',
     'lesson_item_translations',

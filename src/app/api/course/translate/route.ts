@@ -11,7 +11,9 @@ import {
 } from "@/features/courses/languages";
 import {
   countUntranslatedLessons,
+  isStructureTranslated,
   nextUntranslatedLessonId,
+  translateCourseStructureInto,
   translateLessonInto,
 } from "@/features/courses/translate-runner";
 import { scoped } from "@/shared/db/scoped";
@@ -107,6 +109,22 @@ export async function POST(request: NextRequest) {
       },
       { status: 409 }
     );
+  }
+
+  // Translate the course STRUCTURE (course title + unit banners) once per
+  // language, before the lessons. Best-effort: a structure failure shouldn't
+  // block lesson translation (the Learn page falls back to base titles).
+  try {
+    const structureDone = await scoped(auth, (tx) =>
+      isStructureTranslated(tx, courseId, lang)
+    );
+    if (!structureDone) {
+      await scoped(auth, (tx) =>
+        translateCourseStructureInto(tx, auth.companyId, courseId, lang)
+      );
+    }
+  } catch {
+    // Swallowed on purpose — lessons still translate; structure retries next run.
   }
 
   const started = Date.now();

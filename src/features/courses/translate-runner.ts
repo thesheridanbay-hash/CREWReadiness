@@ -1,12 +1,15 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import {
+  courseTranslations,
+  courses,
   lessonTranslations,
   lessons,
   optionTranslations,
   questionTranslations,
+  unitTranslations,
 } from "@/db/schema";
-import { translateLesson } from "@/features/ai/gateway";
+import { translateCourseStructure, translateLesson } from "@/features/ai/gateway";
 import type { LessonTranslationResult, TranslationSource } from "@/features/ai/types";
 import { AppActionError } from "@/shared/errors";
 import { languageLabel } from "@/features/courses/languages";
@@ -275,4 +278,101 @@ export const countLessonsInCourse = async (
     WHERE m.course_id = ${courseId}
   `);
   return result.rows[0]?.n ?? 0;
+};
+
+/* ─────────── Course-structure translation (course + unit titles) ─────────── */
+
+/** True once the course title has been translated into `lang` (the marker for
+ * "structure done", so a re-run skips it). */
+export const isStructureTranslated = async (
+  tx: ScopedTx,
+  courseId: number,
+  lang: string
+): Promise<boolean> => {
+  const row = await tx.query.courseTranslations.findFirst({
+    where: and(
+      eq(courseTranslations.courseId, courseId),
+      eq(courseTranslations.lang, lang)
+    ),
+    columns: { id: true },
+  });
+  return Boolean(row);
+};
+
+/**
+ * Translate the course title + every unit title/description into `lang` and
+ * persist them. Units load in tree order so the translated array maps back to
+ * base unit ids by index (the gateway pins the count). One small LLM call.
+ */
+export const translateCourseStructureInto = async (
+  tx: ScopedTx,
+  companyId: string,
+  courseId: number,
+  lang: string
+): Promise<void> => {
+  const course = await tx.query.courses.findFirst({
+    where: eq(courses.id, courseId),
+    columns: { id: true, title: true },
+  });
+  if (!course) throw new AppActionError("not_found", "Course not found.");
+
+  const unitRows = await tx.execute<{
+    id: number;
+    title: string;
+    description: string | null;
+  }>(sql`
+    SELECT u.id, u.title, u.description
+    FROM units u
+    JOIN modules m ON m.id = u.module_id
+    WHERE m.course_id = ${courseId}
+    ORDER BY m."order", u."order", u.id
+  `);
+  const baseUnits = unitRows.rows;
+
+  const translation = await translateCourseStructure(
+    { tx, companyId },
+    {
+      targetLanguageLabel: languageLabel(lang),
+      source: {
+        courseTitle: course.title,
+        units: baseUnits.map((u) => ({ title: u.title, description: u.description })),
+      },
+    }
+  );
+
+  if (translation.units.length !== baseUnits.length) {
+    throw new Error(
+      `structure unit count ${translation.units.length} != ${baseUnits.length}`
+    );
+  }
+
+  await tx
+    .insert(courseTranslations)
+    .values({ companyId, courseId, lang, title: translation.courseTitle })
+    .onConflictDoUpdate({
+      target: [courseTranslations.courseId, courseTranslations.lang],
+      set: { title: sql`excluded.title`, updatedAt: sql`now()` },
+    });
+
+  if (baseUnits.length > 0) {
+    await tx
+      .insert(unitTranslations)
+      .values(
+        baseUnits.map((u, i) => ({
+          companyId,
+          unitId: u.id,
+          lang,
+          title: translation.units[i].title,
+          description: translation.units[i].description,
+        }))
+      )
+      .onConflictDoUpdate({
+        target: [unitTranslations.unitId, unitTranslations.lang],
+        set: {
+          title: sql`excluded.title`,
+          description: sql`excluded.description`,
+          updatedAt: sql`now()`,
+        },
+      });
+  }
 };

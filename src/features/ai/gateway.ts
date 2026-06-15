@@ -19,6 +19,7 @@ import {
   buildPhotoPrompt,
   buildImproveTextPrompt,
   buildReteachPrompt,
+  buildStructureTranslatePrompt,
   buildTranslatePrompt,
   buildVariantPrompt,
   type CourseBrief,
@@ -27,6 +28,7 @@ import {
 import {
   AI_TIMEOUTS,
   buildLessonTranslationSchema,
+  buildStructureTranslationSchema,
   courseDraftSchema,
   improvedTextSchema,
   lessonDraftSchema,
@@ -35,6 +37,8 @@ import {
   ZERO_USAGE,
   type AiContext,
   type CourseDraft,
+  type CourseStructureSource,
+  type CourseStructureTranslationResult,
   type ImageResult,
   type LessonDraft,
   type LessonTranslationResult,
@@ -203,6 +207,50 @@ export const translateLesson = async (
   await recordUsage(
     ctx,
     "translateLesson",
+    providerName,
+    usage,
+    alertThresholdUsd
+  );
+
+  return data;
+};
+
+/**
+ * Translate a course's STRUCTURE (course title + unit titles/descriptions) into
+ * one language. Counts pinned to the source so the runner maps units back to
+ * base ids by order. Validated + metered like the lesson translator.
+ */
+export const translateCourseStructure = async (
+  ctx: AiContext,
+  args: {
+    targetLanguageLabel: string;
+    source: CourseStructureSource;
+  }
+): Promise<CourseStructureTranslationResult> => {
+  const { adapter, providerName, alertThresholdUsd } =
+    await resolveProvider(ctx);
+
+  const payload = JSON.stringify({
+    courseTitle: args.source.courseTitle,
+    units: args.source.units,
+  });
+
+  const { data, usage } = await validated(
+    buildStructureTranslationSchema(args.source),
+    () =>
+      adapter.generateJson({
+        prompt: buildStructureTranslatePrompt({
+          targetLanguageLabel: args.targetLanguageLabel,
+          payload,
+        }),
+      }),
+    AI_TIMEOUTS.translateCourseStructure,
+    "translateCourseStructure"
+  );
+
+  await recordUsage(
+    ctx,
+    "translateCourseStructure",
     providerName,
     usage,
     alertThresholdUsd

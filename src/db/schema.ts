@@ -277,6 +277,49 @@ export const optionTranslations = pgTable(
 );
 
 /**
+ * Per-language COURSE + UNIT titles (multi-language). The learner's Learn
+ * screen shows the course title (header) and unit banner titles/descriptions —
+ * these are course-structure, not lesson content, so they need their own
+ * side tables (mirrors lesson_translations: base row = primary language, one
+ * row per (parent, lang), produced by the translate backend, fall back to the
+ * base when missing). Module titles aren't learner-facing, so they're omitted.
+ */
+export const courseTranslations = pgTable(
+  "course_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    courseId: integer("course_id")
+      .references(() => courses.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    title: text("title").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("course_translations_course_lang_uq").on(t.courseId, t.lang),
+  ]
+);
+
+export const unitTranslations = pgTable(
+  "unit_translations",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    unitId: integer("unit_id")
+      .references(() => units.id, { onDelete: "cascade" })
+      .notNull(),
+    lang: text("lang").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("unit_translations_unit_lang_uq").on(t.unitId, t.lang)]
+);
+
+/**
  * Per-language text for a lesson_item (mirrors lesson_translations). The base
  * lesson_items row holds the primary language; `fields` is a partial of the
  * payload's TRANSLATABLE text keys (e.g. { markdown } / { caption } /
@@ -982,6 +1025,26 @@ export const optionTranslationsRelations = relations(
     option: one(questionOptions, {
       fields: [optionTranslations.optionId],
       references: [questionOptions.id],
+    }),
+  })
+);
+
+export const courseTranslationsRelations = relations(
+  courseTranslations,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [courseTranslations.courseId],
+      references: [courses.id],
+    }),
+  })
+);
+
+export const unitTranslationsRelations = relations(
+  unitTranslations,
+  ({ one }) => ({
+    unit: one(units, {
+      fields: [unitTranslations.unitId],
+      references: [units.id],
     }),
   })
 );

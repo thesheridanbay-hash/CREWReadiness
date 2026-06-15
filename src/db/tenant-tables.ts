@@ -6,6 +6,7 @@ import {
   companySettings,
   contentVersions,
   courseAssets,
+  courseTranslations,
   courses,
   crewMembers,
   crews,
@@ -28,6 +29,7 @@ import {
   reviewQueue,
   subscriptions,
   tags,
+  unitTranslations,
   units,
   userProgress,
 } from "./schema";
@@ -44,9 +46,11 @@ import {
  */
 export const TENANT_TABLES = {
   courses,
+  course_translations: courseTranslations,
   content_versions: contentVersions,
   modules,
   units,
+  unit_translations: unitTranslations,
   lessons,
   lesson_items: lessonItems,
   lesson_item_translations: lessonItemTranslations,
