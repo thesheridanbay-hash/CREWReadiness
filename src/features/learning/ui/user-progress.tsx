@@ -24,7 +24,7 @@ export const UserProgress = ({ activeCourse, points }: UserProgressProps) => {
         </Button>
       </Link>
 
-      <Link href="/quests">
+      <Link href="/leaderboard">
         <Button variant="ghost" className="text-gold-700">
           <Image
             src="/points.svg"

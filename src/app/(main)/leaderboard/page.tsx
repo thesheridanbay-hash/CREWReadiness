@@ -2,7 +2,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { FeedWrapper } from "@/shared/components/feed-wrapper";
-import { Quests } from "@/features/learning/ui/quests";
 import { StickyWrapper } from "@/shared/components/sticky-wrapper";
 import { Avatar, AvatarImage } from "@/shared/ui/avatar";
 import { Separator } from "@/shared/ui/separator";
@@ -27,7 +26,6 @@ const LeaderboardPage = async () => {
           activeCourse={userProgress.activeCourse}
           points={userProgress.points}
         />
-        <Quests points={userProgress.points} />
       </StickyWrapper>
 
       <FeedWrapper>

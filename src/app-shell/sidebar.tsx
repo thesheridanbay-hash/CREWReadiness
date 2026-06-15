@@ -40,7 +40,6 @@ export const Sidebar = async ({ className }: SidebarProps) => {
           href="/leaderboard"
           iconSrc="/leaderboard.svg"
         />
-        <SidebarItem label="Quests" href="/quests" iconSrc="/quests.svg" />
         {canAuthor && (
           <SidebarItem label="Studio" href="/studio" iconSrc="/points.svg" />
         )}
