@@ -90,7 +90,7 @@ export const LessonButton = ({
                     "h-10 w-10",
                     locked
                       ? "fill-neutral-400 stroke-neutral-400 text-neutral-400"
-                      : "fill-primary-foreground text-primary-foreground",
+                      : "fill-brand-800 text-brand-800",
                     isCompleted && "fill-none stroke-[4]"
                   )}
                 />
