@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCourseAssetStatus, type CourseAssetStatus } from "@/features/courses/actions/course-assets";
@@ -19,14 +18,20 @@ import { StudioEditor, type EditorCourse } from "./studio-editor";
 
 type PageProps = {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{ lesson?: string }>;
 };
 
-const CourseStudioPage = async ({ params }: PageProps) => {
+const CourseStudioPage = async ({ params, searchParams }: PageProps) => {
   const session = await getSession();
   if (!session) redirect("/sign-in");
   if (session.role === "employee") redirect("/learn");
 
   const { courseId } = await params;
+  const { lesson: lessonParam } = await searchParams;
+  const initialLessonId =
+    lessonParam && Number.isFinite(Number(lessonParam))
+      ? Number(lessonParam)
+      : undefined;
   const tree = await getCourseTree(Number(courseId));
 
   if (!tree) redirect("/studio");
@@ -115,23 +120,16 @@ const CourseStudioPage = async ({ params }: PageProps) => {
   };
 
   return (
-    <div className="px-4 pb-16">
-      <Link
-        href="/studio"
-        className="text-sm font-bold text-info hover:underline"
-      >
-        ← All courses
-      </Link>
-      <StudioEditor
-        course={course}
-        assetStatus={assetStatus}
-        translationStatus={translationStatus}
-        listing={listing}
-        isPlatform={session.role === "platform"}
-        assignTargets={assignTargets}
-        courseAssignments={courseAssignments}
-      />
-    </div>
+    <StudioEditor
+      course={course}
+      initialLessonId={initialLessonId}
+      assetStatus={assetStatus}
+      translationStatus={translationStatus}
+      listing={listing}
+      isPlatform={session.role === "platform"}
+      assignTargets={assignTargets}
+      courseAssignments={courseAssignments}
+    />
   );
 };
 
