@@ -88,21 +88,27 @@ export const units = pgTable("units", {
   order: integer("order").notNull(),
 });
 
-export const lessons = pgTable("lessons", {
-  id: serial("id").primaryKey(),
-  companyId: text("company_id").notNull(),
-  unitId: integer("unit_id")
-    .references(() => units.id, { onDelete: "cascade" })
-    .notNull(),
-  title: text("title").notNull(),
-  /**
-   * Plain-language teaching text shown before the questions (AI Course
-   * Builder). Nullable: hand-authored lessons and pre-builder content have
-   * none, and the player renders questions-only when it's absent.
-   */
-  teachingText: text("teaching_text"),
-  order: integer("order").notNull(),
-});
+export const lessons = pgTable(
+  "lessons",
+  {
+    id: serial("id").primaryKey(),
+    companyId: text("company_id").notNull(),
+    unitId: integer("unit_id")
+      .references(() => units.id, { onDelete: "cascade" })
+      .notNull(),
+    title: text("title").notNull(),
+    /**
+     * Plain-language teaching text shown before the questions (AI Course
+     * Builder). Nullable: hand-authored lessons and pre-builder content have
+     * none, and the player renders questions-only when it's absent.
+     */
+    teachingText: text("teaching_text"),
+    order: integer("order").notNull(),
+  },
+  // Order is unique within a unit — lets moveLesson's negative-order swap rely
+  // on the index (parity with lesson_items) and blocks duplicate-order races.
+  (t) => [uniqueIndex("lessons_unit_order_uq").on(t.unitId, t.order)]
+);
 
 export const questionTypeEnum = pgEnum("question_type", ["SELECT", "ASSIST"]);
 

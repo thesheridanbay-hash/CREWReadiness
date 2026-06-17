@@ -1,37 +1,39 @@
 "use client";
 
-import { useState } from "react";
-
-import { useRouter } from "next/navigation";
 import { CircleAlert, CircleCheck, Circle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { cn } from "@/shared/utils";
 
-import { requeueAndGenerate } from "./lesson-media-actions";
 import type { EditorLesson } from "./studio-editor-types";
 import { lessonReadiness, type MediaState } from "./studio-readiness";
 
 type RowState = "done" | "todo" | "pending" | "failed" | "none";
+
+/** Shared retry state, owned by the shell so the desktop rail and the mobile
+ * sheet (two InspectorContent instances) never double-fire a regeneration. */
+type RetryProps = {
+  retryingId: string | null;
+  onRetry: (assetId: string) => void;
+};
 
 /**
  * Right pane: per-lesson publish-readiness checklist + a consolidated
  * generation queue. The queue replaces the old scattered "pending" thumbnails —
  * it lists every in-flight asset (with a spinner) and every failed one (with a
  * gold Retry that re-runs generation via the shared requeue→generate helper).
+ *
+ * `Inspector` is the sticky right-rail wrapper (lg+); `InspectorContent` is the
+ * bare content, reused inside the mobile bottom sheet (T6).
  */
 export const Inspector = ({
-  courseId,
   lesson,
   disabled,
+  retryingId,
+  onRetry,
 }: {
-  courseId: number;
   lesson: EditorLesson | null;
   disabled: boolean;
-}) => {
-  const router = useRouter();
-  const [busyId, setBusyId] = useState<string | null>(null);
-
+} & RetryProps) => {
   if (!lesson) {
     return (
       <aside
@@ -43,6 +45,32 @@ export const Inspector = ({
     );
   }
 
+  return (
+    <aside
+      aria-label="Lesson inspector"
+      className="rounded-2xl border-2 bg-surface p-4 lg:sticky lg:top-[var(--studio-header-h)] lg:max-h-[calc(100vh-var(--studio-header-h)-20px)] lg:overflow-y-auto"
+    >
+      <InspectorContent
+        lesson={lesson}
+        disabled={disabled}
+        retryingId={retryingId}
+        onRetry={onRetry}
+      />
+    </aside>
+  );
+};
+
+/** The inspector's body (readiness checklist + generation queue), without the
+ * card/sticky chrome — rendered in the right rail and in the mobile sheet. */
+export const InspectorContent = ({
+  lesson,
+  disabled,
+  retryingId,
+  onRetry,
+}: {
+  lesson: EditorLesson;
+  disabled: boolean;
+} & RetryProps) => {
   const readiness = lessonReadiness(lesson);
 
   const pendingImages = lesson.images.filter(
@@ -56,24 +84,8 @@ export const Inspector = ({
   const hasQueue =
     pendingImages.length > 0 || failedImages.length > 0 || audioPending || audioFailed;
 
-  const retry = async (assetId: string) => {
-    if (busyId || disabled) return;
-    setBusyId(assetId);
-    const result = await requeueAndGenerate(courseId, assetId);
-    setBusyId(null);
-    if (!result.ok) {
-      toast.error(result.message ?? "Retry failed.");
-      return;
-    }
-    toast.success("Regenerating…");
-    router.refresh();
-  };
-
   return (
-    <aside
-      aria-label="Lesson inspector"
-      className="flex flex-col gap-y-4 rounded-2xl border-2 bg-surface p-4 lg:sticky lg:top-[var(--studio-header-h)] lg:max-h-[calc(100vh-var(--studio-header-h)-20px)] lg:overflow-y-auto"
-    >
+    <div className="flex flex-col gap-y-4">
       <section className="flex flex-col gap-y-3">
         <div className="flex items-center justify-between gap-x-2">
           <h2 className="text-sm font-bold text-ink">Ready to ship</h2>
@@ -132,9 +144,9 @@ export const Inspector = ({
                   key={image.id}
                   state="failed"
                   label={`Image ${image.ref}`}
-                  onRetry={() => retry(image.id)}
-                  retrying={busyId === image.id}
-                  disabled={disabled || busyId !== null}
+                  onRetry={() => onRetry(image.id)}
+                  retrying={retryingId === image.id}
+                  disabled={disabled || retryingId !== null}
                 />
               ))}
               {lesson.audio && audioPending && (
@@ -144,16 +156,16 @@ export const Inspector = ({
                 <QueueRow
                   state="failed"
                   label="Voiceover"
-                  onRetry={() => retry(lesson.audio!.id)}
-                  retrying={busyId === lesson.audio.id}
-                  disabled={disabled || busyId !== null}
+                  onRetry={() => onRetry(lesson.audio!.id)}
+                  retrying={retryingId === lesson.audio.id}
+                  disabled={disabled || retryingId !== null}
                 />
               )}
             </ul>
           )}
         </section>
       )}
-    </aside>
+    </div>
   );
 };
 

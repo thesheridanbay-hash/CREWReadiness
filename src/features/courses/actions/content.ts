@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -241,6 +241,60 @@ export const createLesson = async (input: unknown): Promise<Result<{ id: number 
         .returning();
       revalidatePath(`/studio/${parent.module.courseId}`);
       return ok({ id: row.id });
+    });
+  });
+
+const moveLessonSchema = z.object({
+  lessonId: z.number().int().positive(),
+  direction: z.enum(["up", "down"]),
+});
+
+/** Reorder a lesson within its unit by swapping `order` with its adjacent
+ * sibling (mirrors moveLessonItem). Edge moves are a no-op. */
+export const moveLesson = async (input: unknown): Promise<Result<null>> =>
+  guard<null>(async () => {
+    const parsed = moveLessonSchema.safeParse(input);
+    if (!parsed.success) return fromZod(parsed.error);
+
+    const auth = await requireAuthor();
+
+    return scoped<Result<null>>(auth, async (tx) => {
+      const lesson = await tx.query.lessons.findFirst({
+        where: eq(lessons.id, parsed.data.lessonId),
+        columns: { id: true, unitId: true, order: true },
+      });
+      if (!lesson) return err("not_found", "Lesson not found.");
+
+      // Closest sibling in the move direction, within the same unit.
+      const neighbour = await tx.query.lessons.findFirst({
+        where: and(
+          eq(lessons.unitId, lesson.unitId),
+          ne(lessons.id, lesson.id),
+          parsed.data.direction === "up"
+            ? sql`"order" < ${lesson.order}`
+            : sql`"order" > ${lesson.order}`
+        ),
+        orderBy: (l, { asc, desc }) =>
+          parsed.data.direction === "up" ? [desc(l.order)] : [asc(l.order)],
+        columns: { id: true, order: true },
+      });
+      if (!neighbour) return ok(null); // already at the edge
+
+      // Swap via a temporary negative order to dodge the (unit_id, order) unique
+      // index during the exchange.
+      await tx.update(lessons).set({ order: -lesson.id }).where(eq(lessons.id, lesson.id));
+      await tx
+        .update(lessons)
+        .set({ order: lesson.order })
+        .where(eq(lessons.id, neighbour.id));
+      await tx
+        .update(lessons)
+        .set({ order: neighbour.order })
+        .where(eq(lessons.id, lesson.id));
+
+      revalidatePath("/studio", "layout");
+      revalidatePath("/learn");
+      return ok(null);
     });
   });
 

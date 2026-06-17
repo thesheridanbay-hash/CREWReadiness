@@ -1,14 +1,22 @@
 "use client";
 
-import { useMemo, useState, useTransition, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ClipboardCheck, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { archiveCourse, publishCourse } from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/utils";
 import type { CourseAssetStatus } from "@/features/courses/actions/course-assets";
 import type { CourseTranslationStatus } from "@/features/courses/actions/course-translate";
 import type { CourseListingInfo } from "@/features/marketplace/actions";
@@ -18,9 +26,11 @@ import type {
 } from "@/features/courses/assignment-queries";
 import type { Result } from "@/shared/errors";
 
+import { CommandPalette } from "./command-palette";
 import { CourseTools } from "./course-tools";
 import { EditorCanvas } from "./editor-canvas";
-import { Inspector } from "./inspector";
+import { Inspector, InspectorContent } from "./inspector";
+import { requeueAndGenerate } from "./lesson-media-actions";
 import { OutlineNav } from "./outline-nav";
 import { courseCompleteness, flattenLessons } from "./studio-readiness";
 import type { EditorCourse } from "./studio-editor-types";
@@ -97,13 +107,67 @@ export const StudioEditor = ({
   const selected =
     flat.find((entry) => entry.lesson.id === selectedId) ?? flat[0] ?? null;
 
+  // Mobile is a single-pane drill-down (T6): outline list → tap → editor;
+  // the inspector becomes a bottom sheet. These only affect the <lg layout.
+  const [mobileView, setMobileView] = useState<"outline" | "editor">(
+    initialLessonId ? "editor" : "outline"
+  );
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  // Owned here (not in InspectorContent) so the rail + mobile sheet share one
+  // in-flight retry and can't double-fire a regeneration.
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  // Bottom-sheet focus management (WAI-ARIA dialog): focus the close button on
+  // open, restore the trigger on close.
+  const sheetTriggerRef = useRef<HTMLButtonElement>(null);
+  const sheetCloseRef = useRef<HTMLButtonElement>(null);
+
+  // ⌘K / Ctrl+K toggles the jump palette; Escape closes the mobile sheet.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      } else if (event.key === "Escape" && sheetOpen) {
+        setSheetOpen(false);
+        sheetTriggerRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
+
+  // Move focus into the sheet when it opens (close button = first control).
+  useEffect(() => {
+    if (sheetOpen) sheetCloseRef.current?.focus();
+  }, [sheetOpen]);
+
+  const closeSheet = () => {
+    setSheetOpen(false);
+    sheetTriggerRef.current?.focus();
+  };
+
   const select = (lessonId: number) => {
     setSelectedId(lessonId);
+    setMobileView("editor");
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("lesson", String(lessonId));
       window.history.replaceState(null, "", url.toString());
     }
+  };
+
+  const retryAsset = async (assetId: string) => {
+    if (retryingId || pending) return;
+    setRetryingId(assetId);
+    const result = await requeueAndGenerate(course.id, assetId);
+    setRetryingId(null);
+    if (!result.ok) {
+      toast.error(result.message ?? "Retry failed.");
+      return;
+    }
+    toast.success("Regenerating…");
+    router.refresh();
   };
 
   const { total, ready } = courseCompleteness(course);
@@ -139,6 +203,16 @@ export const StudioEditor = ({
           </div>
 
           <div className="flex items-center gap-x-3">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              title="Jump to a lesson (⌘K)"
+              aria-label="Jump to a lesson"
+              className="hidden items-center gap-x-1.5 rounded-lg border-2 border-line px-2 py-1.5 text-xs font-semibold text-ink-3 outline-none transition-colors hover:bg-canvas-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand sm:inline-flex"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="font-mono">⌘K</span>
+            </button>
             {total > 0 && (
               <div
                 className="hidden items-center gap-x-2 sm:flex"
@@ -206,25 +280,103 @@ export const StudioEditor = ({
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[248px_minmax(0,1fr)_288px]">
-        <OutlineNav
-          course={course}
-          selectedLessonId={selected?.lesson.id ?? null}
-          onSelect={select}
-          disabled={pending}
-          run={run}
-        />
-        <EditorCanvas
-          courseId={course.id}
-          flat={selected}
-          disabled={pending}
-          run={run}
-        />
-        <Inspector
-          courseId={course.id}
-          lesson={selected?.lesson ?? null}
-          disabled={pending}
-        />
+        {/* Outline: shown in the mobile "outline" view; always on lg. */}
+        <div className={cn("min-w-0", mobileView === "editor" && "hidden lg:block")}>
+          <OutlineNav
+            course={course}
+            selectedLessonId={selected?.lesson.id ?? null}
+            onSelect={select}
+            disabled={pending}
+            run={run}
+          />
+        </div>
+
+        {/* Canvas: shown in the mobile "editor" view; always on lg. */}
+        <div className={cn("min-w-0", mobileView === "outline" && "hidden lg:block")}>
+          <div className="mb-3 flex items-center justify-between gap-x-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileView("outline")}
+              className="inline-flex items-center gap-x-1 rounded-lg px-2 py-1.5 text-sm font-semibold text-ink-2 outline-none hover:bg-canvas-2 focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Lessons
+            </button>
+            {selected && (
+              <button
+                ref={sheetTriggerRef}
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                className="inline-flex items-center gap-x-1.5 rounded-lg border-2 border-line px-2 py-1.5 text-sm font-semibold text-ink-2 outline-none hover:bg-canvas-2 focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                Readiness
+              </button>
+            )}
+          </div>
+          <EditorCanvas
+            courseId={course.id}
+            flat={selected}
+            disabled={pending}
+            run={run}
+          />
+        </div>
+
+        {/* Inspector: lg right rail (mobile uses the bottom sheet below). */}
+        <div className="hidden lg:block">
+          <Inspector
+            lesson={selected?.lesson ?? null}
+            disabled={pending}
+            retryingId={retryingId}
+            onRetry={retryAsset}
+          />
+        </div>
       </div>
+
+      {/* Mobile readiness bottom sheet. */}
+      {sheetOpen && selected && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Lesson readiness"
+        >
+          <div
+            className="absolute inset-0 bg-ink/40"
+            onClick={closeSheet}
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t-2 border-line bg-surface p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-ink">Lesson readiness</h2>
+              <button
+                ref={sheetCloseRef}
+                type="button"
+                onClick={closeSheet}
+                aria-label="Close"
+                className="rounded-md p-1 text-ink-3 outline-none hover:bg-canvas-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <InspectorContent
+              lesson={selected.lesson}
+              disabled={pending}
+              retryingId={retryingId}
+              onRetry={retryAsset}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ⌘K jump-to-lesson palette. */}
+      {paletteOpen && (
+        <CommandPalette
+          lessons={flat}
+          onJump={select}
+          onClose={() => setPaletteOpen(false)}
+        />
+      )}
     </div>
   );
 };

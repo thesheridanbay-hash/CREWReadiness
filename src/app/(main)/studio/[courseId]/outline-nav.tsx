@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 
 import {
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Circle,
   CircleCheck,
   Image as ImageIcon,
@@ -21,13 +22,14 @@ import {
   createUnit,
   deleteModule,
   deleteUnit,
+  moveLesson,
 } from "@/features/courses/actions/content";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/utils";
 import type { Result } from "@/shared/errors";
 
 import type { EditorCourse } from "./studio-editor-types";
-import { lessonReadiness, type MediaState } from "./studio-readiness";
+import { flattenLessons, lessonReadiness, type MediaState } from "./studio-readiness";
 
 type Run = (action: () => Promise<Result<unknown>>, success?: string) => void;
 
@@ -65,9 +67,35 @@ export const OutlineNav = ({
     });
   const isOpen = (key: string) => filtering || !collapsed.has(key);
 
+  // Lesson ids in tree order — for ArrowUp/Down (and j/k) selection nav.
+  const lessonOrder = useMemo(
+    () => flattenLessons(course).map((entry) => entry.lesson.id),
+    [course]
+  );
+
+  const onNavKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+    const down = event.key === "ArrowDown" || event.key === "j";
+    const up = event.key === "ArrowUp" || event.key === "k";
+    if ((!down && !up) || lessonOrder.length === 0) return;
+    const index = lessonOrder.indexOf(selectedLessonId ?? lessonOrder[0]);
+    const nextIndex = down
+      ? Math.min(index + 1, lessonOrder.length - 1)
+      : Math.max(index - 1, 0);
+    const nextId = lessonOrder[nextIndex];
+    if (nextId === selectedLessonId) return;
+    event.preventDefault();
+    onSelect(nextId);
+    requestAnimationFrame(() =>
+      document.getElementById(`lesson-btn-${nextId}`)?.focus()
+    );
+  };
+
   return (
     <nav
       aria-label="Course outline"
+      onKeyDown={onNavKeyDown}
       className="rounded-2xl border-2 bg-surface p-2 lg:sticky lg:top-[var(--studio-header-h)] lg:max-h-[calc(100vh-var(--studio-header-h)-20px)] lg:overflow-y-auto"
     >
       <div className="relative mb-2">
@@ -180,43 +208,83 @@ export const OutlineNav = ({
                             {lessons.map((lesson) => {
                               const readiness = lessonReadiness(lesson);
                               const active = lesson.id === selectedLessonId;
+                              const fullIndex = unit.lessons.findIndex(
+                                (l) => l.id === lesson.id
+                              );
                               return (
-                                <button
+                                <div
                                   key={lesson.id}
-                                  type="button"
-                                  onClick={() => onSelect(lesson.id)}
-                                  aria-current={active ? "true" : undefined}
-                                  className={cn(
-                                    "flex w-full items-center gap-x-2 rounded-lg px-2 py-1.5 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
-                                    active
-                                      ? "bg-gold-50 font-semibold text-ink"
-                                      : "text-ink-2 hover:bg-canvas-2"
-                                  )}
+                                  className="group flex items-center gap-x-0.5"
                                 >
-                                  {readiness.ready ? (
-                                    <CircleCheck
-                                      className="h-4 w-4 shrink-0 text-gold-500"
-                                      strokeWidth={2}
-                                    />
-                                  ) : (
-                                    <Circle
-                                      className="h-4 w-4 shrink-0 text-line-2"
-                                      strokeWidth={2}
-                                    />
-                                  )}
-                                  <span className="min-w-0 flex-1 truncate">
-                                    {lesson.title}
-                                  </span>
-                                  <span className="flex shrink-0 items-center gap-x-1">
-                                    <MediaChip state={readiness.imageState} Icon={ImageIcon} label="image" />
-                                    <MediaChip state={readiness.voiceState} Icon={Volume2} label="voiceover" />
-                                    {readiness.questionCount > 0 && (
-                                      <span className="font-mono text-[10px] text-ink-3">
-                                        {readiness.questionCount}Q
-                                      </span>
+                                  <button
+                                    id={`lesson-btn-${lesson.id}`}
+                                    type="button"
+                                    onClick={() => onSelect(lesson.id)}
+                                    aria-current={active ? "true" : undefined}
+                                    className={cn(
+                                      "flex min-w-0 flex-1 items-center gap-x-2 rounded-lg px-2 py-1.5 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
+                                      active
+                                        ? "bg-gold-50 font-semibold text-ink"
+                                        : "text-ink-2 hover:bg-canvas-2"
                                     )}
+                                  >
+                                    {readiness.ready ? (
+                                      <CircleCheck
+                                        className="h-4 w-4 shrink-0 text-gold-500"
+                                        strokeWidth={2}
+                                      />
+                                    ) : (
+                                      <Circle
+                                        className="h-4 w-4 shrink-0 text-line-2"
+                                        strokeWidth={2}
+                                      />
+                                    )}
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {lesson.title}
+                                    </span>
+                                    <span className="flex shrink-0 items-center gap-x-1">
+                                      <MediaChip state={readiness.imageState} Icon={ImageIcon} label="image" />
+                                      <MediaChip state={readiness.voiceState} Icon={Volume2} label="voiceover" />
+                                      {readiness.questionCount > 0 && (
+                                        <span className="font-mono text-[10px] text-ink-3">
+                                          {readiness.questionCount}Q
+                                        </span>
+                                      )}
+                                    </span>
+                                  </button>
+                                  {/* Reorder controls: always visible on touch,
+                                      hover/focus-revealed on desktop to stay calm. */}
+                                  <span className="flex shrink-0 flex-col transition-opacity lg:opacity-0 lg:group-focus-within:opacity-100 lg:group-hover:opacity-100">
+                                    <button
+                                      type="button"
+                                      title="Move lesson up"
+                                      aria-label="Move lesson up"
+                                      disabled={disabled || fullIndex <= 0}
+                                      onClick={() =>
+                                        run(() =>
+                                          moveLesson({ lessonId: lesson.id, direction: "up" })
+                                        )
+                                      }
+                                      className="rounded p-0.5 text-ink-3 outline-none hover:bg-canvas-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
+                                    >
+                                      <ChevronUp className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Move lesson down"
+                                      aria-label="Move lesson down"
+                                      disabled={disabled || fullIndex === unit.lessons.length - 1}
+                                      onClick={() =>
+                                        run(() =>
+                                          moveLesson({ lessonId: lesson.id, direction: "down" })
+                                        )
+                                      }
+                                      className="rounded p-0.5 text-ink-3 outline-none hover:bg-canvas-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
+                                    >
+                                      <ChevronDown className="h-3.5 w-3.5" />
+                                    </button>
                                   </span>
-                                </button>
+                                </div>
                               );
                             })}
                             <TreeAdd
